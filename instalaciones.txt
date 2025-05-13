@@ -1,0 +1,16 @@
+npm install @supabase/supabase-js
+npm install react-router-dom@6
+
+npm install tailwindcss autoprefixer
+ 
+
+Hacer que el calendario funcione mi king : 
+npm install @fullcalendar/react @fullcalendar/core @fullcalendar/daygrid @fullcalendar/timegrid @fullcalendar/interaction --legacy-peer-deps
+
+Libreria para selectores de fecha y hora
+npm install flatpickr --legacy-peer-deps
+
+Libreria para arrastrar documentos 
+npm install react-dropzone --legacy-peer-deps
+
+
