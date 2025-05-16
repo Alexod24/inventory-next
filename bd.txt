@@ -1,0 +1,51 @@
+-- Tabla Usuarios
+CREATE TABLE usuarios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre VARCHAR(100) NOT NULL,
+    correo VARCHAR(150) UNIQUE NOT NULL,
+    contraseña TEXT NOT NULL,
+    rol TEXT CHECK (rol IN ('admin', 'empleado')) DEFAULT 'empleado',
+    fecha_creacion TIMESTAMP DEFAULT NOW()
+);
+
+-- Tabla Productos
+CREATE TABLE productos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    precio_unitario NUMERIC(10, 2) NOT NULL,
+    stock_actual INT DEFAULT 0 CHECK (stock_actual >= 0),
+    stock_minimo INT DEFAULT 0 CHECK (stock_minimo >= 0),
+    unidad_medida VARCHAR(50),
+    fecha_creacion TIMESTAMP DEFAULT NOW()
+);
+
+-- Tabla Ingresos
+CREATE TABLE ingresos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    producto_id UUID NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+    cantidad INT NOT NULL CHECK (cantidad > 0),
+    costo_unitario NUMERIC(10, 2) NOT NULL,
+    usuario_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    fecha_ingreso TIMESTAMP DEFAULT NOW()
+);
+
+-- Tabla Salidas (Ventas)
+CREATE TABLE salidas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    producto_id UUID NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+    cantidad INT NOT NULL CHECK (cantidad > 0),
+    precio_unitario NUMERIC(10, 2) NOT NULL,
+    usuario_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    fecha_salida TIMESTAMP DEFAULT NOW()
+);
+
+-- Tabla Historial de Inventario
+CREATE TABLE historial_inventario (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    producto_id UUID NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+    tipo_movimiento TEXT CHECK (tipo_movimiento IN ('ingreso', 'salida')) NOT NULL,
+    cantidad INT NOT NULL CHECK (cantidad > 0),
+    usuario_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    fecha_movimiento TIMESTAMP DEFAULT NOW()
+);
