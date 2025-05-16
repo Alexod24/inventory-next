@@ -3,25 +3,21 @@ import { useState } from "react";
 import Caja from "@/components/form/input/Caja";
 import Input from "@/components/form/input/Input";
 import Label from "@/components/form/Label";
-import Boton from "@/components/ui/boton/Boton";
+// import Boton from "@/components/ui/boton/Boton";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; // Importa useRouter para redirección
+// import { useRouter } from "next/navigation"; // Importa useRouter para redirección
 import { logIn } from "@/app/actions/auth";
 
 export default function IniciarSesion() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
-  const [email, setEmail] = useState(""); // Estado para correo
-  const [password, setPassword] = useState(""); // Estado para contraseña
-  const [error, setError] = useState(""); // Estado para errores de login
-  const router = useRouter(); // Hook de Next.js para redirección
+  // const [email, setEmail] = useState(""); 
+  // const [password, setPassword] = useState(""); 
+  const [error] = useState(""); 
+  // const router = useRouter(); 
 
-  // Función para manejar el login
-  const Login = async (e: React.FormEvent) => {
-    e.preventDefault(); // Evita el refresco de la página
-  };
-
+  
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
       <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
@@ -57,7 +53,7 @@ export default function IniciarSesion() {
                     name="email"
                     type="email"
                     placeholder="alex@gmail.com"
-                    required
+                    
                   />
                 </div>
 
@@ -72,7 +68,7 @@ export default function IniciarSesion() {
                       name="password"
                       type="password"
                       placeholder="Ingresa tu contraseña"                      
-                      required
+                      
                     />
 
                     <span

@@ -26,7 +26,9 @@ export async function updateSession(request: NextRequest) {
             cookiesToSet.forEach(({ name, value, options }) => {
               supabaseResponse.cookies.set(name, value, options);
             });
-          } catch (error) {}
+          } catch (error) {
+            console.log("Este es el siguiente error: ",error);
+          }
         },
       },
     }
@@ -58,7 +60,9 @@ export async function getUser(request: NextRequest, response: NextResponse) {
             cookiesToSet.forEach(({ name, value, options }) => {
               response.cookies.set(name, value, options);
             });
-          } catch (error) {}
+          } catch (error) {
+            console.log("Este es el siguiente error: ",error);
+          }
         },
       },
     }

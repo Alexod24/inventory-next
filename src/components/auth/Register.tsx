@@ -6,27 +6,25 @@ import Label from "@/components/form/Label";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import React, { useState } from "react";
-import Boton from "@/components/ui/boton/Boton";
+// import Boton from "@/components/ui/boton/Boton";
 import { signUp } from "@/app/actions/auth";
 
 export default function SignUp() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
+  
+  
+  // const [setError] = useState("");
+  // const [setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess(false);
-
-    if (!isChecked) {
-      setError("Debes aceptar los Términos y Condiciones.");
-      return;
-    }
-  };
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  
+  //   if (!isChecked) {
+  //     setError("Debes aceptar los Términos y Condiciones.");
+  //     return;
+  //   }
+  // };
 
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full overflow-y-auto no-scrollbar">
@@ -63,7 +61,7 @@ export default function SignUp() {
                     type="email"
                     name="email"
                     placeholder="Correo electrónico"
-                    required
+
                   />
                 </div>
                 {/* Password */}
@@ -76,7 +74,7 @@ export default function SignUp() {
                       type="password"
                       name="password"
                       placeholder="Contraseña"
-                      required
+                      
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -100,7 +98,7 @@ export default function SignUp() {
                       type="password"
                       name="repeatPassword"
                       placeholder="Repetir Contraseña"
-                      required
+
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
