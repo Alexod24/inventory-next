@@ -8,7 +8,9 @@ interface ButtonProps {
   endIcon?: ReactNode; // Icon after the text
   onClick?: () => void; // Click handler
   disabled?: boolean; // Disabled state
-  className?: string; // Disabled state
+  className?: string; // Additional classes
+  formAction?: string; // Form action attribute
+  type?: "button" | "submit" | "reset"; 
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -20,6 +22,9 @@ const Button: React.FC<ButtonProps> = ({
   onClick,
   className = "",
   disabled = false,
+  formAction, // Add formAction here
+   type = "button",
+  
 }) => {
   // Size Classes
   const sizeClasses = {
@@ -44,6 +49,9 @@ const Button: React.FC<ButtonProps> = ({
       }`}
       onClick={onClick}
       disabled={disabled}
+      formAction={formAction} // Pass formAction to the button
+       type={type}
+
     >
       {startIcon && <span className="flex items-center">{startIcon}</span>}
       {children}

@@ -13,4 +13,8 @@ npm install flatpickr --legacy-peer-deps
 Libreria para arrastrar documentos 
 npm install react-dropzone --legacy-peer-deps
 
+Instalar supabase
+npm install @supabase/supabase-js --legacy-peer-deps
+
+npm install @supabase/ssr --legacy-peer-deps
 

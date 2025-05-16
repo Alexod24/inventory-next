@@ -30,7 +30,8 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    path: "/",
+    // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
   },
   {
     icon: <CalenderIcon />,
@@ -43,55 +44,55 @@ const navItems: NavItem[] = [
     path: "/perfil",
   },
 
-  {
-    name: "Formularios",
-    icon: <ListIcon />,
-    subItems: [{ name: "Formulario", path: "/formularios", pro: false }],
-  },
+  // {
+  //   name: "Formularios",
+  //   icon: <ListIcon />,
+  //   subItems: [{ name: "Formulario", path: "/formularios", pro: false }],
+  // },
   {
     name: "Tablas",
     icon: <TableIcon />,
     subItems: [{ name: "Tabla Básica", path: "/tablas", pro: false }],
   },
-  {
-    name: "Paginas",
-    icon: <PageIcon />,
-    subItems: [
-      { name: "Pagina en blanca", path: "/blank", pro: false },
-      { name: "404 Error", path: "/error-404", pro: false },
-    ],
-  },
+  // {
+  //   name: "Paginas",
+  //   icon: <PageIcon />,
+  //   subItems: [
+  //     { name: "Pagina en blanca", path: "/blank", pro: false },
+  //     { name: "404 Error", path: "/error-404", pro: false },
+  //   ],
+  // },
 ];
 
 const othersItems: NavItem[] = [
-  {
-    icon: <PieChartIcon />,
-    name: "Graficos",
-    subItems: [
-      { name: "Grafico Lineales", path: "/grafico-lineal", pro: false },
-      { name: "Grafico Barras", path: "/grafico-barras", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elementos",
-    subItems: [
-      { name: "Alerts", path: "/alertas", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/insignias", pro: false },
-      { name: "Buttons", path: "/botones", pro: false },
-      { name: "Images", path: "/imagenes", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
-  {
-    icon: <PlugInIcon />,
-    name: "Authentication",
-    subItems: [
-      { name: "Iniciar Sesion", path: "/login", pro: false },
-      { name: "Registrar", path: "/register", pro: false },
-    ],
-  },
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Graficos",
+  //   subItems: [
+  //     { name: "Grafico Lineales", path: "/grafico-lineal", pro: false },
+  //     { name: "Grafico Barras", path: "/grafico-barras", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <BoxCubeIcon />,
+  //   name: "UI Elementos",
+  //   subItems: [
+  //     { name: "Alerts", path: "/alertas", pro: false },
+  //     { name: "Avatar", path: "/avatars", pro: false },
+  //     { name: "Badge", path: "/insignias", pro: false },
+  //     { name: "Buttons", path: "/botones", pro: false },
+  //     { name: "Images", path: "/imagenes", pro: false },
+  //     { name: "Videos", path: "/videos", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <PlugInIcon />,
+  //   name: "Authentication",
+  //   subItems: [
+  //     { name: "Iniciar Sesion", path: "/login", pro: false },
+  //     { name: "Registrar", path: "/register", pro: false },
+  //   ],
+  // },
 ];
 
 const AppSidebar: React.FC = () => {
@@ -365,7 +366,7 @@ const AppSidebar: React.FC = () => {
                 }`}
               >
                 {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
+                  "Otros"
                 ) : (
                   <HorizontaLDots />
                 )}
