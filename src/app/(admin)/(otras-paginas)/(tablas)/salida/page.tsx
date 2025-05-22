@@ -1,6 +1,6 @@
 import ComponentCard from "@/components/common/Tarjeta";
 import PageBreadcrumb from "@/components/common/MigaPan";
-import TablaStock from "@/components/tabla/TablaStock";
+import TablaSalida from "@/components/tabla/TablaSalida";
 import { Metadata } from "next";
 import React from "react";
 
@@ -15,10 +15,10 @@ export default function BasicTables() {
   return (
     <div>
 
-      <PageBreadcrumb pageTitle="Basic Table" />
+      <PageBreadcrumb pageTitle="" />
       <div className="space-y-6">
-        <ComponentCard title="Basic Table 1">
-          <TablaStock />
+        <ComponentCard title="Lista de salida">
+          <TablaSalida />
         </ComponentCard>
       </div>
       

@@ -18,7 +18,8 @@ npm install @supabase/supabase-js --legacy-peer-deps
 
 npm install @supabase/ssr --legacy-peer-deps
 
-
+Alertas 
+npm install react-hot-toast
 
 
 npm install flowbite

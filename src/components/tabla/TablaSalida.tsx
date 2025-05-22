@@ -5,7 +5,6 @@ import {supabase} from "@/app/utils/supabase/supabase"
 import toast, {Toaster} from "react-hot-toast";
 
 
-
 import BotonEditar from "@/components/ui/boton/BotonEditar";
 import BotonBorrar from "@/components/ui/boton/BotonBorrar";
 
@@ -15,164 +14,178 @@ import Button from "../ui/boton/Boton";
 import Input from "../form/input/Input";
 import Label from "../form/Label";
 
-type Producto = {
+type Salida = {
   id?: string;  
-  nombre: string;
-  descripcion: string;
+  producto: string;
+  cantidad: string;
   precio: string;
-  stock: string;
-  unidad: string;
   fecha: string;
+  productoNombre?: string;
 };
 
-export default function ProductosTable() {
+type Producto = {
+  id: string;
+  nombre: string;
+};
+
+export default function SalidaTable() {
   // Obtenemos los productos
+  const [salida, setSalida] = useState<Salida[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
-  const [form, setForm] = useState<Producto>({
-    nombre:"",
-    descripcion: "",
+  const [form, setForm] = useState<Salida>({
+    producto:"",
+    cantidad: "",
     precio: "",
-    stock: "",
-    unidad: "",
     fecha: new Date().toISOString(),
   })
   
   const { isOpen, openModal, closeModal } = useModal();
 
-  const [productoSeleccionado, setProductoSeleccionado] = useState<Producto | null>(null);
+  const [salidaSeleccionado, setSalidaSeleccionado] = useState<Salida | null>(null);
 
   // Cargamos productos
 
-  async function fetchProductos(){
-    const {data,error} = await supabase.from("productos").select("*")
+  async function fetchSalida(){
+    const {data,error} = await supabase.from("salidas").select(`
+      id,
+      cantidad,
+      precio,
+      fecha,
+      productos (
+        id,nombre
+      )
+    `);
 
     if(error){
-      toast.error("Ha fallado en leer los datos ")
+      toast.error("Ha fallado en leer los datos de salida ")
     } else {
-      setProductos(data || [])
+    // Transformamos los datos para incluir el nombre del producto directamente en la lista de salidas
+    const formattedData = data.map((salida) => ({
+      ...salida,
+      id: salida.id,
+      cantidad: salida.cantidad,
+      precio: salida.precio,
+      fecha: salida.fecha,
+      producto: salida.productos?.id || "", 
+      productoNombre: salida.productos?.nombre || "Producto desconocido",
+        }));
+    setSalida(formattedData || []);
+    }
+  }
+
+  // Fetch productos
+  async function fetchProductos() {
+    const { data, error } = await supabase.from("productos").select("id, nombre");
+    if (error) {
+      toast.error("Error al cargar los productos");
+    } else {
+      setProductos(data || []);
     }
   }
 
   useEffect(() =>{
-    fetchProductos()
+    fetchSalida();
+    fetchProductos();
   },[])
 
-  // Editar productos
+  // Editar salida
 
-   function handleEditarProducto(producto: Producto) {
-    setProductoSeleccionado(producto);
+   function handleEditarSalida(salida: Salida) {
+    setSalidaSeleccionado(salida);
     setForm({
-      nombre: producto.nombre,
-      descripcion: producto.descripcion,
-      precio: producto.precio,
-      stock: producto.stock,
-      unidad: producto.unidad,
-      fecha: producto.fecha,
-      id: producto.id,
+      producto: salida.producto,
+      cantidad: salida.cantidad,
+      precio: salida.precio,
+      fecha: salida.fecha,
+      id: salida.id,
     });
     openModal();
   }
   
   // Borramos Producto
 
-  async function handleBorrarProducto(id?: string) {
+  async function handleBorrarSalida(id?: string) {
     if (!id) return;
 
-    if (!confirm("¿Seguro quieres borrar este producto?")) return;
+    if (!id || !confirm("¿Seguro quieres borrar este registro?")) return;
 
-    const { error } = await supabase.from("productos").delete().eq("id", id);
+    const { error } = await supabase.from("salidas").delete().eq("id", id);
     if (error) {
-      toast.error("Error al borrar producto");
+      toast.error("Error al borrar el registro");
     } else {
-      toast.success("Producto borrado");
-      fetchProductos();
+      toast.success("Registro borrado");
+      fetchSalida();
     }
   }
 
-//  Crear o editar productos
-
+   // Crear o editar salida
   async function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (productoSeleccionado) {
-      // Editar producto
+    if (!form.producto || !form.cantidad || !form.precio) {
+      toast.error("Pofavor amigo completa todos los datos");
+      return;
+    }
+
+    if (salidaSeleccionado) {
       const { error } = await supabase
-        .from("productos")
+        .from("salidas")
         .update({
-          nombre: form.nombre,
-          descripcion: form.descripcion,
+          producto: form.producto,
+          cantidad: form.cantidad,
           precio: form.precio,
-          stock: form.stock,
-          unidad: form.unidad,
           fecha: form.fecha,
         })
-        .eq("id", productoSeleccionado.id);
+        .eq("id", salidaSeleccionado.id);
 
       if (error) {
-        toast.error("Error al actualizar producto: " + error.message);
+        toast.error("Error al actualizar la salida" + error.message);
       } else {
-        toast.success("Producto actualizado");
-        fetchProductos();
-        setProductoSeleccionado(null);
-        setForm({
-          nombre: "",
-          descripcion: "",
-          precio: "",
-          stock: "",
-          unidad: "",
-          fecha: new Date().toISOString(),
-        });
+        toast.success("Salida actualizada");
+        fetchSalida();
+        setSalidaSeleccionado(null);
+        setForm({ 
+          producto: "",
+           cantidad: "",
+            precio: "",
+             fecha: new Date().toISOString() 
+            });
         closeModal();
       }
     } else {
-      // Crear producto
-      const { error } = await supabase.from("productos").insert([
+
+      // Creamos la salida
+      const { error } = await supabase.from("salidas").insert([
         {
-          nombre: form.nombre,
-          descripcion: form.descripcion,
+          producto: form.producto,
+          cantidad: form.cantidad,
           precio: form.precio,
-          stock: form.stock,
-          unidad: form.unidad,
           fecha: form.fecha,
         },
       ]);
 
       if (error) {
-        toast.error("Error al crear producto: " + error.message);
+        toast.error("Error al crear la salida" + error.message);
       } else {
-        toast.success("Producto creado");
-        fetchProductos();
-        setForm({
-          nombre: "",
-          descripcion: "",
-          precio: "",
-          stock: "",
-          unidad: "",
-          fecha: new Date().toISOString(),
-        });
+        toast.success("Salida creada");
+        fetchSalida();
+        setForm({ producto: "", cantidad: "", precio: "", fecha: new Date().toISOString() });
         closeModal();
       }
     }
+    
   }
 
-  
-
- 
-
-
   return (
-    
-    
-
     <div className="bg-gray-900">
       <div className="mx-auto max-w-7xl">
         <div className="bg-gray-900 py-10">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="sm:flex sm:items-center">
               <div className="sm:flex-auto">
-                <h1 className="text-base font-semibold text-white">Productos</h1>
+                <h1 className="text-base font-semibold text-white">Salidas</h1>
                 <p className="mt-2 text-sm text-gray-300">
-                  Lista de todos los productos disponibles en tu sistema.
+                  Lista de salida de todos los productos
                 </p>
               </div>
               <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
@@ -192,19 +205,13 @@ export default function ProductosTable() {
                     <thead>
                       <tr>
                         <th className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-white sm:pl-0">
-                          Nombre
+                          Producto
                         </th>
                         <th className="px-3 py-3.5 text-left text-sm font-semibold text-white">
-                          Descripción
+                          Cantidad
                         </th>
                         <th className="px-3 py-3.5 text-left text-sm font-semibold text-white">
                           Precio
-                        </th>
-                        <th className="px-3 py-3.5 text-left text-sm font-semibold text-white">
-                          Stock
-                        </th>
-                        <th className="px-3 py-3.5 text-left text-sm font-semibold text-white">
-                          Unidad
                         </th>
                         <th className="px-3 py-3.5 text-left text-sm font-semibold text-white">
                           Fecha de Creación
@@ -215,32 +222,27 @@ export default function ProductosTable() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-800">
-                      {productos.map((producto) => (
-                        <tr key={producto.id}>
+                      {salida.map((salida) => (
+                        <tr key={salida.id}>
                           <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-white sm:pl-0">
-                            {producto.nombre}
+                            {salida.productoNombre}
                           </td>
                           <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-300">
-                            {producto.descripcion}
+                            {salida.cantidad}
                           </td>
                           <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-300">
-                            S/. {producto.precio}
+                            S/. {salida.precio}
                           </td>
+                          
                           <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-300">
-                            {producto.stock}
-                          </td>
-                          <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-300">
-                            {producto.unidad}
-                          </td>
-                          <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-300">
-                            {new Date(producto.fecha).toLocaleDateString()}
+                            {new Date(salida.fecha).toLocaleDateString()}
                           </td>
                           <td className="relative py-5 pr-4 pl-3 text-left text-sm font-medium whitespace-nowrap sm:pr-0 flex gap-2">
-                             <button onClick={() => handleEditarProducto(producto)}>
+                             <button onClick={() => handleEditarSalida(salida)}>
                               <BotonEditar />
                             </button>
 
-                            <button onClick={() => handleBorrarProducto(producto.id)}>
+                            <button onClick={() => handleBorrarSalida(salida.id)}>
                               <BotonBorrar />
                             </button>
 
@@ -256,35 +258,43 @@ export default function ProductosTable() {
         </div>
       </div>
       {/* Modal para agregar o editar */}
-      <Modal isOpen={isOpen} onClose={() => { closeModal(); setProductoSeleccionado(null);}} className="max-w-[700px] m-4">
+      <Modal isOpen={isOpen} onClose={() => { closeModal(); setSalidaSeleccionado(null);}} className="max-w-[700px] m-4">
 
     <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
     <Toaster/>
     <div className="px-2 pr-14">
       <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-        {productoSeleccionado ? "Editar Producto": "Agregar Producto"}
+        {salidaSeleccionado ? "Editar Producto": "Agregar Producto"}
       </h4>
       <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-        Llena los datos para {productoSeleccionado ? "editar" : "agregar"} un  producto
+        Llena los datos para {salidaSeleccionado ? "editar" : "agregar"} un  producto
       </p>
     </div>
     <form className="flex flex-col" onSubmit={ handleFormSubmit }>
       <div className="px-2 overflow-y-auto custom-scrollbar">
         <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
           <div>
-            <Label className="form-label">Nombre</Label>
-            <Input type="text" value={form.nombre} onChange={(event) => setForm({
-              ...form,
-              nombre: event.target.value
-            })} className="form-control"/>
+            <Label className="form-label">Producto</Label>
+            <select
+            value={form.productoNombre}
+            onChange={(event) => setForm({ ...form, producto: event.target.value })}
+            className="form-control"
+          >
+            <option value="">Seleccione un producto</option>
+            {productos.map((producto) => (
+              <option key={producto.id} value={producto.id}>
+                {producto.nombre}
+              </option>
+            ))}
+          </select>
 
           </div>
 
           <div>
-            <Label>Descripción</Label>
-            <Input type="text" value={form.descripcion} onChange={(event) => setForm({
+            <Label>Cantidad</Label>
+            <Input type="text" value={form.cantidad} onChange={(event) => setForm({
               ...form,
-              descripcion: event.target.value
+              cantidad: event.target.value
              })} className="form-control" />
           </div>
 
@@ -293,31 +303,16 @@ export default function ProductosTable() {
             <Input type="text" value={form.precio} onChange={(event) => setForm({
               ...form,
               precio: event.target.value
-             })} className="form-control" />
-          </div>
-
-          <div>
-            <Label>Stock</Label>
-            <Input type="text" value={form.stock} onChange={(event) => setForm({
-              ...form,
-              stock: event.target.value
              })}  className="form-control" />
           </div>
 
-          <div>
-            <Label>Unidad</Label>
-            <Input type="text" value={form.unidad} onChange={(event) => setForm({
-              ...form,
-              unidad: event.target.value
-             })}  className="form-control" />
-          </div>
         </div>
       </div>
       <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
-        <Button variant="outline" onClick={() => { closeModal(); setProductoSeleccionado(null); }}>
+        <Button variant="outline" onClick={() => { closeModal(); setSalidaSeleccionado(null); }}>
                 Cerrar
               </Button>
-              <Button type="submit">{productoSeleccionado ? "Guardar Cambios" : "Agregar"}</Button>
+              <Button type="submit">{salidaSeleccionado ? "Guardar Cambios" : "Agregar"}</Button>
       </div>
     </form>
   </div>

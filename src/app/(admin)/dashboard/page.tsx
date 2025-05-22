@@ -3,8 +3,8 @@ import {EcommerceMetrics} from "@/components/ecommerce/EcomerceMetrics"
 import React from "react"
 import VentasMensuales from "@/components/ecommerce/VentasMensuales"
 import TarjetasMes from "@/components/ecommerce/TarjetasMes"
-import GraficosStats from "@/components/ecommerce/GraficosStats"
-import TarjetaDemografica from "@/components/ecommerce/TarjetaDemografica"
+// import GraficosStats from "@/components/ecommerce/GraficosStats"
+// import TarjetaDemografica from "@/components/ecommerce/TarjetaDemografica"
 import OrdenesRecientes from "@/components/ecommerce/OrdenesRecientes"
 
 export const metadata: Metadata = {
@@ -23,6 +23,7 @@ export default function Home() {
                 <EcommerceMetrics />
 
                 <VentasMensuales />
+                
             </div>
 
       <div className="col-span-12 xl:col-span-5">
@@ -33,7 +34,7 @@ export default function Home() {
         <OrdenesRecientes/>
       </div>
 
-      <div className="col-span-12">
+      {/* <div className="col-span-12">
         <GraficosStats/>
       </div>
 
@@ -43,7 +44,7 @@ export default function Home() {
 
       <div className="col-span-12 xl:col-span-7">
         <OrdenesRecientes/>
-      </div>
+      </div> */}
 
       
     </div>
