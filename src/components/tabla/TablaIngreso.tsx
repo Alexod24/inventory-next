@@ -15,14 +15,12 @@ import Button from "../ui/boton/Boton";
 import Input from "../form/input/Input";
 import Label from "../form/Label";
 
-type Salida = {
+type Ingreso = {
   id?: string;
   producto: string;
   productoNombre?: string;
   cantidad: string;
-  precio: string;
   fecha: string;
-  total?: string;
   descripcion?: string;
 };
 
@@ -31,52 +29,58 @@ type Producto = {
   nombre: string;
   descripcion?: string;
   imagen_url?: string;
+  stock?: number;
 };
 
-export default function SalidaTable() {
-  const [salida, setSalida] = useState<Salida[]>([]);
+export default function IngresoTable() {
+  const [ingreso, setIngreso] = useState<Ingreso[]>([]);
   const [productos, setProductos] = useState<Producto[]>([]);
-  const [form, setForm] = useState<Salida>({
+  const [form, setForm] = useState<Ingreso>({
     producto: "",
     cantidad: "0",
-    precio: "0",
-    total: "0",
     fecha: new Date().toISOString(),
     descripcion: "",
   });
 
   const { isOpen, openModal, closeModal } = useModal();
-  const [salidaSeleccionada, setSalidaSeleccionada] = useState<Salida | null>(null);
+  const [ingresoSeleccionado, setIngresoSeleccionado] = useState<Ingreso | null>(null);
 
-  async function fetchSalida() {
+  // Cargar ingresos
+ async function fetchIngreso() {
+  try {
     const { data, error } = await supabase
-      .from("salidas")
+      .from("ingresos")
       .select(`
         id,
         cantidad,
-        precio,
         fecha,
-        total,
+        descripcion,
+        producto,
         productos (
           id, nombre, descripcion, imagen_url
         )
       `);
 
     if (error) {
-      toast.error("Error al cargar salidas");
-    } else {
-      const formattedData =
-        data?.map((salida) => ({
-          ...salida,
-          producto: salida.productos?.id || "",
-          productoNombre: salida.productos?.nombre || "Producto desconocido",
-        })) || [];
-      setSalida(formattedData);
+      throw new Error(`Error al obtener datos de ingresos: ${error.message}`);
     }
-  }
 
+    console.log("Datos recuperados de ingresos:", data); // Verificar datos recuperados
+    const formattedData =
+      data?.map((ing) => ({
+        ...ing,
+        productoNombre: ing.productos?.nombre || "Producto desconocido",
+      })) || [];
+    setIngreso(formattedData);
+  } catch (err: any) {
+    console.error("Error en fetchIngreso:", err.message || err);
+    toast.error(`Error al cargar ingresos: ${err.message || "Desconocido"}`);
+  }
+}
+
+  // Cargar productos
   async function fetchProductos() {
-    const { data, error } = await supabase.from("productos").select("id, nombre, precio_venta");
+    const { data, error } = await supabase.from("productos").select("id, nombre, descripcion, imagen_url, stock");
     if (error) {
       toast.error("Error al cargar productos");
     } else {
@@ -85,157 +89,158 @@ export default function SalidaTable() {
   }
 
   useEffect(() => {
-    fetchSalida();
+    fetchIngreso();
     fetchProductos();
   }, []);
 
-  // Actualizar total automáticamente cuando cambie cantidad o precio
-  useEffect(() => {
-    const cantidadNum = parseFloat(form.cantidad) || 0;
-    const precioNum = parseFloat(form.precio) || 0;
-    const totalCalc = (cantidadNum * precioNum).toFixed(2);
-    setForm((prev) => ({ ...prev, total: totalCalc }));
-  }, [form.cantidad, form.precio]);
+  // Actualizar stock sumando cantidad del ingreso
+  async function actualizarStock(productoId: string, cantidadCambio: number) {
+    const producto = productos.find((p) => p.id === productoId);
+    if (!producto) {
+      toast.error("Producto no encontrado para actualizar stock");
+      return false;
+    }
+    const nuevoStock = (producto.stock || 0) + cantidadCambio;
 
-
-
-
-  async function handleBorrarSalida(id?: string) {
-  if (!id) {
-    toast.error("ID no válido para borrar");
-    return;
-  }
-
-  const item = salida.find((sal) => sal.id === id); // Busca el registro para mostrar información adicional
-  if (!item) {
-    toast.error("Registro no encontrado");
-    return;
-  }
-  const productoId = item.producto;
-  const cantidad = Number(item.cantidad);
-  
-  if (!confirm(`¿Seguro quieres borrar el registro de "${item.productoNombre}"?`)) return;
-
-  try {
-    // Primero vamos a recuperar el producto para saber su stock mi king
-    const { data:productoData, error:productoError } = await supabase
-    .from("productos")
-    .select("id, stock")
-    .eq("id", productoId)
-    .single();
-
-  if (productoError) {
-    toast.error(`Error al obtener producto para actualziar stock`);
-    return;
-  }
-
-   // Actualizar el stock sumando la cantidad que se resta con esta salida
-    const nuevoStock = (productoData.stock || 0) + cantidad;
-
-    const { error: updateError } = await supabase
+    const { error } = await supabase
       .from("productos")
       .update({ stock: nuevoStock })
       .eq("id", productoId);
 
-    if (updateError) {
-      toast.error("Error al actualizar stock del producto");
-      return;
+    if (error) {
+      toast.error("Error al actualizar stock");
+      return false;
     }
 
-    // Finalmente borrar el registro de salida
-    const { error: deleteError } = await supabase
-      .from("salidas")
-      .delete()
-      .eq("id", id);
-
-    if (deleteError) {
-      toast.error("Error al borrar registro de salida");
-      return;
-    }
-
-    toast.success(`Registro de "${item.productoNombre}" borrado y stock actualizado`);
-    await fetchSalida();
-
-  } catch (error) {
-    console.error("Error en handleBorrarSalida:", error);
-    toast.error("Error inesperado al intentar borrar");
+    setProductos((prev) =>
+      prev.map((p) => (p.id === productoId ? { ...p, stock: nuevoStock } : p))
+    );
+    return true;
   }
-}
 
+  async function handleBorrarIngreso(id?: string) {
+    if (!id) return;
+    if (!confirm("¿Seguro quieres borrar este ingreso?")) return;
 
+    const ingresoABorrar = ingreso.find((ing) => ing.id === id);
+    if (!ingresoABorrar) {
+      toast.error("Ingreso no encontrado");
+      return;
+    }
+
+    const cantidadABorrar = parseFloat(ingresoABorrar.cantidad) || 0;
+    const productoId = ingresoABorrar.producto;
+
+    const { error: errorDelete } = await supabase.from("ingresos").delete().eq("id", id);
+    if (errorDelete) {
+      toast.error("Error al borrar el ingreso");
+      return;
+    }
+
+    // Al borrar el ingreso, restamos la cantidad al stock
+    await actualizarStock(productoId, -cantidadABorrar);
+
+    toast.success("Ingreso borrado y stock actualizado");
+    fetchIngreso();
+  }
 
   async function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!form.producto || Number(form.cantidad) <= 0 || Number(form.precio) <= 0) {
-      toast.error("Completa correctamente todos los campos obligatorios");
+    if (!form.producto || Number(form.cantidad) <= 0) {
+      toast.error("Completa todos los campos obligatorios correctamente");
       return;
     }
 
+    const cantidadNum = Number(form.cantidad);
+
     try {
-      if (salidaSeleccionada) {
+      if (ingresoSeleccionado) {
+        // Actualizar ingreso existente: calcular diferencia para ajustar stock
+        const cantidadVieja = parseFloat(ingresoSeleccionado.cantidad) || 0;
+        const diferenciaCantidad = cantidadNum - cantidadVieja;
+
         const { error } = await supabase
-          .from("salidas")
+          .from("ingresos")
           .update({
             producto: form.producto,
-            cantidad: Number(form.cantidad),
-            precio: Number(form.precio),
+            cantidad: cantidadNum,
             fecha: form.fecha,
-            total: (Number(form.cantidad) * Number(form.precio)).toFixed(2),
+            descripcion: form.descripcion,
           })
-          .eq("id", salidaSeleccionada.id);
+          .eq("id", ingresoSeleccionado.id);
 
         if (error) throw error;
 
-        toast.success("Registro actualizado");
+        if (diferenciaCantidad !== 0) {
+          const stockOk = await actualizarStock(form.producto, diferenciaCantidad);
+          if (!stockOk) throw new Error("No se pudo actualizar stock");
+        }
+
+        toast.success("Ingreso actualizado");
       } else {
-        const { error } = await supabase.from("salidas").insert([
+        // Crear nuevo ingreso y sumar stock
+        const { error } = await supabase.from("ingresos").insert([
           {
             producto: form.producto,
-            cantidad: Number(form.cantidad),
-            precio: Number(form.precio),
+            cantidad: cantidadNum,
             fecha: form.fecha,
-            total: (Number(form.cantidad) * Number(form.precio)).toFixed(2),
+            descripcion: form.descripcion,
           },
         ]);
 
         if (error) throw error;
 
-        toast.success("Registro agregado");
+        const stockOk = await actualizarStock(form.producto, cantidadNum);
+        if (!stockOk) throw new Error("No se pudo actualizar stock");
+
+        toast.success("Ingreso agregado");
       }
 
-      fetchSalida();
+      fetchIngreso();
+      fetchProductos();
       closeModal();
       resetForm();
-      setSalidaSeleccionada(null);
+      setIngresoSeleccionado(null);
     } catch (error: any) {
       toast.error(`Error: ${error.message || "Algo salió mal"}`);
+      console.error("Error handleFormSubmit:", error);
     }
+
+//     try {
+//   console.log("Enviando datos:", form); // Agrega este log
+//   if (ingresoSeleccionado) {
+//     // Lógica para actualizar
+//   } else {
+//     // Crear nuevo ingreso y sumar stock
+//     const { error } = await supabase.from("ingresos").insert([form]);
+//     if (error) throw error;
+//     console.log("Ingreso agregado exitosamente");
+//   }
+// } catch (error: any) {
+//   console.error("Error handleFormSubmit:", error);
+//   toast.error(`Error: ${error.message || "Algo salió mal"}`);
+// }
   }
 
   function resetForm() {
     setForm({
       producto: "",
       cantidad: "0",
-      precio: "0",
-      total: "0",
       fecha: new Date().toISOString(),
       descripcion: "",
     });
   }
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
-      <Toaster
-  position="bottom-right"
-  reverseOrder={false}
-/>
+      <Toaster />
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Productos</h3>
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
               resetForm();
-              setSalidaSeleccionada(null);
+              setIngresoSeleccionado(null);
               openModal();
             }}
             className="inline-flex items-center gap-2 rounded-lg border border-indigo-500 bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-600"
@@ -250,18 +255,15 @@ export default function SalidaTable() {
           <thead className="border-b border-gray-200 dark:border-gray-700">
             <tr>
               <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Producto</th>
-              
-              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Precio</th>
-              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Total</th>
-              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Fecha</th>
-              
               <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Cantidad</th>
+              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Fecha</th>
+              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Total</th>
               <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400"></th>
               <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {salida.map((item) => (
+            {ingreso.map((item) => (
               <tr key={item.id}>
                 <td className="py-3 px-4 flex items-center gap-3">
                   {item.productos?.imagen_url ? (
@@ -271,7 +273,7 @@ export default function SalidaTable() {
                       width={50}
                       height={50}
                       className="rounded-md object-cover block"
-                      unoptimized={true}
+                      unoptimized={true} // opcional si usas imágenes externas
                     />
                   ) : (
                     <div className="h-[50px] w-[50px] bg-gray-200 rounded-md dark:bg-gray-700 flex items-center justify-center text-gray-400 text-xs">
@@ -279,26 +281,27 @@ export default function SalidaTable() {
                     </div>
                   )}
                   <div>
-                    <p className="font-medium text-gray-800 dark:text-white/90">{item.productoNombre}</p>
-                    <span className="text-gray-500 text-xs dark:text-gray-400">{item.descripcion}</span>
+                    <p className="font-medium text-gray-800 dark:text-white/90">
+                      {item.productoNombre || "Producto desconocido"}
+                    </p>
+                    <span className="text-gray-500 text-xs dark:text-gray-400">
+                      {item.descripcion || "Sin descripción"}
+                    </span>
                   </div>
+                  
                 </td>
+                <td className="py-3 px-4 text-gray-500 text-sm dark:text-gray-400">{item.cantidad || "-"}</td>
                 
-                <td className="py-3 px-4 text-gray-500 text-sm dark:text-gray-400">S/. {(Number(item.precio) || 0).toFixed(2)}</td>
-                <td className="py-3 px-4 text-gray-500 text-sm dark:text-gray-400">S/. {(Number(item.total) || 0).toFixed(2)}</td>
                 <td className="py-3 px-4 text-gray-500 text-sm dark:text-gray-400">{item.fecha || "-"}</td>
                 
-                <td className="py-3 px-4 text-gray-500 text-sm dark:text-gray-400">{item.cantidad || "-"}</td>
                 <td className="py-3 px-4 gap-2">
                   <button
                     className="flex items-center justify-center"
                     onClick={() => {
-                      setSalidaSeleccionada(item);
+                      setIngresoSeleccionado(item);
                       setForm({
                         producto: item.producto,
                         cantidad: item.cantidad || "0",
-                        precio: item.precio || "0",
-                        total: item.total || "0",
                         fecha: item.fecha || new Date().toISOString(),
                         descripcion: item.descripcion || "",
                       });
@@ -309,7 +312,7 @@ export default function SalidaTable() {
                   </button>
                 </td>
                 <td className="py-3 px-4 gap-2">
-                  <button className="flex items-center justify-center" onClick={() => handleBorrarSalida(item.id)}>
+                  <button className="flex items-center justify-center" onClick={() => handleBorrarIngreso(item.id)}>
                     <BotonBorrar />
                   </button>
                 </td>
@@ -323,7 +326,7 @@ export default function SalidaTable() {
         isOpen={isOpen}
         onClose={() => {
           closeModal();
-          setSalidaSeleccionada(null);
+          setIngresoSeleccionado(null);
           resetForm();
         }}
         className="max-w-[700px] m-4"
@@ -331,28 +334,22 @@ export default function SalidaTable() {
         <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              {salidaSeleccionada ? "Editar Registro" : "Agregar Registro"}
+              {ingresoSeleccionado ? "Editar Registro" : "Agregar Registro"}
             </h4>
             <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-              Llena los datos para {salidaSeleccionada ? "editar" : "agregar"} un producto
+              Llena los datos para {ingresoSeleccionado ? "editar" : "agregar"} un producto
             </p>
           </div>
           <form className="flex flex-col" onSubmit={handleFormSubmit}>
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                
                 <div>
                   <Label htmlFor="producto">Producto</Label>
                   <select
                     id="producto"
                     value={form.producto}
-                    onChange={(e) => {
-                    const selectedProduct = productos.find(p => p.id === e.target.value);
-                    setForm({
-                      ...form,
-                      producto: e.target.value,
-                      precio: selectedProduct ? selectedProduct.precio_venta.toString() : "0",
-                    });
-                    }}
+                    onChange={(e) => setForm({ ...form, producto: e.target.value })}
                     className="w-full p-2 border border-gray-300 rounded-lg dark:bg-gray-800 dark:border-gray-700"
                     required
                   >
@@ -389,20 +386,7 @@ export default function SalidaTable() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="precio">Precio</Label>
-                  <Input
-                    type="number"
-                    id="precio"
-                    value={form.precio}
-                    onChange={(e) =>
-                      setForm({ ...form, precio: e.target.value === "" ? "0" : e.target.value })
-                    }
-                    min="0"
-                    
-                    disabled
-                  />
-                </div>
+                
 
                 <div>
                   <Label htmlFor="fecha">Fecha </Label>
@@ -415,26 +399,23 @@ export default function SalidaTable() {
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="total">Total</Label>
-                  <Input
-                    type="number"
-                    id="total"
-                    value={form.total}
-                    readOnly
-                  />
-                </div>
+                
+                
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <Button type="button" variant="secondary" onClick={() => {
-                closeModal();
-                setSalidaSeleccionada(null);
-                resetForm();
-              }}>
+              <Button
+                type="button"
+                color="secondary"
+                onClick={() => {
+                  closeModal();
+                  setIngresoSeleccionado(null);
+                  resetForm();
+                }}
+              >
                 Cancelar
               </Button>
-              <Button type="submit">{salidaSeleccionada ? "Actualizar" : "Agregar"}</Button>
+              <Button type="submit">{ingresoSeleccionado ? "Actualizar" : "Agregar"}</Button>
             </div>
           </form>
         </div>

@@ -3,6 +3,7 @@ import {EcommerceMetrics} from "@/components/ecommerce/EcomerceMetrics"
 import React from "react"
 import VentasMensuales from "@/components/ecommerce/VentasMensuales"
 import TarjetasMes from "@/components/ecommerce/TarjetasMes"
+import TablaProductos from "@/components/tabla/TablaProductos"
 // import GraficosStats from "@/components/ecommerce/GraficosStats"
 // import TarjetaDemografica from "@/components/ecommerce/TarjetaDemografica"
 import OrdenesRecientes from "@/components/ecommerce/OrdenesRecientes"
@@ -31,7 +32,7 @@ export default function Home() {
       </div>
       
       <div className="col-span-12">
-        <OrdenesRecientes/>
+        <TablaProductos/>
       </div>
 
       {/* <div className="col-span-12">

@@ -5,19 +5,20 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
-  // BoxCubeIcon,
+  BoxCubeIcon,
   CalenderIcon,
   ChevronDownIcon,
   GridIcon,
   HorizontaLDots,
+  PieChartIcon,
+  TaskIcon,
   // ListIcon,
   // PageIcon,
-  // PieChartIcon,
   // PlugInIcon,
-  TableIcon,
   UserCircleIcon,
+  
 } from "../icons/index";
-import SidebarWidget from "./SidebarWidget";
+// import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
   name: string;
@@ -49,15 +50,31 @@ const navItems: NavItem[] = [
   //   icon: <ListIcon />,
   //   subItems: [{ name: "Formulario", path: "/formularios", pro: false }],
   // },
-  {
-    name: "Tablas",
-    icon: <TableIcon />,
-    subItems: [
-      { name: "Tabla Productos", path: "/productos", pro: false },
-      { name: "Tabla Salida", path: "/salida", pro: false }
-      // { name: "Tabla Stock", path: "/stock", pro: false }
-    ],
+  // {
+  //   name: "Tablas",
+  //   icon: <TableIcon />,
+  //   subItems: [
+  //     { name: "Tabla Productos", path: "/productos", pro: false },
+  //     { name: "Tabla Salida", path: "/salida", pro: false },
+  //     { name: "Tabla Ingrsos", path: "/ingreso", pro: false }
+      
+  //   ],
     
+  // },
+   {
+    icon: <PieChartIcon />,
+    name: "Lista de productos",
+    path: "/productos",
+  },
+   {
+    icon: <BoxCubeIcon />,
+    name: "Registro de Salida",
+    path: "/salida",
+  },
+   {
+    icon: <TaskIcon />,
+    name: "Registro de Ingreso",
+    path: "/ingreso",
   },
   // {
   //   name: "Paginas",
@@ -380,7 +397,7 @@ const AppSidebar: React.FC = () => {
             </div>
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
+        {/* {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null} */}
       </div>
     </aside>
   );

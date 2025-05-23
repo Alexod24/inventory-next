@@ -15,12 +15,12 @@ export default function Example() {
       >
         <PlusIcon aria-hidden="true" className="size-5" />
       </button> */}
-      <button
+      <span
         type="button"
         className="rounded-full bg-red-600 p-2 text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       >
         <TrashIcon aria-hidden="true" className="size-5" />
-      </button>
+      </span>
     </>
   )
 }

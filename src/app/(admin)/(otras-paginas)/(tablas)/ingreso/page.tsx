@@ -1,6 +1,6 @@
 import ComponentCard from "@/components/common/Tarjeta";
 import PageBreadcrumb from "@/components/common/MigaPan";
-import TablaSalida from "@/components/tabla/TablaSalida";
+import TablaIngreso from "@/components/tabla/TablaIngreso";
 import {EcommerceMetrics} from "@/components/ecommerce/EcomerceMetrics"
 import { Metadata } from "next";
 import React from "react";
@@ -19,9 +19,10 @@ export default function BasicTables() {
       <PageBreadcrumb pageTitle="" />
       <EcommerceMetrics className="mb-6" />
       <div className="space-y-6">
-        
-          <TablaSalida />
-        
+        {/* <ComponentCard title="Lista de salida">
+          
+        </ComponentCard> */}
+        <TablaIngreso />
       </div>
       
     </div>
