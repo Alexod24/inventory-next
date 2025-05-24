@@ -1,7 +1,7 @@
-import ComponentCard from "@/components/common/Tarjeta";
+// import ComponentCard from "@/components/common/Tarjeta";
 import PageBreadcrumb from "@/components/common/MigaPan";
 import TablaIngreso from "@/components/tabla/TablaIngreso";
-import {EcommerceMetrics} from "@/components/ecommerce/EcomerceMetrics"
+import {EcommerceMetrics} from "@/components/ecommerce/EcomerceMetrics";
 import { Metadata } from "next";
 import React from "react";
 

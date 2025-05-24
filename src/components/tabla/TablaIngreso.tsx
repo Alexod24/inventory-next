@@ -235,7 +235,7 @@ export default function IngresoTable() {
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <Toaster />
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Productos</h3>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Ingreso de Productos</h3>
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
@@ -257,7 +257,7 @@ export default function IngresoTable() {
               <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Producto</th>
               <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Cantidad</th>
               <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Fecha</th>
-              <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400">Total</th>
+              
               <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400"></th>
               <th className="py-3 px-4 text-left text-sm font-semibold text-gray-500 dark:text-gray-400"></th>
             </tr>

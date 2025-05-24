@@ -4,9 +4,13 @@ import React from "react"
 import VentasMensuales from "@/components/ecommerce/VentasMensuales"
 import TarjetasMes from "@/components/ecommerce/TarjetasMes"
 import TablaProductos from "@/components/tabla/TablaProductos"
+import TablaIngreso from "@/components/tabla/TablaIngreso"
+import TablaSalida from "@/components/tabla/TablaSalida"
+
+import Chatbot from "@/components/chatbot/ChatBot"
 // import GraficosStats from "@/components/ecommerce/GraficosStats"
 // import TarjetaDemografica from "@/components/ecommerce/TarjetaDemografica"
-import OrdenesRecientes from "@/components/ecommerce/OrdenesRecientes"
+// import OrdenesRecientes from "@/components/ecommerce/OrdenesRecientes"
 
 export const metadata: Metadata = {
     title:
@@ -34,6 +38,20 @@ export default function Home() {
       <div className="col-span-12">
         <TablaProductos/>
       </div>
+
+      <div className="col-span-12">
+        <TablaSalida/>
+      </div>
+
+      <div className="col-span-12">
+        <TablaIngreso/>
+      </div>
+
+      <div>
+        <Chatbot/>
+      </div>
+
+      
 
       {/* <div className="col-span-12">
         <GraficosStats/>

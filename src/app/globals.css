@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 
-
 @import 'react-datepicker/dist/react-datepicker.css';
 
 @tailwind base;
@@ -173,6 +172,7 @@
   --z-index-99999: 99999;
   --z-index-999999: 999999;
 }
+
 
 /*
   The default border color has changed to `currentColor` in Tailwind CSS v4,

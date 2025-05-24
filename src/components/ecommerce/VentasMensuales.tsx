@@ -1,17 +1,46 @@
 "use client";
+
 import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import { MoreDotIcon } from "@/icons";
 import { DesplegableItem } from "../ui/desplegable/DesplegableItem";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Desplegable } from "../ui/desplegable/Desplegable";
+import { supabase } from "@/app/utils/supabase/supabase"; // Ajusta esta ruta según tu proyecto
 
-// Dynamically import the ReactApexChart component
+// Importa ApexCharts dinámicamente
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
 export default function MonthlySalesChart() {
+  const [productData, setProductData] = useState<{ name: string; stock: number }[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Función para cargar los productos desde Supabase
+  async function fetchProductos() {
+    const { data, error } = await supabase.from("productos").select("nombre, stock");
+    if (error) {
+      console.error("Error al obtener los productos:", error.message);
+      return [];
+    }
+    return data.map((producto) => ({
+      name: producto.nombre,
+      stock: producto.stock,
+    }));
+  }
+
+  // Cargar datos al montar el componente
+  useEffect(() => {
+    async function loadData() {
+      const data = await fetchProductos();
+      setProductData(data);
+    }
+
+    loadData();
+  }, []);
+
+  // Opciones para ApexCharts
   const options: ApexOptions = {
     colors: ["#465fff"],
     chart: {
@@ -39,20 +68,7 @@ export default function MonthlySalesChart() {
       colors: ["transparent"],
     },
     xaxis: {
-      categories: [
-        "Enero",
-        "Febrero",
-        "Marzo",
-        "Abril",
-        "Mayo",
-        "Jun",
-        "Jul",
-        "Ago",
-        "Set",
-        "Oct",
-        "Nov",
-        "Dic",
-      ],
+      categories: productData.map((item) => item.name), // Nombres de productos
       axisBorder: {
         show: false,
       },
@@ -68,7 +84,7 @@ export default function MonthlySalesChart() {
     },
     yaxis: {
       title: {
-        text: undefined,
+        text: "Stock",
       },
     },
     grid: {
@@ -81,24 +97,25 @@ export default function MonthlySalesChart() {
     fill: {
       opacity: 1,
     },
-
     tooltip: {
       x: {
-        show: false,
+        show: true,
       },
       y: {
         formatter: (val: number) => `${val}`,
       },
     },
   };
+
+  // Series para el gráfico
   const series = [
     {
-      name: "Sales",
-      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
+      name: "Stock",
+      data: productData.map((item) => item.stock), // Valores de stock
     },
   ];
-  const [isOpen, setIsOpen] = useState(false);
 
+  // Funciones para el desplegable
   function toggleDropdown() {
     setIsOpen(!isOpen);
   }
@@ -111,7 +128,7 @@ export default function MonthlySalesChart() {
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Ventas del Mes
+          Stock de Productos
         </h3>
 
         <div className="relative inline-block">
@@ -127,13 +144,13 @@ export default function MonthlySalesChart() {
               onItemClick={closeDropdown}
               className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
-              View More
+              Ver más
             </DesplegableItem>
             <DesplegableItem
               onItemClick={closeDropdown}
               className="flex w-full font-normal text-left text-gray-500 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
             >
-              Delete
+              Eliminar
             </DesplegableItem>
           </Desplegable>
         </div>

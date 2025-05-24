@@ -223,6 +223,9 @@ export default function SalidaTable() {
       descripcion: "",
     });
   }
+
+// -----------------------------------------------------------------------------   
+
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <Toaster
@@ -230,7 +233,7 @@ export default function SalidaTable() {
   reverseOrder={false}
 />
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Productos</h3>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Salida de Productos</h3>
         <div className="flex items-center gap-3">
           <button
             onClick={() => {

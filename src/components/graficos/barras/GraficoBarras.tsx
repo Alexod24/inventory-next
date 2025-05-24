@@ -1,24 +1,63 @@
 "use client";
-import React from "react";
 
+import React, { useEffect, useState } from "react";
 import { ApexOptions } from "apexcharts";
-
 import dynamic from "next/dynamic";
-// Dynamically import the ReactApexChart component
+import { supabase } from "@/app/utils/supabase/supabase"; // Ajusta la ruta según tu proyecto
+
+// Importa ApexCharts dinámicamente
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
 });
 
 export default function BarChartOne() {
+  const [productData, setProductData] = useState<{ name: string; stock: number }[]>([]);
+
+  // Función para cargar los productos
+  async function fetchProductos() {
+    const { data, error } = await supabase.from("productos").select("nombre, stock");
+
+    if (error) {
+      console.error("Error fetching productos:", error.message);
+      return [];
+    }
+
+    return data.map((producto) => ({
+      name: producto.nombre,
+      stock: producto.stock,
+    }));
+  }
+
+  // Cargar datos al montar el componente y agregar suscripción
+  useEffect(() => {
+    async function loadData() {
+      const data = await fetchProductos();
+      setProductData(data);
+    }
+
+    loadData();
+
+    const subscription = supabase
+      .from("productos")
+      .on("*", async () => {
+        const data = await fetchProductos();
+        setProductData(data);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeSubscription(subscription);
+    };
+  }, []);
+
+  // Opciones del gráfico
   const options: ApexOptions = {
     colors: ["#465fff"],
     chart: {
       fontFamily: "Outfit, sans-serif",
       type: "bar",
       height: 180,
-      toolbar: {
-        show: false,
-      },
+      toolbar: { show: false },
     },
     plotOptions: {
       bar: {
@@ -28,35 +67,12 @@ export default function BarChartOne() {
         borderRadiusApplication: "end",
       },
     },
-    dataLabels: {
-      enabled: false,
-    },
-    stroke: {
-      show: true,
-      width: 4,
-      colors: ["transparent"],
-    },
+    dataLabels: { enabled: false },
+    stroke: { show: true, width: 4, colors: ["transparent"] },
     xaxis: {
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
-      axisBorder: {
-        show: false,
-      },
-      axisTicks: {
-        show: false,
-      },
+      categories: productData.map((item) => item.name), // Nombres de productos
+      axisBorder: { show: false },
+      axisTicks: { show: false },
     },
     legend: {
       show: true,
@@ -64,47 +80,32 @@ export default function BarChartOne() {
       horizontalAlign: "left",
       fontFamily: "Outfit",
     },
-    yaxis: {
-      title: {
-        text: undefined,
-      },
-    },
-    grid: {
-      yaxis: {
-        lines: {
-          show: true,
-        },
-      },
-    },
-    fill: {
-      opacity: 1,
-    },
-
+    yaxis: { title: { text: "Stock" } },
+    grid: { yaxis: { lines: { show: true } } },
+    fill: { opacity: 1 },
     tooltip: {
-      x: {
-        show: false,
-      },
-      y: {
-        formatter: (val: number) => `${val}`,
-      },
+      x: { show: true },
+      y: { formatter: (val: number) => `${val}` },
     },
   };
+
+  // Series del gráfico
   const series = [
     {
-      name: "Sales",
-      data: [168, 385, 201, 298, 187, 195, 291, 110, 215, 390, 280, 112],
+      name: "Stock",
+      data: productData.map((item) => item.stock), // Valores de stock
     },
   ];
+
   return (
-    <div className="max-w-full overflow-x-auto custom-scrollbar">
-      <div id="chartOne" className="min-w-[1000px]">
-        <ReactApexChart
-          options={options}
-          series={series}
-          type="bar"
-          height={180}
-        />
-      </div>
+    <div className="p-4 bg-white rounded-lg shadow hover:shadow-lg transition duration-300">
+      <h2 className="text-xl font-bold mb-4">Stock por Producto</h2>
+      <ReactApexChart
+        options={options}
+        series={series}
+        type="bar"
+        height={180}
+      />
     </div>
   );
 }

@@ -14,6 +14,8 @@ import Button from "../ui/boton/Boton";
 import Input from "../form/input/Input";
 import Label from "../form/Label";
 
+import { useNotifications } from "@/context/NotificacionContext";
+
 import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import es from "date-fns/locale/es";
@@ -34,10 +36,13 @@ type Producto = {
   imagen_url?: string;
 };
 
+// -------------------------------------------------------------------
+
 export default function ProductosTable() {
   const [categorias, setCategorias] = useState<string[]>([]);
   const { isOpen: isCategoryModalOpen, openModal: openCategoryModal, closeModal: closeCategoryModal } = useModal(); // Modal para agregar categoría
   const [nuevaCategoria, setNuevaCategoria] = useState("");
+  
 
   const [productos, setProductos] = useState<Producto[]>([]);
 
@@ -58,7 +63,88 @@ export default function ProductosTable() {
 
   // Estado para controlar si la imagen está subida
   const [uploading, setUploading] = useState(false);
+  const { notifications, addNotification, removeNotification } = useNotifications();
 
+
+  // -------------------------------------------------------------------
+
+  // Gestionar notificaciones
+function gestionarNotificaciones(productos, notifications, addNotification, removeNotification) {
+  // Filtrar productos con stock 1 y no nuevos
+  const productosBajoStock = productos.filter(
+    (producto) => producto.stock === 1 && !producto.nuevo
+  );
+
+  // Crear mensajes actuales de alerta
+  const mensajesActuales = productosBajoStock.map(
+    (producto) => `El producto "${producto.nombre}" tiene solo 1 unidad en stock.`
+  );
+
+  // Agregar notificaciones nuevas (sin repetir)
+  mensajesActuales.forEach((msg) => {
+    if (!notifications.includes(msg)) {
+      addNotification(msg);
+    }
+  });
+
+  // Eliminar notificaciones que ya no aplican
+  notifications.forEach((msg) => {
+    if (!mensajesActuales.includes(msg)) {
+      removeNotification(msg);
+    }
+  });
+
+  // Marcar productos nuevos como no nuevos
+  const actualizados = productos.map((producto) =>
+    producto.stock === 0 && producto.nuevo ? { ...producto, nuevo: false } : producto
+  );
+
+  return actualizados;
+}
+
+
+// -------------------------------------------------------------------
+
+ // Funcion para cargar productos
+  async function fetchProductos() {
+  const { data, error } = await supabase.from("productos").select("*");
+  if (error) {
+    toast.error("Error al cargar productos");
+    console.error(error.message);
+    return [];
+  }
+  return data || [];
+}
+
+// -------------------------------------------------------------------
+
+
+useEffect(() => {
+  async function cargarProductos() {
+    const productos = await fetchProductos();
+    if (productos) {
+      const productosActualizados = gestionarNotificaciones(productos, notifications, addNotification, removeNotification);
+      setProductos(productosActualizados);
+    }
+  }
+
+  cargarProductos();
+
+   // Ejecuta al montar el componente
+
+  // Escucha actualizaciones en tiempo real
+  const channel = supabase
+    .channel('productos-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'productos' }, (payload) => {
+      console.log('Cambio detectado:', payload);
+      cargarProductos();
+    })
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
 // -------------------------------------------------------------------
 
   async function fetchCategorias() {
@@ -149,22 +235,6 @@ export default function ProductosTable() {
     }
   }
 
-
-// -------------------------------------------------------------------
-
-  // Funcion para cargar productos
-  async function fetchProductos() {
-    const { data, error } = await supabase.from("productos").select("*");
-    if (error) {
-      toast.error("Error al cargar productos");
-    } else {
-      setProductos(data || []);
-    }
-  }
-
-  useEffect(() => {
-    fetchProductos();
-  }, []);
 
 // -------------------------------------------------------------------
 
@@ -287,7 +357,7 @@ export default function ProductosTable() {
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <Toaster />
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Productos</h3>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">Lista de Productos</h3>
         <div className="flex items-center gap-3">
           <button
             onClick={() => {
