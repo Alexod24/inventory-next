@@ -13,7 +13,7 @@ export const baseOperativaSchema = z.object({
   fecha: z.string(), // Fecha como cadena en formato ISO
   valor: z.number(),
   estado: z.string(),
-  justificacion: z.string(),
+  disponibilidad: z.string(),
   type: z.enum(["income", "expense"]).optional(), // Opcional si aplica
 });
 

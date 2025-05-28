@@ -9,17 +9,6 @@ import { cn } from "@/lib/utils";
 
 export const columns: ColumnDef<BaseOperativa>[] = [
   {
-    accessorKey: "proveedor",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Proveedor" />
-    ),
-    cell: ({ row }) => (
-      <div className="w-[150px] capitalize">{row.getValue("proveedor")}</div>
-    ),
-    enableSorting: false,
-    enableHiding: false
-  },
-  {
     accessorKey: "descripcion",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Descripcion del bien" />
@@ -34,11 +23,24 @@ export const columns: ColumnDef<BaseOperativa>[] = [
     // Agregamos filtro de texto simple para que funcione con input tipo string
     filterFn: (row, id, filterValue) => {
       const value = row.getValue(id) as string;
-      return value.toLowerCase().includes((filterValue as string).toLowerCase());
+      return value
+        .toLowerCase()
+        .includes((filterValue as string).toLowerCase());
     },
   },
+  {
+    accessorKey: "proveedor",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Proveedor" />
+    ),
+    cell: ({ row }) => (
+      <div className="w-[150px] capitalize">{row.getValue("proveedor")}</div>
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
 
-   {
+  {
     accessorKey: "marca",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Marca" />
@@ -51,12 +53,13 @@ export const columns: ColumnDef<BaseOperativa>[] = [
     filterFn: (row, id, filterValue) => {
       // filtro simple de texto, no includes de array
       const value = row.getValue(id) as string;
-      return value.toLowerCase().includes((filterValue as string).toLowerCase());
+      return value
+        .toLowerCase()
+        .includes((filterValue as string).toLowerCase());
     },
   },
 
-
-    // Igual para color
+  // Igual para color
   {
     accessorKey: "color",
     header: ({ column }) => (
@@ -69,37 +72,38 @@ export const columns: ColumnDef<BaseOperativa>[] = [
     ),
     filterFn: (row, id, filterValue) => {
       const value = row.getValue(id) as string;
-      return value.toLowerCase().includes((filterValue as string).toLowerCase());
+      return value
+        .toLowerCase()
+        .includes((filterValue as string).toLowerCase());
     },
   },
- 
-
- 
+  // ---------------------------------------------------------------------------------
   {
     accessorKey: "cantidad",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Cantidad" />
     ),
     cell: ({ row }) => {
-      const type = row.getValue("estado");
+      const cantidad = row.getValue("cantidad") as number;
+      const isPositive = cantidad > 0;
       return (
         <div className="flex w-[100px] items-center">
           <span
             className={cn(
               "capitalize",
-              type === "income" ? "text-green-500" : "text-red-500"
+              isPositive ? "text-green-500" : "text-red-500"
             )}
           >
-            {" "}
-            {row.getValue("cantidad")}
+            {cantidad}
           </span>
         </div>
       );
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
-    }
+    },
   },
+  // ---------------------------------------------------------------------------------
   {
     accessorKey: "tamano",
     header: ({ column }) => (
@@ -109,8 +113,9 @@ export const columns: ColumnDef<BaseOperativa>[] = [
       <div className="w-[150px] capitalize">{row.getValue("tamano")}</div>
     ),
     enableSorting: false,
-    enableHiding: false
+    enableHiding: false,
   },
+  // ---------------------------------------------------------------------------------
   {
     accessorKey: "material",
     header: ({ column }) => (
@@ -124,9 +129,9 @@ export const columns: ColumnDef<BaseOperativa>[] = [
           </span>
         </div>
       );
-    }
+    },
   },
-
+  // ---------------------------------------------------------------------------------
   {
     accessorKey: "fecha",
     header: ({ column }) => (
@@ -152,79 +157,95 @@ export const columns: ColumnDef<BaseOperativa>[] = [
       return rowDate >= startDate && rowDate <= endDate;
     },
   },
-
+  // ---------------------------------------------------------------------------------
   {
-  accessorKey: "valor",
-  header: ({ column }) => (
-    <DataTableColumnHeader column={column} title="Valor" />
-  ),
-  cell: ({ row }) => {
-    const type = row.getValue("estado"); // <- Cambié aquí
-    return (
-      <div className="flex w-[100px] items-center">
-        <span
-          className={cn(
-            "capitalize",
-            type === "income" ? "text-green-500" : "text-red-500"
-          )}
-        >
-          {row.getValue("valor")}
-        </span>
-      </div>
-    );
+    accessorKey: "valor",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Valor" />
+    ),
+    cell: ({ row }) => {
+      const valor = row.getValue("valor") as number;
+      const isPositive = valor > 0;
+      return (
+        <div className="flex w-[100px] items-center">
+          <span
+            className={cn(
+              "capitalize",
+              isPositive ? "text-green-500" : "text-red-500"
+            )}
+          >
+            {valor}
+          </span>
+        </div>
+      );
+    },
+    filterFn: (row, id, value) => {
+      return (value as string)
+        .toLowerCase()
+        .includes((row.getValue(id) as string).toLowerCase());
+    },
   },
-  filterFn: (row, id, value) => {
-    return (value as string).toLowerCase().includes((row.getValue(id) as string).toLowerCase());
-  }
-},
-
-
-   {
+  // ---------------------------------------------------------------------------
+  {
     accessorKey: "estado",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Estado Fisico" />
     ),
     cell: ({ row }) => {
-      const type = row.getValue("estado");
+      const estado = row.getValue("estado") as String;
+      const isNuevo = estado.toLowerCase() === "nuevo";
+      const isBueno = estado.toLowerCase() === "bueno";
+      const isDañado = estado.toLowerCase() === "dañado";
+      const isRoto = estado.toLowerCase() === "roto";
+
       return (
         <div className="flex w-[100px] items-center">
-          {type === "income" ? (
-            <TrendingUp size={20} className="mr-2 text-green-500" />
-          ) : (
-            <TrendingDown size={20} className="mr-2 text-red-500" />
-          )}
-          <span className="capitalize"> {row.getValue("estado")}</span>
+          <span
+            className={cn(
+              "capitalize font-semibold",
+              isNuevo ? "text-blue-400" : "",
+              isBueno ? "text-green-600" : "",
+              isDañado ? "text-orange-500" : "",
+              isRoto ? "text-red-500" : ""
+            )}
+          >
+            {estado}
+          </span>
         </div>
       );
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
-    }
+    },
   },
+  // ---------------------------------------------------------------------------
   {
-    accessorKey: "justificacion",
+    accessorKey: "disponibilidad",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Justificacion" />
+      <DataTableColumnHeader column={column} title="Disponibilidad" />
     ),
     cell: ({ row }) => {
-      const type = row.getValue("justificacion");
+      const disponibilidad = row.getValue("disponibilidad") as String;
+
       return (
         <div className="flex w-[100px] items-center">
-          {type === "income" ? (
-            <TrendingUp size={20} className="mr-2 text-green-500" />
-          ) : (
-            <TrendingDown size={20} className="mr-2 text-red-500" />
-          )}
-          <span className="capitalize"> {row.getValue("justificacion")}</span>
+          <span
+            className={cn(
+              "capitalize font-semibold",
+              disponibilidad.toLowerCase() === "ok" && "text-green-600",
+              disponibilidad.toLowerCase() === "faltante" && "text-red-500",
+              disponibilidad.toLowerCase() === "pendiente" && "text-orange-500",
+              disponibilidad.toLowerCase() === "reparacion" && "text-amber-500",
+              disponibilidad.toLowerCase() === "baja" && "text-gray-500"
+            )}
+          >
+            {disponibilidad}
+          </span>
         </div>
       );
     },
     filterFn: (row, id, value) => {
       return value.includes(row.getValue(id));
-    }
+    },
   },
-  {
-    id: "actions",
-    cell: ({ row }) => <DataTableRowActions row={row} />
-  }
 ];

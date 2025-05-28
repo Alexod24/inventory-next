@@ -31,13 +31,13 @@ import {
 import { DataTablePagination } from "./data-table-pagination";
 import { DataTableToolbar } from "./data-table-herramientas";
 import { supabase } from "@/app/utils/supabase/supabase";
+import { DataTableRowActions } from "./data-table-acciones-tabla";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   loading: boolean;
 }
-// ----------------------------------------------------------------------------------
 
 export function DataTable<TData, TValue>({
   columns,
@@ -57,10 +57,8 @@ export function DataTable<TData, TValue>({
 
   const [viewOptions, setViewOptions] = React.useState({
     showHiddenColumns: false,
-    customView: "default", // Ejemplo: vista predeterminada
+    customView: "default",
   });
-
-  // ----------------------------------------------------------------------------------
 
   const fetchData = async (triggeredBy?: string) => {
     setLoading(true);
@@ -76,10 +74,9 @@ export function DataTable<TData, TValue>({
 
     setData(fetchedData || []);
 
-    // Solo muestra la alerta si es disparada desde "data-table-view-options"
     if (triggeredBy === "view-options") {
       setAlertaExito(true);
-      setTimeout(() => setAlertaExito(false), 3000); // Oculta la alerta después de 3 segundos
+      setTimeout(() => setAlertaExito(false), 3000);
     }
 
     setLoading(false);
@@ -88,8 +85,6 @@ export function DataTable<TData, TValue>({
   useEffect(() => {
     fetchData();
   }, []);
-
-  // ----------------------------------------------------------------------------------
 
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -125,8 +120,6 @@ export function DataTable<TData, TValue>({
     return <div>Cargando datos...</div>;
   }
 
-  // ----------------------------------------------------------------------------------
-
   return (
     <div className="space-y-4">
       {renderAlerta}
@@ -157,6 +150,7 @@ export function DataTable<TData, TValue>({
               </TableRow>
             ))}
           </TableHeader>
+
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
@@ -172,6 +166,10 @@ export function DataTable<TData, TValue>({
                       )}
                     </TableCell>
                   ))}
+                  {/* Pasa la función fetchData al componente DataTableRowActions */}
+                  <TableCell>
+                    <DataTableRowActions row={row} refreshData={fetchData} />
+                  </TableCell>
                 </TableRow>
               ))
             ) : (

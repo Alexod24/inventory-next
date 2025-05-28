@@ -38,16 +38,19 @@ export async function exportarToPDF<TData>(table: Table<TData>) {
     if (visibleColumns.length === 0)
       throw new Error("No hay columnas visibles.");
 
-    const headers = visibleColumns.map((col) => col.id.toUpperCase());
+    // Agregar nueva columna con título de check/x
+    const headers = [...visibleColumns.map((col) => col.id.toUpperCase()), "x"];
+
     const rows = table.getRowModel().rows;
     if (rows.length === 0) throw new Error("No hay filas visibles.");
 
-    const data = rows.map((row) =>
-      visibleColumns.map((col) => {
+    // Agregar valor check o x a cada fila (aquí ejemplo simple: filas pares ✔, impares ✘)
+    const data = rows.map((row, i) => [
+      ...visibleColumns.map((col) => {
         const val = row.getValue(col.id);
         return typeof val === "string" ? val : JSON.stringify(val);
-      })
-    );
+      }),
+    ]);
 
     // Generar tabla con autoTable
     autoTable(doc, {

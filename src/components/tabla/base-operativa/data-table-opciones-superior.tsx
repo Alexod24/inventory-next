@@ -13,8 +13,6 @@ import { supabase } from "@/app/utils/supabase/supabase";
 import Input from "../../form/input/Input";
 import Label from "../../form/Label";
 import Select from "../../form/Seleccionar";
-// import Alert from "@/components/ui/alerta/Alerta"
-
 import { Button } from "@/components/ui/button";
 import { exportarToPDF } from "@/components/exportar/exportarPDF";
 import { useState, useEffect, FormEvent } from "react";
@@ -24,7 +22,6 @@ import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { MixerHorizontalIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Table } from "@tanstack/react-table";
 
-// -------------------------------------------------------------------------------------
 type Crear = {
   descripcion: string;
   proveedor: string;
@@ -35,18 +32,28 @@ type Crear = {
   fecha: string;
   valor: number;
   estado: string;
-  justificacion: string;
+  disponibilidad: string;
 };
+
+const opcionesEstado = [
+  { value: "nuevo", label: "Nuevo" },
+  { value: "bueno", label: "Bueno" },
+  { value: "dañado", label: "Dañado" },
+  { value: "roto", label: "Roto" },
+];
+
+const opcionesDisponibilidad = [
+  { value: "ok", label: "OK" },
+  { value: "faltante", label: "Faltante" },
+  { value: "pendiente", label: "Pendiente" },
+  { value: "reparacion", label: "Reparación" },
+  { value: "baja", label: "Baja" },
+];
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
-  viewOptions: { showHiddenColumns: boolean; customView: string };
-  setViewOptions: React.Dispatch<
-    React.SetStateAction<{ showHiddenColumns: boolean; customView: string }>
-  >;
   fetchData: () => Promise<void>;
 }
-// -------------------------------------------------------------------------------------
 
 export function DataTableViewOptions<TData>({
   table,
@@ -54,27 +61,16 @@ export function DataTableViewOptions<TData>({
 }: DataTableViewOptionsProps<TData>) {
   const { isOpen, openModal, closeModal } = useModal();
   const [items, setItems] = useState<Crear[]>([]);
-  const [marcas, setMarcas] = useState<{ value: string; label: string }[]>([]);
-  const [colores, setColores] = useState<{ value: string; label: string }[]>(
-    []
-  );
-  const [materiales, setMateriales] = useState<
-    { value: string; label: string }[]
-  >([]);
-  const [proveedores, setProveedores] = useState<
-    { value: string; label: string }[]
-  >([]);
-  const [estados, setEstados] = useState<{ value: string; label: string }[]>(
-    []
-  );
+  const [options, setOptions] = useState({
+    marcas: [],
+    colores: [],
+    materiales: [],
+    proveedores: [],
+    estados: [],
+  });
   const [isMiniModalOpen, setMiniModalOpen] = useState(false);
-  const [newMarca, setNewMarca] = useState("");
-  const [newProveedor, setNewProveedor] = useState("");
-  const [newMaterial, setNewMaterial] = useState("");
-  const [newColor, setNewColor] = useState("");
-  const [newEstado, setNewEstado] = useState("");
-
-  const [alertaExito, setAlertaExito] = useState(false);
+  const [newValue, setNewValue] = useState("");
+  const [currentType, setCurrentType] = useState("");
 
   const loadData = async () => {
     const { data, error } = await supabase.from("base_operativa").select("*");
@@ -86,70 +82,33 @@ export function DataTableViewOptions<TData>({
     loadData();
   }, []);
 
-  const options = [
-    { value: "marketing", label: "Marketing" },
-    { value: "template", label: "Template" },
-    { value: "development", label: "Development" },
-  ];
+  const fetchOptions = async () => {
+    const types = ["marcas", "colores", "materiales", "proveedores", "estados"];
+    const promises = types.map(async (type) => {
+      const { data, error } = await supabase.from(type).select("nombre");
+      if (error) {
+        console.error(`Error al cargar ${type}:`, error);
+        return { [type]: [] };
+      }
+      return {
+        [type]: data.map((item) => ({
+          value: item.nombre,
+          label: item.nombre,
+        })),
+      };
+    });
 
-  const [selectedValues, setSelectedValues] = useState<string[]>([]);
-
-  const handleSelectChange = (value: string) => {
-    console.log("Selected value:", value);
+    const results = await Promise.all(promises);
+    setOptions(Object.assign({}, ...results));
   };
-  // -------------------------------------------------------------------------------------
 
   useEffect(() => {
-    const fetchOpciones = async () => {
-      const { data: marcasData } = await supabase
-        .from("marcas")
-        .select("nombre");
-      if (marcasData) {
-        setMarcas(
-          marcasData.map((m) => ({ value: m.nombre, label: m.nombre }))
-        );
-      }
-      const { data: coloresData } = await supabase
-        .from("colores")
-        .select("nombre");
-      if (coloresData) {
-        setColores(
-          coloresData.map((c) => ({ value: c.nombre, label: c.nombre }))
-        );
-      }
-      const { data: materialesData } = await supabase
-        .from("materiales")
-        .select("nombre");
-      if (materialesData) {
-        setMateriales(
-          materialesData.map((m) => ({ value: m.nombre, label: m.nombre }))
-        );
-      }
-      const { data: proveedoresData } = await supabase
-        .from("proveedores")
-        .select("nombre");
-      if (proveedoresData) {
-        setProveedores(
-          proveedoresData.map((c) => ({ value: c.nombre, label: c.nombre }))
-        );
-      }
-      const { data: estadosData } = await supabase
-        .from("estados")
-        .select("nombre");
-      if (estadosData) {
-        setEstados(
-          estadosData.map((c) => ({ value: c.nombre, label: c.nombre }))
-        );
-      }
-    };
-    fetchOpciones();
+    fetchOptions();
   }, []);
 
-  // -------------------------------------------------------------------------------------
-  const handleCreate = async (event: FormEvent) => {
-    event.preventDefault();
-
-    const formData = new FormData(event.target as HTMLFormElement);
+  const handleCreate = async (e: FormEvent) => {
+    e.preventDefault();
+    const formData = new FormData(e.target as HTMLFormElement);
     const productData = Object.fromEntries(formData);
 
     if (productData.fecha) {
@@ -161,193 +120,37 @@ export function DataTableViewOptions<TData>({
         .from("base_operativa")
         .insert([productData])
         .select("*");
-      if (error) {
-        console.error("Error al crear producto:", error.message);
-        return;
-      }
+      if (error) throw error;
 
-      setItems((prevItems) => [...prevItems, ...data]);
+      setItems((prev) => [...prev, ...data]);
       closeModal();
-      setAlertaExito(true);
-
-      setTimeout(() => {
-        setAlertaExito(false); // Oculta la alerta después de 3 segundos
-      }, 3000);
-
       await fetchData();
     } catch (err) {
-      console.error("Error inesperado en handleCreate:", err);
+      console.log("Error al crear producto:", err);
     }
   };
 
-  // -------------------------------------------------------------------------------------
-  const fetchMarcas = async () => {
-    const { data: marcasData, error } = await supabase
-      .from("marcas")
-      .select("nombre");
-    if (!error && marcasData) {
-      setMarcas(marcasData.map((m) => ({ value: m.nombre, label: m.nombre })));
-    } else {
-      console.error("Error al cargar marcas:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchMarcas();
-  }, []);
-
-  const handleCreateMarca = async (e: FormEvent) => {
+  const handleCreateOption = async (e: FormEvent) => {
     e.preventDefault();
-    if (!newMarca.trim()) return;
+    if (!newValue.trim() || !currentType) return;
 
-    const { error } = await supabase
-      .from("marcas")
-      .insert([{ nombre: newMarca }]);
-    if (error) {
-      console.error("Error al crear marca:", error);
-    } else {
-      await fetchMarcas();
+    try {
+      const { error } = await supabase
+        .from(currentType)
+        .insert([{ nombre: newValue }]);
+      if (error) throw error;
+
+      await fetchOptions();
       setMiniModalOpen(false);
-      setNewMarca(""); // Limpia el campo
-    }
-  };
-  // -------------------------------------------------------------------------------------
-  const fetchProveedores = async () => {
-    const { data: proveedoresData, error } = await supabase
-      .from("proveedores")
-      .select("nombre");
-    if (!error && proveedoresData) {
-      setProveedores(
-        proveedoresData.map((m) => ({ value: m.nombre, label: m.nombre }))
-      );
-    } else {
-      console.error("Error al cargar proveedores:", error);
+      setNewValue("");
+      setCurrentType(null);
+    } catch (err) {
+      console.error(`Error al crear ${currentType}:`, err);
     }
   };
 
-  useEffect(() => {
-    fetchProveedores();
-  }, []);
-
-  const handleCreateProveedor = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!newProveedor.trim()) return;
-
-    const { error } = await supabase
-      .from("proveedores")
-      .insert([{ nombre: newProveedor }]);
-    if (error) {
-      console.error("Error al crear marca:", error);
-    } else {
-      await fetchProveedores();
-      setMiniModalOpen(false);
-      setNewProveedor(""); // Limpia el campo
-    }
-  };
-  // -------------------------------------------------------------------------------------
-  const fetchMateriales = async () => {
-    const { data: materialesData, error } = await supabase
-      .from("materiales")
-      .select("nombre");
-    if (!error && materialesData) {
-      setMateriales(
-        materialesData.map((m) => ({ value: m.nombre, label: m.nombre }))
-      );
-    } else {
-      console.error("Error al cargar materiales:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchMateriales();
-  }, []);
-
-  const handleCreateMaterial = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!newMaterial.trim()) return;
-
-    const { error } = await supabase
-      .from("materiales")
-      .insert([{ nombre: newMaterial }]);
-    if (error) {
-      console.error("Error al crear material:", error);
-    } else {
-      await fetchMateriales();
-      setMiniModalOpen(false);
-      setNewMaterial(""); // Limpia el campo
-    }
-  };
-  // -------------------------------------------------------------------------------------
-  const fetchColores = async () => {
-    const { data: coloresData, error } = await supabase
-      .from("colores")
-      .select("nombre");
-    if (!error && coloresData) {
-      setColores(
-        coloresData.map((m) => ({ value: m.nombre, label: m.nombre }))
-      );
-    } else {
-      console.error("Error al cargar colores:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchColores();
-  }, []);
-
-  const handleCreateColor = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!newColor.trim()) return;
-
-    const { error } = await supabase
-      .from("colores")
-      .insert([{ nombre: newColor }]);
-    if (error) {
-      console.error("Error al crear color:", error);
-    } else {
-      await fetchColores();
-      setMiniModalOpen(false);
-      setNewColor(""); // Limpia el campo
-    }
-  };
-  // -------------------------------------------------------------------------------------
-
-  const fetchEstados = async () => {
-    const { data: estadosData, error } = await supabase
-      .from("estados")
-      .select("nombre");
-    if (!error && estadosData) {
-      setEstados(
-        estadosData.map((m) => ({ value: m.nombre, label: m.nombre }))
-      );
-    } else {
-      console.error("Error al cargar estados:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchEstados();
-  }, []);
-
-  const handleCreateEstado = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!newEstado.trim()) return;
-
-    const { error } = await supabase
-      .from("estados")
-      .insert([{ nombre: newEstado }]);
-    if (error) {
-      console.error("Error al crear estado:", error);
-    } else {
-      await fetchEstados();
-      setMiniModalOpen(false);
-      setNewEstado(""); // Limpia el campo
-    }
-  };
-  // -------------------------------------------------------------------------------------
   return (
     <div className="flex space-x-2 ml-auto">
-      {/* Botón Vista */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -381,7 +184,6 @@ export function DataTableViewOptions<TData>({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Botón Exportar */}
       <Button
         variant="outline"
         size="sm"
@@ -391,7 +193,6 @@ export function DataTableViewOptions<TData>({
         Exportar
       </Button>
 
-      {/* Botón Agregar */}
       <Button
         variant="solid"
         size="sm"
@@ -416,10 +217,7 @@ export function DataTableViewOptions<TData>({
               Llena los campos para registrar un nuevo producto.
             </p>
           </div>
-          <form
-            className="flex flex-col"
-            onSubmit={handleCreate} // Aquí se gestiona la creación
-          >
+          <form className="flex flex-col" onSubmit={handleCreate}>
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div className="lg:col-span-2">
@@ -428,21 +226,27 @@ export function DataTableViewOptions<TData>({
                     type="text"
                     name="descripcion"
                     placeholder="Ej. Caja de herramientas"
-                    required
                   />
                 </div>
-
                 <div>
                   <Label>Proveedor</Label>
                   <div className="flex items-center space-x-2">
                     <Select
                       name="proveedor"
-                      options={proveedores}
+                      options={options.proveedores}
                       placeholder="Selecciona un proveedor"
-                      onChange={handleSelectChange}
+                      onChange={(selectedOption) =>
+                        console.log("Producto seleccionado:", selectedOption)
+                      }
                       className="dark:bg-dark-900"
                     />
-                    <Button size="sm" onClick={() => setMiniModalOpen(true)}>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setCurrentType("proveedores");
+                        setMiniModalOpen(true);
+                      }}
+                    >
                       +
                     </Button>
                   </div>
@@ -453,12 +257,20 @@ export function DataTableViewOptions<TData>({
                   <div className="flex items-center space-x-2">
                     <Select
                       name="marca"
-                      options={marcas}
+                      options={options.marcas}
                       placeholder="Selecciona una marca"
-                      onChange={handleSelectChange}
+                      onChange={(selectedOption) =>
+                        console.log("Marca seleccionado:", selectedOption)
+                      }
                       className="dark:bg-dark-900 flex-1"
                     />
-                    <Button size="sm" onClick={() => setMiniModalOpen(true)}>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setCurrentType("marcas");
+                        setMiniModalOpen(true);
+                      }}
+                    >
                       +
                     </Button>
                   </div>
@@ -476,7 +288,6 @@ export function DataTableViewOptions<TData>({
                     name="cantidad"
                     min="1"
                     placeholder="Ej. 10"
-                    required
                   />
                 </div>
 
@@ -486,12 +297,21 @@ export function DataTableViewOptions<TData>({
                     <Select
                       type="text"
                       name="material"
-                      options={materiales}
+                      options={options.materiales}
                       placeholder="Selecciona un material"
-                      onChange={handleSelectChange}
+                      onChange={(selectedOption) =>
+                        console.log("Material seleccionado:", selectedOption)
+                      }
                       className="dark:bg-dark-900 flex-1"
                     />
-                    <Button size="sm" onClick={() => setMiniModalOpen(true)}>
+
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setCurrentType("materiales");
+                        setMiniModalOpen(true);
+                      }}
+                    >
                       +
                     </Button>
                   </div>
@@ -503,12 +323,20 @@ export function DataTableViewOptions<TData>({
                     <Select
                       type="text"
                       name="color"
-                      options={colores}
+                      options={options.colores}
                       placeholder="Selecciona un color"
-                      onChange={handleSelectChange}
+                      onChange={(selectedOption) =>
+                        console.log("Material seleccionado:", selectedOption)
+                      }
                       className="dark:bg-dark-900"
                     />
-                    <Button size="sm" onClick={() => setMiniModalOpen(true)}>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setCurrentType("colores");
+                        setMiniModalOpen(true);
+                      }}
+                    >
                       +
                     </Button>
                   </div>
@@ -526,13 +354,7 @@ export function DataTableViewOptions<TData>({
 
                 <div>
                   <Label>Valor</Label>
-                  <Input
-                    type="number"
-                    name="valor"
-                    step="0.01"
-                    placeholder="Ej. 250.00"
-                    required
-                  />
+                  <Input type="number" name="valor" placeholder="Ej. 250.00" />
                 </div>
 
                 <div>
@@ -540,12 +362,20 @@ export function DataTableViewOptions<TData>({
                   <div className="flex items-center space-x-2">
                     <Select
                       name="estado"
-                      options={estados}
+                      options={opcionesEstado}
                       placeholder="Selecciona el estado"
-                      onChange={handleSelectChange}
+                      onChange={(selectedOpciones) =>
+                        console.log("Estado seleccionado:", selectedOpciones)
+                      }
                       className="dark:bg-dark-900"
                     />
-                    <Button size="sm" onClick={() => setMiniModalOpen(true)}>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setCurrentType("estados");
+                        setMiniModalOpen(true);
+                      }}
+                    >
                       +
                     </Button>
                   </div>
@@ -553,10 +383,14 @@ export function DataTableViewOptions<TData>({
 
                 <div>
                   <Label>Disponibilidad</Label>
-                  <Input
-                    type="text"
-                    name="justificacion"
-                    placeholder="Razón de compra o ingreso"
+                  <Select
+                    name="disponibilidad"
+                    options={opcionesDisponibilidad}
+                    placeholder="Selecciona la disponibilidad"
+                    onChange={(selectedOpciones) =>
+                      console.log("Estado seleccionado:", selectedOpciones)
+                    }
+                    className="dark:bg-dark-900"
                   />
                 </div>
               </div>
@@ -577,180 +411,39 @@ export function DataTableViewOptions<TData>({
 
       {/* ------------------------------------------------------------------------------------- */}
 
-      {isMiniModalOpen && (
+      {isMiniModalOpen && currentType && (
         <Modal
           isOpen={isMiniModalOpen}
-          onClose={() => setMiniModalOpen(false)}
+          onClose={() => {
+            setMiniModalOpen(false);
+            setCurrentType(null);
+            setNewValue("");
+          }}
           className="max-w-[400px] m-4"
         >
           <div className="w-full p-4 bg-white rounded-lg dark:bg-gray-900">
             <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90">
-              Agregar Nueva Marca
+              Agregar Nuevo{" "}
+              {currentType.charAt(0).toUpperCase() + currentType.slice(1, -1)}
             </h4>
-            <form onSubmit={handleCreateMarca}>
-              <Label>Nombre de la Marca</Label>
+            <form onSubmit={handleCreateOption}>
+              <Label>Nombre del {currentType.slice(0, -1)}</Label>
               <Input
                 type="text"
-                name="newMarca"
-                value={newMarca}
-                onChange={(e) => setNewMarca(e.target.value)}
-                placeholder="Ej. Nike"
+                name="newValue"
+                value={newValue}
+                onChange={(e) => setNewValue(e.target.value)}
+                placeholder={`Ej. Nombre de ${currentType.slice(0, -1)}`}
               />
               <div className="flex justify-end mt-4 gap-2">
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => setMiniModalOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button size="sm" type="submit">
-                  Crear
-                </Button>
-              </div>
-            </form>
-          </div>
-        </Modal>
-      )}
-
-      {/* ------------------------------------------------------------------------------------- */}
-
-      {isMiniModalOpen && (
-        <Modal
-          isOpen={isMiniModalOpen}
-          onClose={() => setMiniModalOpen(false)}
-          className="max-w-[400px] m-4"
-        >
-          <div className="w-full p-4 bg-white rounded-lg dark:bg-gray-900">
-            <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90">
-              Agregar Nuevo Proveedor
-            </h4>
-            <form onSubmit={handleCreateProveedor}>
-              <Label>Nombre del proveedor</Label>
-              <Input
-                type="text"
-                name="newProveedor"
-                value={newProveedor}
-                onChange={(e) => setNewProveedor(e.target.value)}
-                placeholder="Ej. Nike"
-              />
-              <div className="flex justify-end mt-4 gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setMiniModalOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button size="sm" type="submit">
-                  Crear
-                </Button>
-              </div>
-            </form>
-          </div>
-        </Modal>
-      )}
-
-      {/* ------------------------------------------------------------------------------------- */}
-
-      {isMiniModalOpen && (
-        <Modal
-          isOpen={isMiniModalOpen}
-          onClose={() => setMiniModalOpen(false)}
-          className="max-w-[400px] m-4"
-        >
-          <div className="w-full p-4 bg-white rounded-lg dark:bg-gray-900">
-            <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90">
-              Agregar Nuevo Proveedor
-            </h4>
-            <form onSubmit={handleCreateMaterial}>
-              <Label>Nombre del material</Label>
-              <Input
-                type="text"
-                name="newMaterial"
-                value={newMaterial}
-                onChange={(e) => setNewMaterial(e.target.value)}
-                placeholder="Ej. Nike"
-              />
-              <div className="flex justify-end mt-4 gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setMiniModalOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button size="sm" type="submit">
-                  Crear
-                </Button>
-              </div>
-            </form>
-          </div>
-        </Modal>
-      )}
-
-      {/* ------------------------------------------------------------------------------------- */}
-
-      {isMiniModalOpen && (
-        <Modal
-          isOpen={isMiniModalOpen}
-          onClose={() => setMiniModalOpen(false)}
-          className="max-w-[400px] m-4"
-        >
-          <div className="w-full p-4 bg-white rounded-lg dark:bg-gray-900">
-            <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90">
-              Agregar Nuevo Proveedor
-            </h4>
-            <form onSubmit={handleCreateColor}>
-              <Label>Nombre del color</Label>
-              <Input
-                type="text"
-                name="newColor"
-                value={newColor}
-                onChange={(e) => setNewColor(e.target.value)}
-                placeholder="Ej. Nike"
-              />
-              <div className="flex justify-end mt-4 gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setMiniModalOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button size="sm" type="submit">
-                  Crear
-                </Button>
-              </div>
-            </form>
-          </div>
-        </Modal>
-      )}
-
-      {isMiniModalOpen && (
-        <Modal
-          isOpen={isMiniModalOpen}
-          onClose={() => setMiniModalOpen(false)}
-          className="max-w-[400px] m-4"
-        >
-          <div className="w-full p-4 bg-white rounded-lg dark:bg-gray-900">
-            <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90">
-              Agregar Nuevo Estado
-            </h4>
-            <form onSubmit={handleCreateEstado}>
-              <Label>Nombre del estado</Label>
-              <Input
-                type="text"
-                name="newEstado"
-                value={newEstado}
-                onChange={(e) => setNewEstado(e.target.value)}
-                placeholder="Ej. Nike"
-              />
-              <div className="flex justify-end mt-4 gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setMiniModalOpen(false)}
+                  onClick={() => {
+                    setMiniModalOpen(false);
+                    setCurrentType(null);
+                    setNewValue("");
+                  }}
                 >
                   Cancelar
                 </Button>
