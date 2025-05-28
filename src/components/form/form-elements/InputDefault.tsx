@@ -7,6 +7,10 @@ import Select from '../Seleccionar';
 import { ChevronDownIcon, EyeCloseIcon, EyeIcon, TimeIcon } from '../../../icons';
 import DatePicker from '@/components/form/Fecha';
 
+import { Button } from "@/components/ui/button";
+
+ // Ajusta ruta
+
 export default function DefaultInputs() {
   const [showPassword, setShowPassword] = useState(false);
   const options = [
@@ -113,7 +117,23 @@ export default function DefaultInputs() {
               </svg>
             </span>
           </div>
+
+         {/* Botones estáticos por ahora */}
+        <div className="mt-6 flex justify-end gap-3">
+          <Button
+            type="button"
+            color="secondary"
+            onClick={() => {
+              // Aquí nada, solo para que no haga nada por ahora
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button type="button">
+            Agregar
+          </Button>
         </div>
+      </div>
       </div>
     </ComponentCard>
   );

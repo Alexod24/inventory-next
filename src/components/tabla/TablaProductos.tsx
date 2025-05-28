@@ -14,7 +14,7 @@ import Button from "../ui/boton/Boton";
 import Input from "../form/input/Input";
 import Label from "../form/Label";
 
-import { useNotifications } from "@/context/NotificacionContext";
+// import { useNotifications } from "@/context/NotificacionContext";
 
 import DatePicker, { registerLocale } from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -63,44 +63,44 @@ export default function ProductosTable() {
 
   // Estado para controlar si la imagen está subida
   const [uploading, setUploading] = useState(false);
-  const { notifications, addNotification, removeNotification } = useNotifications();
+  // const { notifications, addNotification, removeNotification } = useNotifications();
 
 
   // -------------------------------------------------------------------
 
-  // Gestionar notificaciones
-function gestionarNotificaciones(productos, notifications, addNotification, removeNotification) {
-  // Filtrar productos con stock 1 y no nuevos
-  const productosBajoStock = productos.filter(
-    (producto) => producto.stock === 1 && !producto.nuevo
-  );
+  
+// function gestionarNotificaciones(productos, notifications, addNotification, removeNotification) {
+//   // Filtrar productos con stock 1 y no nuevos
+//   const productosBajoStock = productos.filter(
+//     (producto) => producto.stock === 1 && !producto.nuevo
+//   );
 
-  // Crear mensajes actuales de alerta
-  const mensajesActuales = productosBajoStock.map(
-    (producto) => `El producto "${producto.nombre}" tiene solo 1 unidad en stock.`
-  );
+//   // Crear mensajes actuales de alerta
+//   const mensajesActuales = productosBajoStock.map(
+//     (producto) => `El producto "${producto.nombre}" tiene solo 1 unidad en stock.`
+//   );
 
-  // Agregar notificaciones nuevas (sin repetir)
-  mensajesActuales.forEach((msg) => {
-    if (!notifications.includes(msg)) {
-      addNotification(msg);
-    }
-  });
+//   // Agregar notificaciones nuevas (sin repetir)
+//   mensajesActuales.forEach((msg) => {
+//     if (!notifications.includes(msg)) {
+//       addNotification(msg);
+//     }
+//   });
 
-  // Eliminar notificaciones que ya no aplican
-  notifications.forEach((msg) => {
-    if (!mensajesActuales.includes(msg)) {
-      removeNotification(msg);
-    }
-  });
+//   // Eliminar notificaciones que ya no aplican
+//   notifications.forEach((msg) => {
+//     if (!mensajesActuales.includes(msg)) {
+//       removeNotification(msg);
+//     }
+//   });
 
-  // Marcar productos nuevos como no nuevos
-  const actualizados = productos.map((producto) =>
-    producto.stock === 0 && producto.nuevo ? { ...producto, nuevo: false } : producto
-  );
+//   // Marcar productos nuevos como no nuevos
+//   const actualizados = productos.map((producto) =>
+//     producto.stock === 0 && producto.nuevo ? { ...producto, nuevo: false } : producto
+//   );
 
-  return actualizados;
-}
+//   return actualizados;
+// }
 
 
 // -------------------------------------------------------------------
@@ -123,8 +123,8 @@ useEffect(() => {
   async function cargarProductos() {
     const productos = await fetchProductos();
     if (productos) {
-      const productosActualizados = gestionarNotificaciones(productos, notifications, addNotification, removeNotification);
-      setProductos(productosActualizados);
+     
+      setProductos(productos);
     }
   }
 

@@ -18,7 +18,7 @@ export default function Error404() {
           PAGINA NO ENCONTRADA
         </h1>
 
-        <Image
+        {/* <Image
           src="/images/error/404.svg"
           alt="404"
           className="dark:hidden"
@@ -31,7 +31,7 @@ export default function Error404() {
           className="hidden dark:block"
           width={472}
           height={152}
-        />
+        /> */}
 
         <p className="mt-10 mb-6 text-base text-gray-700 dark:text-gray-400 sm:text-lg">
           Algo esta fallando en ti, no en el sistema

@@ -5,12 +5,12 @@ import React, { useState } from "react";
 import { Desplegable } from "../ui/desplegable/Desplegable";
 import { DesplegableItem } from "../ui/desplegable/DesplegableItem";
 
-import { useNotifications } from "@/context/NotificacionContext";
+// import { useNotifications } from "@/context/NotificacionContext";
 
 
 
 export default function NotificationDropdown() {
-  const { notifications, clearNotifications } = useNotifications();
+  // const { notifications, clearNotifications } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const [notifying, setNotifying] = useState(true);
 
@@ -85,9 +85,9 @@ export default function NotificationDropdown() {
         </div>
 
         <ul className="flex flex-col h-auto overflow-y-auto custom-scrollbar">
-          {notifications.map((notification, index) => (
+          {/* {notifications.map((notification, index) => ( */}
             
-            <li key={index}>
+            {/* <li key={index}>
             <DesplegableItem
               onItemClick={closeDropdown}
               className="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
@@ -106,19 +106,19 @@ export default function NotificationDropdown() {
               <span className="block">
                 <span className="mb-1.5 space-x-1 block text-theme-sm text-gray-500 dark:text-gray-400">
                   {notification}
-                </span>
+                </span> */}
 
                 {/* <span className="flex items-center gap-2 text-gray-500 text-theme-xs dark:text-gray-400">
                   <span>Project</span>
                   <span className="w-1 h-1 bg-gray-400 rounded-full"></span>
                   <span>5 min ago</span>
                 </span> */}
-              </span>
-            </DesplegableItem>
-          </li>
-          ))}
+              {/* </span> */}
+            {/* </DesplegableItem> */}
+          {/* </li> */}
+          
           {/* Example notification items */}
-          {/* <li>
+          {/* {/* <li>
             <DesplegableItem
               onItemClick={closeDropdown}
               className="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
@@ -152,7 +152,7 @@ export default function NotificationDropdown() {
                 </span>
               </span>
             </DesplegableItem>
-          </li>
+          </li> */}
 
 
           <li>
@@ -190,7 +190,7 @@ export default function NotificationDropdown() {
                 </span>
               </span>
             </DesplegableItem>
-          </li> */}
+          </li> 
 
           
 

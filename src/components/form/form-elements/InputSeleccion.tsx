@@ -43,6 +43,7 @@ export default function SelectInputs() {
               <ChevronDownIcon/>
             </span>
          </div>
+         
         </div>
         <div className="relative">
           <MultiSelect

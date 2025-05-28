@@ -207,20 +207,6 @@ export default function IngresoTable() {
       console.error("Error handleFormSubmit:", error);
     }
 
-//     try {
-//   console.log("Enviando datos:", form); // Agrega este log
-//   if (ingresoSeleccionado) {
-//     // Lógica para actualizar
-//   } else {
-//     // Crear nuevo ingreso y sumar stock
-//     const { error } = await supabase.from("ingresos").insert([form]);
-//     if (error) throw error;
-//     console.log("Ingreso agregado exitosamente");
-//   }
-// } catch (error: any) {
-//   console.error("Error handleFormSubmit:", error);
-//   toast.error(`Error: ${error.message || "Algo salió mal"}`);
-// }
   }
 
   function resetForm() {

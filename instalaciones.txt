@@ -26,3 +26,40 @@ npm install flowbite
 
 Calendario
 npm install @types/react-datepicker --save-dev
+
+
+PARA LA TABLA : 
+npm install @radix-ui/react-icons
+npm install lucide-react
+npm install date-fns-tz
+npm install class-variance-authority
+npm install @radix-ui/react-dropdown-menu
+npm install @tanstack/react-table
+npm install react-day-picker
+npm install cmdk
+npm install @radix-ui/react-popover
+npm install @radix-ui/react-select
+npm install @radix-ui/react-separator
+npm install next-themes
+
+npm install @radix-ui/react-icons lucide-react date-fns-tz class-variance-authority @radix-ui/react-dropdown-menu @tanstack/react-table react-day-picker cmdk @radix-ui/react-popover @radix-ui/react-select @radix-ui/react-separator next-themes
+
+
+
+npx shadcn@latest init
+npx shadcn@latest add table
+npm install @tanstack/react-table
+
+
+LIBRERIA PARA PDF : 
+
+npm install jspdf jspdf-autotable
+
+
+
+
+
+
+PARA NOTIFICACIONES
+
+npm install react-toastify

@@ -1,0 +1,159 @@
+[
+  {
+    "proveedor": "Supermercado Local",
+    "descripcion": "Compras semanales de supermercado",
+
+    "marca": "N/A",
+    "color": "Rojo",
+    "estado": "NUEVO",
+    "cantidad": 50,
+    "tamaño": "Variable",
+    "material": "Alimentos y productos varios",
+    "fecha": "2024-06-24",
+    "valor": 150.00,
+    "justificacion": "Productos para el hogar"
+  },
+  {
+    "proveedor": "Empresa Eléctrica S.A.",
+    "descripcion": "Factura mensual de electricidad",
+    "marca": "N/A",
+    "estado": "FACTURADO",
+    "cantidad": 1,
+    "tamaño": "N/A",
+    "material": "Servicio",
+    "fecha": "2024-06-23",
+    "justificacion": "Consumo de energía del mes"
+  },
+  {
+    "proveedor": "Cliente Freelance",
+    "descripcion": "Pago por proyecto freelance",
+    "marca": "N/A",
+    "estado": "COMPLETADO",
+    "cantidad": 1,
+    "tamaño": "Proyecto completo",
+    "material": "Trabajo digital",
+    "fecha": "2024-06-22",
+    "justificacion": "Trabajo entregado"
+  },
+  {
+    "proveedor": "Propietario de Inmuebles",
+    "descripcion": "Pago mensual de alquiler",
+    "marca": "N/A",
+    "estado": "FACTURADO",
+    "cantidad": 1,
+    "tamaño": "150m²",
+    "material": "Espacio habitacional",
+    "fecha": "2024-06-21",
+    "justificacion": "Uso del espacio"
+  },
+  {
+    "proveedor": "Gimnasio FitLife",
+    "descripcion": "Cuota mensual del gimnasio",
+    "marca": "N/A",
+    "estado": "ACTIVO",
+    "cantidad": 1,
+    "tamaño": "Instalaciones del gimnasio",
+    "material": "Servicio de salud",
+    "fecha": "2024-06-20",
+    "justificacion": "Membresía mensual"
+  },
+  {
+    "proveedor": "Restaurante Gourmet",
+    "descripcion": "Cena en restaurante",
+    "marca": "N/A",
+    "estado": "CONSUMIDO",
+    "cantidad": 1,
+    "tamaño": "Servicio individual",
+    "material": "Alimentos",
+    "fecha": "2024-06-19",
+    "justificacion": "Reunión social"
+  },
+  {
+    "proveedor": "Proveedor de Internet",
+    "descripcion": "Factura mensual de internet",
+    "marca": "N/A",
+    "estado": "FACTURADO",
+    "cantidad": 1,
+    "tamaño": "N/A",
+    "material": "Servicio",
+    "fecha": "2024-06-18",
+    "justificacion": "Conectividad doméstica"
+  },
+  {
+    "proveedor": "Empresa de Transporte",
+    "descripcion": "Pase de transporte público",
+    "marca": "N/A",
+    "estado": "ACTIVO",
+    "cantidad": 1,
+    "tamaño": "Abono mensual",
+    "material": "Servicio",
+    "fecha": "2024-06-17",
+    "justificacion": "Desplazamiento diario"
+  },
+  {
+    "proveedor": "Papelería XYZ",
+    "descripcion": "Artículos de papelería para la oficina",
+    "marca": "N/A",
+    "estado": "NUEVO",
+    "cantidad": 10,
+    "tamaño": "Variable",
+    "material": "Papel, lápices, bolígrafos",
+    "fecha": "2024-06-16",
+    "justificacion": "Uso en oficina"
+  },
+  {
+    "proveedor": "Promotora de Eventos",
+    "descripcion": "Entradas para un concierto",
+    "marca": "N/A",
+    "estado": "USADO",
+    "cantidad": 2,
+    "tamaño": "N/A",
+    "material": "Entradas electrónicas",
+    "fecha": "2024-06-15",
+    "justificacion": "Ocio y entretenimiento"
+  },
+  {
+    "proveedor": "Taller de Automóviles",
+    "descripcion": "Servicio anual del auto",
+    "marca": "N/A",
+    "estado": "COMPLETADO",
+    "cantidad": 1,
+    "tamaño": "N/A",
+    "material": "Repuestos y servicios",
+    "fecha": "2024-06-14",
+    "justificacion": "Mantenimiento preventivo"
+  },
+  {
+    "proveedor": "Librería Central",
+    "descripcion": "Compra de un libro nuevo",
+    "marca": "N/A",
+    "estado": "NUEVO",
+    "cantidad": 1,
+    "tamaño": "A5",
+    "material": "Papel y tinta",
+    "fecha": "2024-06-13",
+    "justificacion": "Lectura y estudio"
+  },
+  {
+    "proveedor": "Cineplex",
+    "descripcion": "Entradas para cine",
+    "marca": "N/A",
+    "estado": "USADO",
+    "cantidad": 2,
+    "tamaño": "N/A",
+    "material": "Entradas electrónicas",
+    "fecha": "2024-06-12",
+    "justificacion": "Entretenimiento"
+  },
+  {
+    "proveedor": "Tienda de Regalos",
+    "descripcion": "Regalo de cumpleaños para un amigo",
+    "marca": "N/A",
+    "estado": "NUEVO",
+    "cantidad": 1,
+    "tamaño": "Caja de regalo",
+    "material": "Accesorios y detalles",
+    "fecha": "2024-06-11",
+    "justificacion": "Celebración de cumpleaños"
+  }
+]

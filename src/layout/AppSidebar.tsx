@@ -12,10 +12,11 @@ import {
   HorizontaLDots,
   PieChartIcon,
   TaskIcon,
-  // ListIcon,
-  // PageIcon,
-  // PlugInIcon,
+  ListIcon,
+  PageIcon,
+  PlugInIcon,
   UserCircleIcon,
+  TableIcon,
   
 } from "../icons/index";
 // import SidebarWidget from "./SidebarWidget";
@@ -34,22 +35,22 @@ const navItems: NavItem[] = [
     path: "/dashboard",
     // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
   },
-  {
-    icon: <CalenderIcon />,
-    name: "Calendario",
-    path: "/calendario",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "Perfil Usuario",
-    path: "/perfil",
-  },
-
   // {
-  //   name: "Formularios",
-  //   icon: <ListIcon />,
-  //   subItems: [{ name: "Formulario", path: "/formularios", pro: false }],
+  //   icon: <CalenderIcon />,
+  //   name: "Calendario",
+  //   path: "/calendario",
   // },
+  // {
+  //   icon: <UserCircleIcon />,
+  //   name: "Perfil Usuario",
+  //   path: "/perfil",
+  // },
+
+  {
+    name: "Formularios",
+    icon: <ListIcon />,
+    subItems: [{ name: "Formulario", path: "/formularios", pro: false }],
+  },
   // {
   //   name: "Tablas",
   //   icon: <TableIcon />,
@@ -61,7 +62,114 @@ const navItems: NavItem[] = [
   //   ],
     
   // },
+ 
+  // {
+  //   name: "Paginas",
+  //   icon: <PageIcon />,
+  //   subItems: [
+  //     { name: "Pagina en blanca", path: "/blank", pro: false },
+  //     { name: "404 Error", path: "/error-404", pro: false },
+  //   ],
+  // },
+  {
+    icon: <PieChartIcon />,
+    name: "Base Operativa",
+    path: "/base-operativa",
+  },
+  {
+    icon: <PageIcon />,
+    name: "Phone Booth",
+    path: "/phone-booth",
+  },
+  {
+    icon: <ListIcon />,
+    name: "El Hangar",
+    path: "/hangar",
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "Bunkers",
+    path: "/bunkers",
+  },
+  {
+    icon: <PieChartIcon />,
+    name: "Unidades",
+    path: "/unidades",
+  },
+  {
+    icon: <GridIcon />,
+    name: "La Brigada",
+    path: "/brigada",
+  },
+  {
+    icon: <BoxCubeIcon />,
+    name: "Base de Mando",
+    path: "/base-de-mando",
+  },
+  {
+    icon: <PieChartIcon />,
+    name: "Counter",
+    path: "/counter",
+  },
    {
+    icon: <TaskIcon />,
+    name: "SSHH Limpieza",
+    path: "/limpieza",
+  },
+   {
+    icon: <PieChartIcon />,
+    name: "Almacen",
+    path: "/almacen",
+  },
+
+];
+
+const othersItems: NavItem[] = [
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Graficos",
+  //   subItems: [
+  //     { name: "Grafico Lineales", path: "/grafico-lineal", pro: false },
+  //     { name: "Grafico Barras", path: "/grafico-barras", pro: false },
+  //   ],
+  // },
+  {
+    icon: <BoxCubeIcon />,
+    name: "UI Elementos",
+    subItems: [
+      { name: "Alerts", path: "/alertas", pro: false },
+      { name: "Avatar", path: "/avatars", pro: false },
+      { name: "Badge", path: "/insignias", pro: false },
+      { name: "Buttons", path: "/botones", pro: false },
+      { name: "Images", path: "/imagenes", pro: false },
+      { name: "Videos", path: "/videos", pro: false },
+    ],
+  },
+  // {
+  //   icon: <PlugInIcon />,
+  //   name: "Authentication",
+  //   subItems: [
+  //     { name: "Iniciar Sesion", path: "/login", pro: false },
+  //     { name: "Registrar", path: "/register", pro: false },
+  //   ],
+  // },
+  // {
+  //   icon: <GridIcon />,
+  //   name: "Dashboard",
+  //   path: "/dashboard",
+  //   // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+  // },
+  {
+    icon: <CalenderIcon />,
+    name: "Calendario",
+    path: "/calendario",
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "Perfil Usuario",
+    path: "/perfil",
+  },
+    {
     icon: <PieChartIcon />,
     name: "Lista de productos",
     path: "/productos",
@@ -76,46 +184,9 @@ const navItems: NavItem[] = [
     name: "Registro de Ingreso",
     path: "/ingreso",
   },
-  // {
-  //   name: "Paginas",
-  //   icon: <PageIcon />,
-  //   subItems: [
-  //     { name: "Pagina en blanca", path: "/blank", pro: false },
-  //     { name: "404 Error", path: "/error-404", pro: false },
-  //   ],
-  // },
 ];
 
-const othersItems: NavItem[] = [
-  // {
-  //   icon: <PieChartIcon />,
-  //   name: "Graficos",
-  //   subItems: [
-  //     { name: "Grafico Lineales", path: "/grafico-lineal", pro: false },
-  //     { name: "Grafico Barras", path: "/grafico-barras", pro: false },
-  //   ],
-  // },
-  // {
-  //   icon: <BoxCubeIcon />,
-  //   name: "UI Elementos",
-  //   subItems: [
-  //     { name: "Alerts", path: "/alertas", pro: false },
-  //     { name: "Avatar", path: "/avatars", pro: false },
-  //     { name: "Badge", path: "/insignias", pro: false },
-  //     { name: "Buttons", path: "/botones", pro: false },
-  //     { name: "Images", path: "/imagenes", pro: false },
-  //     { name: "Videos", path: "/videos", pro: false },
-  //   ],
-  // },
-  // {
-  //   icon: <PlugInIcon />,
-  //   name: "Authentication",
-  //   subItems: [
-  //     { name: "Iniciar Sesion", path: "/login", pro: false },
-  //     { name: "Registrar", path: "/register", pro: false },
-  //   ],
-  // },
-];
+
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
@@ -336,14 +407,14 @@ const AppSidebar: React.FC = () => {
             <>
               <Image
                 className="dark:hidden"
-                src="/images/logo/logo-white.svg"
+                src="/images/logo/labase.png"
                 alt="Logo"
                 width={150}
                 height={40}
               />
               <Image
                 className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
+                src="/images/logo/labase.png"
                 alt="Logo"
                 width={150}
                 height={40}
