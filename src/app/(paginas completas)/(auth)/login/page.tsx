@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function Login() {
-  return <IniciarSesion/>;
+  return <IniciarSesion />;
 }

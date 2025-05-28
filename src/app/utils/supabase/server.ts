@@ -17,8 +17,7 @@ export async function createSupabaseClient() {
               cookiesStore.set(name, value, options);
             });
           } catch (error) {
-            console.log("Este es el siguiente error: ",error);
-          
+            console.log("Este es el siguiente error: ", error);
           }
         },
       },

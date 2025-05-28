@@ -1,7 +1,7 @@
 // import ComponentCard from "@/components/common/Tarjeta";
 import PageBreadcrumb from "@/components/common/MigaPan";
 import TablaIngreso from "@/components/tabla/TablaIngreso";
-import {EcommerceMetrics} from "@/components/ecommerce/EcomerceMetrics";
+import { EcommerceMetrics } from "@/components/ecommerce/EcomerceMetrics";
 import { Metadata } from "next";
 import React from "react";
 
@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 export default function BasicTables() {
   return (
     <div>
-
       <PageBreadcrumb pageTitle="" />
       <EcommerceMetrics className="mb-6" />
       <div className="space-y-6">
@@ -24,7 +23,6 @@ export default function BasicTables() {
         </ComponentCard> */}
         <TablaIngreso />
       </div>
-      
     </div>
   );
 }

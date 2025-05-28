@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Alert from "@/components/ui/alerta/AlertaExito"
+import Alert from "@/components/ui/alerta/AlertaExito";
 
 import * as React from "react";
 import {
@@ -16,7 +16,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  useReactTable
+  useReactTable,
 } from "@tanstack/react-table";
 
 import {
@@ -25,7 +25,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 
 import { DataTablePagination } from "./data-table-pagination";
@@ -40,13 +40,12 @@ interface DataTableProps<TData, TValue> {
 // ----------------------------------------------------------------------------------
 
 export function DataTable<TData, TValue>({
-  columns
+  columns,
 }: DataTableProps<TData, TValue>) {
   const [data, setData] = React.useState<TData[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [alertaExito, setAlertaExito] = React.useState(false);
 
-  
   const renderAlerta = alertaExito && (
     <Alert
       variant="success"
@@ -61,13 +60,9 @@ export function DataTable<TData, TValue>({
     customView: "default", // Ejemplo: vista predeterminada
   });
 
-  
-  
+  // ----------------------------------------------------------------------------------
 
-
-// ----------------------------------------------------------------------------------  
-  
-   const fetchData = async (triggeredBy?: string) => {
+  const fetchData = async (triggeredBy?: string) => {
     setLoading(true);
 
     const { data: fetchedData, error } = await supabase
@@ -94,8 +89,7 @@ export function DataTable<TData, TValue>({
     fetchData();
   }, []);
 
-
-// ----------------------------------------------------------------------------------  
+  // ----------------------------------------------------------------------------------
 
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -112,7 +106,7 @@ export function DataTable<TData, TValue>({
       sorting,
       columnVisibility,
       rowSelection,
-      columnFilters
+      columnFilters,
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
@@ -124,22 +118,25 @@ export function DataTable<TData, TValue>({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues()
+    getFacetedUniqueValues: getFacetedUniqueValues(),
   });
 
   if (loading) {
     return <div>Cargando datos...</div>;
   }
 
-// ---------------------------------------------------------------------------------- 
+  // ----------------------------------------------------------------------------------
 
   return (
     <div className="space-y-4">
       {renderAlerta}
-      <DataTableToolbar table={table} viewOptions={viewOptions} 
-  setViewOptions={setViewOptions} 
-  fetchData={() => fetchData("view-options")}/>
-      
+      <DataTableToolbar
+        table={table}
+        viewOptions={viewOptions}
+        setViewOptions={setViewOptions}
+        fetchData={() => fetchData("view-options")}
+      />
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>

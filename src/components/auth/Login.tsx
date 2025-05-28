@@ -12,12 +12,11 @@ import { logIn } from "@/app/actions/auth";
 export default function IniciarSesion() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
-  // const [email, setEmail] = useState(""); 
-  // const [password, setPassword] = useState(""); 
-  const [error] = useState(""); 
-  // const router = useRouter(); 
+  // const [email, setEmail] = useState("");
+  // const [password, setPassword] = useState("");
+  const [error] = useState("");
+  // const router = useRouter();
 
-  
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
       <div className="w-full max-w-md sm:pt-10 mx-auto mb-5">
@@ -53,7 +52,6 @@ export default function IniciarSesion() {
                     name="email"
                     type="email"
                     placeholder="alex@gmail.com"
-                    
                   />
                 </div>
 
@@ -67,8 +65,7 @@ export default function IniciarSesion() {
                       id="password"
                       name="password"
                       type="password"
-                      placeholder="Ingresa tu contraseña"                      
-                      
+                      placeholder="Ingresa tu contraseña"
                     />
 
                     <span
@@ -102,11 +99,11 @@ export default function IniciarSesion() {
                     Iniciar Sesion
                   </Boton> */}
                   <button
-          formAction={logIn}
-          className="p-2 bg-blue-800 h-10 pointer hover:bg-blue-700 transition-all rounded-sm flex items-center justify-center text-white font-bold w-full"
-        >
-          Iniciar sesion
-        </button>
+                    formAction={logIn}
+                    className="p-2 bg-blue-800 h-10 pointer hover:bg-blue-700 transition-all rounded-sm flex items-center justify-center text-white font-bold w-full"
+                  >
+                    Iniciar sesion
+                  </button>
                 </div>
                 {/* Mostrar el error si ocurre */}
                 {error && (
@@ -134,4 +131,3 @@ export default function IniciarSesion() {
     </div>
   );
 }
-

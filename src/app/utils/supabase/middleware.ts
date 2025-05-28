@@ -27,7 +27,7 @@ export async function updateSession(request: NextRequest) {
               supabaseResponse.cookies.set(name, value, options);
             });
           } catch (error) {
-            console.log("Este es el siguiente error: ",error);
+            console.log("Este es el siguiente error: ", error);
           }
         },
       },
@@ -61,7 +61,7 @@ export async function getUser(request: NextRequest, response: NextResponse) {
               response.cookies.set(name, value, options);
             });
           } catch (error) {
-            console.log("Este es el siguiente error: ",error);
+            console.log("Este es el siguiente error: ", error);
           }
         },
       },

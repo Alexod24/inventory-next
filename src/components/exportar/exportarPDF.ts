@@ -32,8 +32,11 @@ export async function exportarToPDF<TData>(table: Table<TData>) {
     doc.text("BASE DE MANDO", 50, 20);
 
     // Obtener columnas visibles y filas
-    const visibleColumns = table.getAllColumns().filter((col) => col.getIsVisible());
-    if (visibleColumns.length === 0) throw new Error("No hay columnas visibles.");
+    const visibleColumns = table
+      .getAllColumns()
+      .filter((col) => col.getIsVisible());
+    if (visibleColumns.length === 0)
+      throw new Error("No hay columnas visibles.");
 
     const headers = visibleColumns.map((col) => col.id.toUpperCase());
     const rows = table.getRowModel().rows;

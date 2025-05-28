@@ -10,8 +10,6 @@ import React, { useState } from "react";
 import { signUp } from "@/app/actions/auth";
 
 export default function SignUp() {
-  
-  
   // const [setError] = useState("");
   // const [setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -19,7 +17,7 @@ export default function SignUp() {
 
   // const handleSubmit = async (e: React.FormEvent) => {
   //   e.preventDefault();
-  
+
   //   if (!isChecked) {
   //     setError("Debes aceptar los Términos y Condiciones.");
   //     return;
@@ -49,7 +47,6 @@ export default function SignUp() {
             </p>
           </div>
           <div>
-           
             <form>
               <div className="space-y-5">
                 {/* Email */}
@@ -61,7 +58,6 @@ export default function SignUp() {
                     type="email"
                     name="email"
                     placeholder="Correo electrónico"
-
                   />
                 </div>
                 {/* Password */}
@@ -74,7 +70,6 @@ export default function SignUp() {
                       type="password"
                       name="password"
                       placeholder="Contraseña"
-                      
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -98,7 +93,6 @@ export default function SignUp() {
                       type="password"
                       name="repeatPassword"
                       placeholder="Repetir Contraseña"
-
                     />
                     <span
                       onClick={() => setShowPassword(!showPassword)}
@@ -133,11 +127,11 @@ export default function SignUp() {
                     Registrarse
                   </Boton> */}
                   <button
-          formAction={signUp}
-          className="p-2 bg-blue-800 h-10 pointer hover:bg-blue-700 transition-all rounded-sm flex items-center justify-center text-white font-bold w-full"
-        >
-          Registrarse123
-        </button>
+                    formAction={signUp}
+                    className="p-2 bg-blue-800 h-10 pointer hover:bg-blue-700 transition-all rounded-sm flex items-center justify-center text-white font-bold w-full"
+                  >
+                    Registrarse123
+                  </button>
                 </div>
               </div>
             </form>

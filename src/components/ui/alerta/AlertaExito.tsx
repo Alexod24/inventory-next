@@ -23,7 +23,7 @@ const Alert = ({
   useEffect(() => {
     const interval = setInterval(() => {
       setProgress((prev) => (prev > 0 ? prev - 1 : 0));
-    }, duration / 100);
+    }, duration / 200);
 
     if (progress === 0 && onClose) {
       onClose();

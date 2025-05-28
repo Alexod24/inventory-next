@@ -14,6 +14,12 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 
+//! Esto no toques mierda
+
+//? Esto no vale
+//* Esto si quieres borra
+//: 
+
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
 }

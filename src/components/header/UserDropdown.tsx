@@ -9,15 +9,15 @@ import { logOut } from "@/app/actions/auth";
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
 
-function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
-  e.stopPropagation();
-  setIsOpen((prev) => !prev);
-}
+  function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+    e.stopPropagation();
+    setIsOpen((prev) => !prev);
+  }
 
   function closeDropdown() {
     setIsOpen(false);
   }
-  
+
   function handleLogout() {
     logOut(); // Llamada a la función de logout
     closeDropdown(); // Cierra el desplegable
@@ -25,7 +25,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
   return (
     <div className="relative">
       <button
-        onClick={toggleDropdown} 
+        onClick={toggleDropdown}
         className="flex items-center text-gray-700 dark:text-gray-400 dropdown-toggle"
       >
         <span className="mr-3 overflow-hidden rounded-full h-11 w-11">
@@ -150,7 +150,7 @@ function toggleDropdown(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
             </DesplegableItem>
           </li>
         </ul>
-         <button
+        <button
           onClick={handleLogout}
           className="p-2 bg-red-800 h-10 pointer hover:bg-red-700 transition-all rounded-sm flex items-center justify-center text-white font-bold w-full"
         >
