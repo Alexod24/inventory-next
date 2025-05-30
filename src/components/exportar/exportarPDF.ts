@@ -1,3 +1,4 @@
+// eslint-disable @typescript-eslint/no-unused-vars
 import { Table } from "@tanstack/react-table";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -45,7 +46,7 @@ export async function exportarToPDF<TData>(table: Table<TData>) {
     if (rows.length === 0) throw new Error("No hay filas visibles.");
 
     // Agregar valor check o x a cada fila (aquí ejemplo simple: filas pares ✔, impares ✘)
-    const data = rows.map((row, i) => [
+    const data = rows.map((row) => [
       ...visibleColumns.map((col) => {
         const val = row.getValue(col.id);
         return typeof val === "string" ? val : JSON.stringify(val);
@@ -66,6 +67,5 @@ export async function exportarToPDF<TData>(table: Table<TData>) {
     doc.save("base_de_mando.pdf");
   } catch (error) {
     console.error("Error generando PDF:", error);
-    alert(`Hubo un error exportando el PDF: ${error.message}`);
   }
 }

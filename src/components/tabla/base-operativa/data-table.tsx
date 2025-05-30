@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Alert from "@/components/ui/alerta/AlertaExito";
 
 import * as React from "react";
@@ -45,7 +45,8 @@ export function DataTable<TData, TValue>({
   const [data, setData] = React.useState<TData[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [alertaExito, setAlertaExito] = React.useState(false);
-
+  const [alertaBorrado, setAlertaBorrado] = React.useState(false);
+  // -------------------------------------------------------------------------------------
   const renderAlerta = alertaExito && (
     <Alert
       variant="success"
@@ -54,11 +55,22 @@ export function DataTable<TData, TValue>({
       showLink={false}
     />
   );
-
+  // -------------------------------------------------------------------------------------
+  const renderAlertaBorrado = alertaBorrado && (
+    <Alert
+      variant="success"
+      title="¡Operación exitosa!"
+      message="El registro ha sido borrado correctamente."
+      showLink={false}
+    />
+  );
+  // -------------------------------------------------------------------------------------
   const [viewOptions, setViewOptions] = React.useState({
     showHiddenColumns: false,
     customView: "default",
   });
+
+  // -------------------------------------------------------------------------------------
 
   const fetchData = async (triggeredBy?: string) => {
     setLoading(true);
@@ -69,6 +81,7 @@ export function DataTable<TData, TValue>({
 
     if (error) {
       console.error(error);
+      setLoading(false);
       return;
     }
 
@@ -79,13 +92,18 @@ export function DataTable<TData, TValue>({
       setTimeout(() => setAlertaExito(false), 3000);
     }
 
+    if (triggeredBy === "delete") {
+      setAlertaBorrado(true);
+      setTimeout(() => setAlertaBorrado(false), 3000);
+    }
+
     setLoading(false);
   };
 
   useEffect(() => {
     fetchData();
   }, []);
-
+  // -------------------------------------------------------------------------------------
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -123,6 +141,7 @@ export function DataTable<TData, TValue>({
   return (
     <div className="space-y-4">
       {renderAlerta}
+      {renderAlertaBorrado}
       <DataTableToolbar
         table={table}
         viewOptions={viewOptions}

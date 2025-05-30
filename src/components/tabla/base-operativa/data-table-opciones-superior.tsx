@@ -1,3 +1,4 @@
+// eslint-disable @typescript-eslint/no-unused-vars
 "use client";
 
 import {
@@ -36,25 +37,24 @@ type Crear = {
 };
 
 const opcionesEstado = [
-  { value: "nuevo", label: "Nuevo" },
   { value: "bueno", label: "Bueno" },
   { value: "dañado", label: "Dañado" },
   { value: "roto", label: "Roto" },
 ];
 
 const opcionesDisponibilidad = [
-  { value: "ok", label: "OK" },
+  { value: "ok", label: "Ok" },
   { value: "faltante", label: "Faltante" },
   { value: "pendiente", label: "Pendiente" },
-  { value: "reparacion", label: "Reparación" },
-  { value: "baja", label: "Baja" },
+  // { value: "reparacion", label: "Reparación" },
+  // { value: "baja", label: "Baja" },
 ];
-
+// ---------------------------------------------------------------------------------------------
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
   fetchData: () => Promise<void>;
 }
-
+// ---------------------------------------------------------------------------------------------
 export function DataTableViewOptions<TData>({
   table,
   fetchData,
@@ -76,11 +76,14 @@ export function DataTableViewOptions<TData>({
     const { data, error } = await supabase.from("base_operativa").select("*");
     if (!error) setItems(data || []);
     else console.error(error);
+    console.log(items);
   };
 
   useEffect(() => {
     loadData();
   }, []);
+
+  // -----------------------------------------------------------------------------------------------
 
   const fetchOptions = async () => {
     const types = ["marcas", "colores", "materiales", "proveedores", "estados"];
@@ -105,6 +108,8 @@ export function DataTableViewOptions<TData>({
   useEffect(() => {
     fetchOptions();
   }, []);
+
+  // -----------------------------------------------------------------------------------------------
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
@@ -369,15 +374,6 @@ export function DataTableViewOptions<TData>({
                       }
                       className="dark:bg-dark-900"
                     />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("estados");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
                   </div>
                 </div>
 

@@ -8,6 +8,11 @@ type Props = {
   className?: string;
 };
 
+// Interfaz para definir el tipo de producto
+interface Product {
+  stock: number;
+}
+
 export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
   const [totalProducts, setTotalProducts] = useState(0);
   const [totalStock, setTotalStock] = useState(0);
@@ -17,7 +22,7 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
       try {
         // Obtener el total de productos
         const { data: products, error: productsError } = await supabase
-          .from("productos") // Cambia "products" por el nombre real de tu tabla
+          .from("productos") // Cambia "productos" por el nombre real de tu tabla
           .select("*", { count: "exact" });
 
         if (productsError) throw productsError;
@@ -26,13 +31,14 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
 
         // Obtener el total del stock
         const { data: stockData, error: stockError } = await supabase
-          .from("productos") // Cambia "products" por el nombre real de tu tabla
-          .select("stock"); // Cambia "stock" por el nombre real de la columna de tu tabla
+          .from("productos") // Cambia "productos" por el nombre real de tu tabla
+          .select("stock");
 
         if (stockError) throw stockError;
 
-        const totalStockValue = stockData?.reduce(
-          (total: number, product: any) => total + (product.stock || 0),
+        // Calcular el stock total asegurándonos de que los datos sean del tipo correcto
+        const totalStockValue = (stockData as Product[])?.reduce(
+          (total, product) => total + (product.stock || 0),
           0
         );
 
@@ -46,7 +52,9 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
   }, []);
 
   return (
-    <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 ${className}`}>
+    <div
+      className={`grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 ${className}`}
+    >
       {/* Metric Item: Total Products */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
@@ -54,7 +62,9 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
         </div>
         <div className="flex items-end justify-between mt-5">
           <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">Nº Productos</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              Nº Productos
+            </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
               {totalProducts}
             </h4>
@@ -74,7 +84,9 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
         </div>
         <div className="flex items-end justify-between mt-5">
           <div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">Total Stock</span>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              Total Stock
+            </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
               {totalStock}
             </h4>

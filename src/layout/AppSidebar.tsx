@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState,useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -14,10 +14,7 @@ import {
   TaskIcon,
   ListIcon,
   PageIcon,
-  PlugInIcon,
   UserCircleIcon,
-  TableIcon,
-  
 } from "../icons/index";
 // import SidebarWidget from "./SidebarWidget";
 
@@ -58,11 +55,11 @@ const navItems: NavItem[] = [
   //     { name: "Tabla Productos", path: "/productos", pro: false },
   //     { name: "Tabla Salida", path: "/salida", pro: false },
   //     { name: "Tabla Ingrsos", path: "/ingreso", pro: false }
-      
+
   //   ],
-    
+
   // },
- 
+
   // {
   //   name: "Paginas",
   //   icon: <PageIcon />,
@@ -111,17 +108,16 @@ const navItems: NavItem[] = [
     name: "Counter",
     path: "/counter",
   },
-   {
+  {
     icon: <TaskIcon />,
     name: "SSHH Limpieza",
     path: "/limpieza",
   },
-   {
+  {
     icon: <PieChartIcon />,
     name: "Almacen",
     path: "/almacen",
   },
-
 ];
 
 const othersItems: NavItem[] = [
@@ -169,24 +165,22 @@ const othersItems: NavItem[] = [
     name: "Perfil Usuario",
     path: "/perfil",
   },
-    {
+  {
     icon: <PieChartIcon />,
     name: "Lista de productos",
     path: "/productos",
   },
-   {
+  {
     icon: <BoxCubeIcon />,
     name: "Registro de Salida",
     path: "/salida",
   },
-   {
+  {
     icon: <TaskIcon />,
     name: "Registro de Ingreso",
     path: "/ingreso",
   },
 ];
-
-
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
@@ -328,7 +322,7 @@ const AppSidebar: React.FC = () => {
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // const isActive = (path: string) => path === pathname;
-   const isActive = useCallback((path: string) => path === pathname, [pathname]);
+  const isActive = useCallback((path: string) => path === pathname, [pathname]);
 
   useEffect(() => {
     // Check if the current path matches any submenu item
@@ -354,7 +348,7 @@ const AppSidebar: React.FC = () => {
     if (!submenuMatched) {
       setOpenSubmenu(null);
     }
-  }, [pathname,isActive]);
+  }, [pathname, isActive]);
 
   useEffect(() => {
     // Set the height of the submenu items when the submenu is opened

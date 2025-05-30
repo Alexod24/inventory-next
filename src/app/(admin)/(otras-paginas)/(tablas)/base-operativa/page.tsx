@@ -1,11 +1,8 @@
 import React from "react";
 import Imagen from "@/components/ui/imagenes/ImagenResponsive";
-import { Metricas } from "@/components/ecommerce/Metricas";
-import {
-  Payment,
-  columns as paymentColumns,
-} from "@/components/tabla/base-operativa/columns";
-import { DataTable as PaymentTable } from "@/components/tabla/base-operativa/data-table";
+import { EcommerceMetrics } from "@/components/ecommerce/EcomerceMetrics";
+// import { Payment } from "@/components/tabla/base-operativa/columns";
+// import { DataTable as PaymentTable } from "@/components/tabla/base-operativa/data-table";
 import fs from "fs";
 import path from "path";
 import { DataTable as ExpenseTable } from "@/components/tabla/base-operativa/data-table";
@@ -18,17 +15,17 @@ export const metadata = {
 };
 
 // Simulamos fetch async para obtener pagos
-async function getPaymentData(): Promise<Payment[]> {
-  return [
-    {
-      id: "728ed52f",
-      amount: 100,
-      status: "pending",
-      email: "m@example.com",
-    },
-    // Otros datos simulados
-  ];
-}
+// async function getPaymentData(): Promise<Payment[]> {
+//   return [
+//     {
+//       id: "728ed52f",
+//       amount: 100,
+//       status: "pending",
+//       email: "m@example.com",
+//     },
+//     // Otros datos simulados
+//   ];
+// }
 
 // Función para obtener datos de gastos desde un archivo JSON
 async function getExpenseData() {
@@ -38,32 +35,36 @@ async function getExpenseData() {
 }
 
 export default async function CombinedPage() {
-  const paymentData = await getPaymentData();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // const paymentData = await getPaymentData();
   const expenseData = await getExpenseData();
 
   return (
-    <div className="container mx-auto py-10 space-y-10">
-      {/* Sección grilla con imagen y métricas */}
-      <div className="grid grid-cols-12 gap-6 md:gap-4">
-        <div className="col-span-12 md:col-span-7 flex justify-center md:justify-start">
-          <Metricas className="w-full max-w-none" />
-        </div>
+    <div className="container mx-auto py-4 space-y-4 overflow-x-hidden">
+      {/* Imagen principal ocupando todo el ancho */}
+      <div className="w-full">
+        <Imagen
+          src="/images/espacios/base-operativa.jpg"
+          alt="Descripción personalizada"
+          className="shadow-lg rounded-xl w-full h-[400px] object-cover"
+        />
+      </div>
 
-        <div className="col-span-12 md:col-span-5 flex justify-center md:justify-end">
-          <Imagen
-            src="/images/espacios/base-operativa.jpg"
-            alt="Descripción personalizada"
-            width={400}
-            height={500}
-            className="shadow-lg"
-          />
+      {/* Métricas en una sola fila */}
+      <div className="grid grid-cols-12 gap-4 items-center">
+        <div className="col-span-12 flex flex-row space-x-4">
+          <EcommerceMetrics className="flex-1" />
         </div>
       </div>
 
-      {/* Tabla de gastos */}
-      <div>
+      {/* Tabla de gastos con scroll horizontal solo ahí */}
+      <div className="overflow-x-auto max-w-full">
         <h2 className="text-xl font-semibold mb-4">Base operativa</h2>
-        <ExpenseTable data={expenseData} columns={expenseColumns} />
+        <ExpenseTable
+          data={expenseData}
+          columns={expenseColumns}
+          loading={false}
+        />
       </div>
     </div>
   );

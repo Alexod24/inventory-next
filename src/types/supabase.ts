@@ -1,3 +1,4 @@
+// eslint-disable @typescript-eslint/no-unused-vars
 // @/types/supabase.ts
 
 export type Json =
@@ -59,7 +60,7 @@ export interface Database {
         };
       };
     };
-    Functions: {};
-    Enums: {};
+    Functions: object;
+    Enums: object;
   };
 }

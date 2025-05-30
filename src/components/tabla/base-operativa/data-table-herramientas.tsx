@@ -16,7 +16,6 @@ import { CalendarDatePicker } from "@/components/calendar-date-picker";
 import { DataTableViewOptions } from "./data-table-opciones-superior";
 
 const opcionesEstado = [
-  { value: "nuevo", label: "Nuevo" },
   { value: "bueno", label: "Bueno" },
   { value: "dañado", label: "Dañado" },
   { value: "roto", label: "Roto" },
@@ -34,6 +33,8 @@ const opcionesDisponibilidad = [
 const filterDateRange = (row, columnId, value) => {
   const [from, to] = value || [];
   const rowDate = new Date(row.getValue(columnId));
+
+  // El rowDate debe estar entre from y to si estos existen
   return (
     (!from || rowDate >= new Date(from)) && (!to || rowDate <= new Date(to))
   );
@@ -68,7 +69,7 @@ export function DataTableToolbar<TData>({
   useEffect(() => {
     console.log("Filtros activos:", table.getState().columnFilters);
     console.log("Datos filtrados:", table.getRowModel().rows);
-  }, [table.getState().columnFilters]);
+  }, [table]);
 
   return (
     <div className="flex flex-wrap items-center justify-between">
@@ -158,7 +159,7 @@ export default function App() {
     {
       descripcion: "Producto 1",
       disponibilidad: "ok",
-      estado: "nuevo",
+      estado: "bueno",
       date: "2023-05-01",
     },
     {

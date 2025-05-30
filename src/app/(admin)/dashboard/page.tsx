@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { EcommerceMetrics } from "@/components/ecommerce/EcomerceMetrics";
+// import { EcommerceMetrics } from "@/components/ecommerce/EcomerceMetrics";
 import React from "react";
-import VentasMensuales from "@/components/ecommerce/VentasMensuales";
-import TarjetasMes from "@/components/ecommerce/TarjetasMes";
-import TablaProductos from "@/components/tabla/TablaProductos";
-import TablaIngreso from "@/components/tabla/TablaIngreso";
-import TablaSalida from "@/components/tabla/TablaSalida";
+// import VentasMensuales from "@/components/ecommerce/VentasMensuales";
+// import TarjetasMes from "@/components/ecommerce/TarjetasMes";
+// import TablaProductos from "@/components/tabla/TablaProductos";
+// import TablaIngreso from "@/components/tabla/TablaIngreso";
+// import TablaSalida from "@/components/tabla/TablaSalida";
+import Imagen from "@/components/ui/imagenes/ImagenResponsive";
 
-import Chatbot from "@/components/chatbot/ChatBot";
 // import GraficosStats from "@/components/ecommerce/GraficosStats"
 // import TarjetaDemografica from "@/components/ecommerce/TarjetaDemografica"
 // import OrdenesRecientes from "@/components/ecommerce/OrdenesRecientes"
@@ -19,44 +19,12 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <div className="grid grid-cols-12 gap-4 md:gap-6">
-      <div className="col-span-12 space-y-6 xl:col-span-7">
-        <EcommerceMetrics />
-
-        <VentasMensuales />
-      </div>
-
-      <div className="col-span-12 xl:col-span-5">
-        <TarjetasMes />
-      </div>
-
-      <div className="col-span-12">
-        <TablaProductos />
-      </div>
-
-      <div className="col-span-12">
-        <TablaSalida />
-      </div>
-
-      <div className="col-span-12">
-        <TablaIngreso />
-      </div>
-
-      <div>
-        <Chatbot />
-      </div>
-
-      {/* <div className="col-span-12">
-        <GraficosStats/>
-      </div>
-
-      <div className="col-span-12 xl:col-span-5">
-        <TarjetaDemografica/>
-      </div>
-
-      <div className="col-span-12 xl:col-span-7">
-        <OrdenesRecientes/>
-      </div> */}
+    <div className="w-full">
+      <Imagen
+        src="/images/espacios/base-operativa.jpg"
+        alt="Descripción personalizada"
+        className="shadow-lg rounded-xl w-full h-[400px] object-cover"
+      />
     </div>
   );
 }

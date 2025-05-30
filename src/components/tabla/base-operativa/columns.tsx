@@ -3,8 +3,8 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { BaseOperativa } from "./schema";
 import { DataTableColumnHeader } from "./data-table-column-header";
-import { DataTableRowActions } from "./data-table-acciones-tabla";
-import { TrendingUp, TrendingDown } from "lucide-react";
+// import { DataTableRowActions } from "./data-table-acciones-tabla";
+// import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const columns: ColumnDef<BaseOperativa>[] = [
@@ -192,8 +192,7 @@ export const columns: ColumnDef<BaseOperativa>[] = [
       <DataTableColumnHeader column={column} title="Estado Fisico" />
     ),
     cell: ({ row }) => {
-      const estado = row.getValue("estado") as String;
-      const isNuevo = estado.toLowerCase() === "nuevo";
+      const estado = row.getValue("estado") as string;
       const isBueno = estado.toLowerCase() === "bueno";
       const isDañado = estado.toLowerCase() === "dañado";
       const isRoto = estado.toLowerCase() === "roto";
@@ -203,9 +202,8 @@ export const columns: ColumnDef<BaseOperativa>[] = [
           <span
             className={cn(
               "capitalize font-semibold",
-              isNuevo ? "text-blue-400" : "",
               isBueno ? "text-green-600" : "",
-              isDañado ? "text-orange-500" : "",
+              isDañado ? "text-yellow-500" : "",
               isRoto ? "text-red-500" : ""
             )}
           >
@@ -225,7 +223,7 @@ export const columns: ColumnDef<BaseOperativa>[] = [
       <DataTableColumnHeader column={column} title="Disponibilidad" />
     ),
     cell: ({ row }) => {
-      const disponibilidad = row.getValue("disponibilidad") as String;
+      const disponibilidad = row.getValue("disponibilidad") as string;
 
       return (
         <div className="flex w-[100px] items-center">
@@ -234,9 +232,7 @@ export const columns: ColumnDef<BaseOperativa>[] = [
               "capitalize font-semibold",
               disponibilidad.toLowerCase() === "ok" && "text-green-600",
               disponibilidad.toLowerCase() === "faltante" && "text-red-500",
-              disponibilidad.toLowerCase() === "pendiente" && "text-orange-500",
-              disponibilidad.toLowerCase() === "reparacion" && "text-amber-500",
-              disponibilidad.toLowerCase() === "baja" && "text-gray-500"
+              disponibilidad.toLowerCase() === "pendiente" && "text-yellow-500"
             )}
           >
             {disponibilidad}
