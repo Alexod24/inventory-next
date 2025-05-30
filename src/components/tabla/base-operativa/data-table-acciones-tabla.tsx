@@ -21,6 +21,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+interface Option {
+  value: string;
+  label: string;
+}
+
+interface OptionsState {
+  marcas: Option[];
+  colores: Option[];
+  materiales: Option[];
+  proveedores: Option[];
+  estados: Option[];
+}
+
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
   refreshData: (triggeredBy?: string) => Promise<void>;
@@ -54,10 +67,10 @@ export function DataTableRowActions<TData>({
   row,
   refreshData,
 }: DataTableRowActionsProps<TData>) {
+  const data: any = row.original;
   const { isOpen, openModal, closeModal } = useModal();
-  const data = row.original;
 
-  const [options, setOptions] = useState({
+  const [options, setOptions] = useState<OptionsState>({
     marcas: [],
     colores: [],
     materiales: [],
@@ -68,9 +81,7 @@ export function DataTableRowActions<TData>({
   const [isMiniModalOpen, setMiniModalOpen] = useState(false);
   const [currentType, setCurrentType] = useState<string | null>(null);
   const [newValue, setNewValue] = useState("");
-  const [isEditModalOpen, setIsEditModalOpen] = useState<string | undefined>(
-    undefined
-  );
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [selectedProveedor, setSelectedProveedor] = useState<
     string | undefined
   >(data.proveedor || undefined);
@@ -289,7 +300,6 @@ export function DataTableRowActions<TData>({
                         setSelectedProveedor(selectedOption)
                       }
                       options={options.proveedores} // Opciones dinámicas
-                      label="Proveedor"
                     />
 
                     <Button
@@ -314,7 +324,6 @@ export function DataTableRowActions<TData>({
                         setSelectedMarca(selectedOption)
                       }
                       options={options.marcas} // Opciones dinámicas
-                      label="Marca"
                     />
                     <Button
                       size="sm"
@@ -358,7 +367,6 @@ export function DataTableRowActions<TData>({
                         setSelectedMaterial(selectedOption)
                       }
                       options={options.materiales} // Opciones dinámicas
-                      label="Material"
                     />
 
                     <Button
@@ -382,7 +390,6 @@ export function DataTableRowActions<TData>({
                         setSelectedColor(selectedOption)
                       }
                       options={options.colores} // Opciones dinámicas
-                      label="Color"
                     />
                     <Button
                       size="sm"

@@ -9,9 +9,8 @@ import { DataTable as ExpenseTable } from "@/components/tabla/base-operativa/dat
 import { columns as expenseColumns } from "@/components/tabla/base-operativa/columns";
 
 export const metadata = {
-  title: "Dashboard | Next.js Expense & Payment Tracker",
-  description:
-    "This page combines payment tracking and expense management for TailAdmin.",
+  title: "Bienvenido - Sistema de inventario",
+  description: "Landing page para iniciar sesión o registrarse",
 };
 
 // Simulamos fetch async para obtener pagos
@@ -44,7 +43,7 @@ export default async function CombinedPage() {
       {/* Imagen principal ocupando todo el ancho */}
       <div className="w-full">
         <Imagen
-          src="/images/espacios/base-operativa.jpg"
+          src="/images/espacios/lobby1.jpg"
           alt="Descripción personalizada"
           className="shadow-lg rounded-xl w-full h-[400px] object-cover"
         />
@@ -59,7 +58,9 @@ export default async function CombinedPage() {
 
       {/* Tabla de gastos con scroll horizontal solo ahí */}
       <div className="overflow-x-auto max-w-full">
-        <h2 className="text-xl font-semibold mb-4">Base operativa</h2>
+        <h2 className="text-xl font-semibold mb-4">
+          Base operativa (Lista de items)
+        </h2>
         <ExpenseTable
           data={expenseData}
           columns={expenseColumns}

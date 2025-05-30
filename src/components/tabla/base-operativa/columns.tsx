@@ -36,8 +36,6 @@ export const columns: ColumnDef<BaseOperativa>[] = [
     cell: ({ row }) => (
       <div className="w-[150px] capitalize">{row.getValue("proveedor")}</div>
     ),
-    enableSorting: false,
-    enableHiding: false,
   },
 
   {
@@ -112,8 +110,8 @@ export const columns: ColumnDef<BaseOperativa>[] = [
     cell: ({ row }) => (
       <div className="w-[150px] capitalize">{row.getValue("tamano")}</div>
     ),
-    enableSorting: false,
-    enableHiding: false,
+    enableSorting: true,
+    enableHiding: true,
   },
   // ---------------------------------------------------------------------------------
   {

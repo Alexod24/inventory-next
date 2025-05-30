@@ -31,6 +31,7 @@ const Select: React.FC<SelectProps> = ({
   id, // Nuevo prop para el id del select
 }) => {
   // Internamente, manejamos el estado solo si no se pasa `value`
+  options = options || [];
   const [internalValue, setInternalValue] = useState<string>(defaultValue);
 
   useEffect(() => {

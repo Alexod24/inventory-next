@@ -15,6 +15,7 @@ import {
   ListIcon,
   PageIcon,
   UserCircleIcon,
+  TableIcon,
 } from "../icons/index";
 // import SidebarWidget from "./SidebarWidget";
 
@@ -29,9 +30,16 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    path: "/dashboard",
+    path: "/base-operativa",
     // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
   },
+  {
+    icon: <UserCircleIcon />,
+    name: "Movimientos",
+    path: "/movimientos",
+    // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+  },
+
   // {
   //   icon: <CalenderIcon />,
   //   name: "Calendario",
@@ -43,22 +51,25 @@ const navItems: NavItem[] = [
   //   path: "/perfil",
   // },
 
-  {
-    name: "Formularios",
-    icon: <ListIcon />,
-    subItems: [{ name: "Formulario", path: "/formularios", pro: false }],
-  },
   // {
-  //   name: "Tablas",
-  //   icon: <TableIcon />,
-  //   subItems: [
-  //     { name: "Tabla Productos", path: "/productos", pro: false },
-  //     { name: "Tabla Salida", path: "/salida", pro: false },
-  //     { name: "Tabla Ingrsos", path: "/ingreso", pro: false }
-
-  //   ],
-
+  //   name: "Formularios",
+  //   icon: <ListIcon />,
+  //   subItems: [{ name: "Formulario", path: "/formularios", pro: false }],
   // },
+  {
+    name: "Espacios",
+    icon: <PieChartIcon />,
+    subItems: [
+      { name: "Phone Booth", path: "/", pro: false },
+      { name: "El Hangar", path: "/", pro: false },
+      { name: "Bunkers", path: "/", pro: false },
+      { name: "Unidades", path: "/", pro: false },
+      { name: "La Brigada", path: "/", pro: false },
+      { name: "Counter", path: "/", pro: false },
+      { name: "Limpieza", path: "/", pro: false },
+      { name: "Almacen", path: "/", pro: false },
+    ],
+  },
 
   // {
   //   name: "Paginas",
@@ -68,56 +79,56 @@ const navItems: NavItem[] = [
   //     { name: "404 Error", path: "/error-404", pro: false },
   //   ],
   // },
-  {
-    icon: <PieChartIcon />,
-    name: "Base Operativa",
-    path: "/base-operativa",
-  },
-  {
-    icon: <PageIcon />,
-    name: "Phone Booth",
-    path: "/phone-booth",
-  },
-  {
-    icon: <ListIcon />,
-    name: "El Hangar",
-    path: "/hangar",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "Bunkers",
-    path: "/bunkers",
-  },
-  {
-    icon: <PieChartIcon />,
-    name: "Unidades",
-    path: "/unidades",
-  },
-  {
-    icon: <GridIcon />,
-    name: "La Brigada",
-    path: "/brigada",
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "Base de Mando",
-    path: "/base-de-mando",
-  },
-  {
-    icon: <PieChartIcon />,
-    name: "Counter",
-    path: "/counter",
-  },
-  {
-    icon: <TaskIcon />,
-    name: "SSHH Limpieza",
-    path: "/limpieza",
-  },
-  {
-    icon: <PieChartIcon />,
-    name: "Almacen",
-    path: "/almacen",
-  },
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Base Operativa",
+  //   path: "/base-operativa",
+  // },
+  // {
+  //   icon: <PageIcon />,
+  //   name: "Phone Booth",
+  //   path: "/phone-booth",
+  // },
+  // {
+  //   icon: <ListIcon />,
+  //   name: "El Hangar",
+  //   path: "/hangar",
+  // },
+  // {
+  //   icon: <UserCircleIcon />,
+  //   name: "Bunkers",
+  //   path: "/bunkers",
+  // },
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Unidades",
+  //   path: "/unidades",
+  // },
+  // {
+  //   icon: <GridIcon />,
+  //   name: "La Brigada",
+  //   path: "/brigada",
+  // },
+  // {
+  //   icon: <BoxCubeIcon />,
+  //   name: "Base de Mando",
+  //   path: "/base-de-mando",
+  // },
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Counter",
+  //   path: "/counter",
+  // },
+  // {
+  //   icon: <TaskIcon />,
+  //   name: "SSHH Limpieza",
+  //   path: "/limpieza",
+  // },
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Almacen",
+  //   path: "/almacen",
+  // },
 ];
 
 const othersItems: NavItem[] = [
@@ -129,18 +140,18 @@ const othersItems: NavItem[] = [
   //     { name: "Grafico Barras", path: "/grafico-barras", pro: false },
   //   ],
   // },
-  {
-    icon: <BoxCubeIcon />,
-    name: "UI Elementos",
-    subItems: [
-      { name: "Alerts", path: "/alertas", pro: false },
-      { name: "Avatar", path: "/avatars", pro: false },
-      { name: "Badge", path: "/insignias", pro: false },
-      { name: "Buttons", path: "/botones", pro: false },
-      { name: "Images", path: "/imagenes", pro: false },
-      { name: "Videos", path: "/videos", pro: false },
-    ],
-  },
+  // {
+  //   icon: <BoxCubeIcon />,
+  //   name: "UI Elementos",
+  //   subItems: [
+  //     { name: "Alerts", path: "/alertas", pro: false },
+  //     { name: "Avatar", path: "/avatars", pro: false },
+  //     { name: "Badge", path: "/insignias", pro: false },
+  //     { name: "Buttons", path: "/botones", pro: false },
+  //     { name: "Images", path: "/imagenes", pro: false },
+  //     { name: "Videos", path: "/videos", pro: false },
+  //   ],
+  // },
   // {
   //   icon: <PlugInIcon />,
   //   name: "Authentication",
@@ -165,21 +176,21 @@ const othersItems: NavItem[] = [
     name: "Perfil Usuario",
     path: "/perfil",
   },
-  {
-    icon: <PieChartIcon />,
-    name: "Lista de productos",
-    path: "/productos",
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "Registro de Salida",
-    path: "/salida",
-  },
-  {
-    icon: <TaskIcon />,
-    name: "Registro de Ingreso",
-    path: "/ingreso",
-  },
+  // {
+  //   icon: <PieChartIcon />,
+  //   name: "Lista de productos",
+  //   path: "/productos",
+  // },
+  // {
+  //   icon: <BoxCubeIcon />,
+  //   name: "Registro de Salida",
+  //   path: "/salida",
+  // },
+  // {
+  //   icon: <TaskIcon />,
+  //   name: "Registro de Ingreso",
+  //   path: "/ingreso",
+  // },
 ];
 
 const AppSidebar: React.FC = () => {

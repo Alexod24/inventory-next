@@ -39,7 +39,7 @@ export async function logIn(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(credentials);
   if (error) redirect("/credencialesfalsas");
   revalidatePath("/", "layout");
-  redirect("/dashboard");
+  redirect("/base-operativa");
 }
 
 // SALIR
