@@ -4,12 +4,27 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 
 import { SidebarProvider } from "@/context/SidebarContext";
-import { ThemeProvider } from "@/context/ThemeContext";
+import { ThemeProvider, useTheme } from "@/context/ThemeContext";
 
-// Definimos el cargador de fuente Outfit a nivel de módulo
 const outfit = Outfit({
   subsets: ["latin"],
 });
+
+// Crea un componente que maneje la lógica del tema
+function ThemedBody({ children }: { children: React.ReactNode }) {
+  const { theme } = useTheme();
+
+  return (
+    <body
+      suppressHydrationWarning
+      className={`${outfit.className} ${
+        theme === "dark" ? "bg-gray-900" : "bg-white"
+      }`}
+    >
+      {children}
+    </body>
+  );
+}
 
 export default function RootLayout({
   children,
@@ -17,15 +32,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body
-        suppressHydrationWarning
-        className={`${outfit.className} bg-gray-900`}
-      >
-        <ThemeProvider>
-          <SidebarProvider>{children}</SidebarProvider>
-        </ThemeProvider>
-      </body>
+    <html lang="en">
+      <ThemeProvider>
+        <SidebarProvider>
+          <ThemedBody>{children}</ThemedBody>
+        </SidebarProvider>
+      </ThemeProvider>
     </html>
   );
 }

@@ -57,26 +57,6 @@ export const columns: ColumnDef<BaseOperativa>[] = [
       <div className="w-[150px] capitalize">{row.getValue("movimiento")}</div>
     ),
   },
-  {
-    accessorKey: "operacion",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Operacion" />
-    ),
-    cell: ({ row }) => (
-      <div className="flex space-x-2">
-        <span className="max-w-[500px] truncate capitalize font-medium">
-          {row.getValue("operacion")}
-        </span>
-      </div>
-    ),
-    // Agregamos filtro de texto simple para que funcione con input tipo string
-    filterFn: (row, id, filterValue) => {
-      const value = row.getValue(id) as string;
-      return value
-        .toLowerCase()
-        .includes((filterValue as string).toLowerCase());
-    },
-  },
 
   {
     accessorKey: "cantidad",

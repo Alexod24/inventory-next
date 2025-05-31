@@ -21,13 +21,6 @@ const opcionesMovimiento = [
   { value: "roto", label: "Roto" },
 ];
 
-const opcionesOperacion = [
-  { value: "ok", label: "OK" },
-  { value: "faltante", label: "Faltante" },
-  { value: "pendiente", label: "Pendiente" },
-  { value: "reparacion", label: "Reparación" },
-  { value: "baja", label: "Baja" },
-];
 // -----------------------------------------------------------------------------------------------
 // Filtro personalizado rango fecha
 const filterDateRange = (row, columnId, value) => {
@@ -93,14 +86,6 @@ export function DataTableToolbar<TData>({
           />
         )}
 
-        {table.getColumn("operacion") && (
-          <DataTableFacetedFilter
-            column={table.getColumn("operacion")}
-            title="Operacion"
-            options={opcionesOperacion}
-          />
-        )}
-
         {isFiltered && (
           <Button
             variant="ghost"
@@ -143,10 +128,7 @@ const columns = [
     accessorKey: "movimiento",
     header: "Disponibilidad",
   },
-  {
-    accessorKey: "operacion",
-    header: "Estado",
-  },
+
   {
     accessorKey: "fecha",
     header: "Fecha",
@@ -159,13 +141,13 @@ export default function App() {
     {
       descripcion: "Producto 1",
       movimiento: "ok",
-      operacion: "bueno",
+
       date: "2023-05-01",
     },
     {
       descripcion: "Producto 2",
       movimiento: "faltante",
-      operacion: "bueno",
+
       fecha: "2023-05-02",
     },
   ]);

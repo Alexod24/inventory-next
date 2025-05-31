@@ -27,21 +27,15 @@ type Crear = {
   producto: string;
   espacio: string;
   movimiento: string;
-  operacion: string;
   cantidad: number;
   descripcion: string;
   fecha: string;
   usuario: string;
 };
 const opcionesMovimiento = [
-  { value: "bueno", label: "Bueno" },
-  { value: "dañado", label: "Dañado" },
-  { value: "roto", label: "Roto" },
-];
-const opcionesOperacion = [
-  { value: "bueno", label: "Bueno" },
-  { value: "dañado", label: "Dañado" },
-  { value: "roto", label: "Roto" },
+  { value: "aumentar", label: "Aumentar" },
+  { value: "reducir", label: "Reducir" },
+  { value: "neutral", label: "Neutral" },
 ];
 
 // ---------------------------------------------------------------------------------------------
@@ -62,10 +56,8 @@ export function DataTableViewOptions<TData>({
     producto: [],
     espacio: [],
     movimiento: [],
-    operacion: [],
   });
 
-  const [isMiniModalOpen, setMiniModalOpen] = useState(false);
   const [newValue, setNewValue] = useState("");
   const [currentType, setCurrentType] = useState("");
 
@@ -89,7 +81,7 @@ export function DataTableViewOptions<TData>({
       // Consulta para obtener valores únicos de "movimientos_inventario"
       const { data: movimientosData, error: movimientosError } = await supabase
         .from("movimientos_inventario")
-        .select("movimiento, operacion");
+        .select("movimiento");
 
       if (movimientosError) {
         console.error(
@@ -101,9 +93,6 @@ export function DataTableViewOptions<TData>({
 
       const movimientos = [
         ...new Set(movimientosData.map((item) => item.movimiento)),
-      ];
-      const operaciones = [
-        ...new Set(movimientosData.map((item) => item.operacion)),
       ];
 
       // Consulta para obtener valores únicos de "espacios"
@@ -146,7 +135,7 @@ export function DataTableViewOptions<TData>({
       setOptions({
         producto: productos.map((item) => ({ value: item, label: item })),
         movimiento: movimientos.map((item) => ({ value: item, label: item })),
-        operacion: operaciones.map((item) => ({ value: item, label: item })),
+
         espacio: espacios.map((item) => ({ value: item, label: item })),
       });
     } catch (err) {
@@ -165,66 +154,100 @@ export function DataTableViewOptions<TData>({
     const formData = new FormData(e.target as HTMLFormElement);
     const productData = Object.fromEntries(formData);
 
-    // Validar y mapear producto
-    const productoSeleccionado = options.producto.find(
-      (opcion) => opcion.value === productData.producto
-    );
-    if (!productoSeleccionado) {
-      alert("El producto seleccionado no es válido.");
-      return;
-    }
-    productData.producto = productoSeleccionado.value;
-
-    const espacioSeleccionado = options.espacio.find(
-      (opcion) => opcion.value === productData.espacio
-    );
-    if (!espacioSeleccionado) {
-      alert("El espacio seleccionado no es válido.");
-      return;
-    }
-    productData.espacio = espacioSeleccionado.value;
-
-    if (productData.fecha) {
-      productData.fecha = new Date(productData.fecha as string).toISOString();
-    }
-
     try {
-      const { data, error } = await supabase
+      if (
+        !productData.producto ||
+        !productData.cantidad ||
+        !productData.movimiento
+      ) {
+        throw new Error("Por favor, completa todos los campos obligatorios.");
+      }
+
+      // Validar y mapear producto
+      const productoSeleccionado = options.producto.find(
+        (opcion) => opcion.value === productData.producto
+      );
+
+      if (!productoSeleccionado) {
+        throw new Error("El producto seleccionado no es válido.");
+      }
+      productData.producto = productoSeleccionado.value;
+
+      const espacioSeleccionado = options.espacio.find(
+        (opcion) => opcion.value === productData.espacio
+      );
+      if (!espacioSeleccionado) {
+        throw new Error("El espacio seleccionado no es válido.");
+      }
+      productData.espacio = espacioSeleccionado.value;
+
+      if (productData.fecha) {
+        productData.fecha = new Date(productData.fecha as string).toISOString();
+      }
+
+      // Crear el registro en movimientos_inventario
+      console.log("Datos a insertar en movimientos_inventario:", productData);
+      const { data: registroCreado, error: registroError } = await supabase
         .from("movimientos_inventario")
         .insert([productData])
         .select("*");
-      if (error) throw error;
 
-      setItems((prev) => [...prev, ...data]);
+      if (registroError) {
+        console.error(
+          "Error al insertar en movimientos_inventario:",
+          registroError
+        );
+        throw registroError;
+      }
+
+      console.log("Registro creado en movimientos_inventario:", registroCreado);
+
+      // Lógica para actualizar la cantidad en base_operativa
+      const cantidad = parseInt(productData.cantidad as string, 10);
+      if (!isNaN(cantidad)) {
+        let cantidadActualizar = 0;
+
+        if (productData.movimiento === "aumentar") {
+          cantidadActualizar = cantidad;
+        } else if (productData.movimiento === "reducir") {
+          cantidadActualizar = -cantidad;
+        }
+
+        if (cantidadActualizar !== 0) {
+          console.log(
+            `Actualizando cantidad en base_operativa: ${cantidadActualizar} para producto ${productData.producto}`
+          );
+
+          // Ejecutar el RPC para incrementar o reducir el stock
+          const { data: rpcResult, error: rpcError } = await supabase.rpc(
+            "incrementar_stock",
+            {
+              p_producto_descripcion: productData.producto,
+              p_cantidad: cantidadActualizar,
+            }
+          );
+
+          if (rpcError) {
+            console.error("Error al ejecutar RPC incrementar_stock:", rpcError);
+            throw rpcError;
+          }
+
+          console.log("Resultado del RPC incrementar_stock:", rpcResult);
+        }
+      }
+
+      setItems((prev) => [...prev, ...registroCreado]);
       closeModal();
       await fetchData();
     } catch (err) {
-      console.log("Error al crear producto:", err);
+      console.error(
+        "Error al crear producto o actualizar cantidad:",
+        err.message || err
+      );
+      alert(`Error: ${err.message || "Ocurrió un problema desconocido."}`);
     }
   };
 
-  const handleCreateOption = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!newValue.trim() || !currentType) return;
-
-    // Define el campo que usarás para insertar según la tabla
-    const campoNombre =
-      currentType === "base_operativa" ? "descripcion" : "nombre";
-
-    try {
-      const { error } = await supabase
-        .from(currentType)
-        .insert([{ nombre: newValue }]);
-      if (error) throw error;
-
-      await fetchOptions();
-      setMiniModalOpen(false);
-      setNewValue("");
-      setCurrentType(null);
-    } catch (err) {
-      console.error(`Error al crear ${currentType}:`, err);
-    }
-  };
   return (
     <div className="flex space-x-2 ml-auto">
       <DropdownMenu>
@@ -335,20 +358,7 @@ export function DataTableViewOptions<TData>({
                     />
                   </div>
                 </div>
-                <div>
-                  <Label>Operacion</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      name="operacion"
-                      options={opcionesOperacion}
-                      placeholder="Selecciona una operacion"
-                      onChange={(selectedOpciones) =>
-                        console.log("Estado seleccionado:", selectedOpciones)
-                      }
-                      className="dark:bg-dark-900 flex-1"
-                    />
-                  </div>
-                </div>
+
                 <div>
                   <Label>Cantidad</Label>
                   <Input
@@ -367,6 +377,10 @@ export function DataTableViewOptions<TData>({
                     disabled
                   />
                 </div>
+                <div>
+                  <Label>Usuario</Label>
+                  <Input type="text" name="usuario" placeholder="Ej. Dania" />
+                </div>
                 <div className="lg:col-span-2">
                   <Label>Descripción</Label>
                   <Input
@@ -374,11 +388,6 @@ export function DataTableViewOptions<TData>({
                     name="descripcion"
                     placeholder="Ej. Caja de herramientas"
                   />
-                </div>
-
-                <div>
-                  <Label>Usuario</Label>
-                  <Input type="text" name="usuario" placeholder="Ej. Dania" />
                 </div>
               </div>
             </div>

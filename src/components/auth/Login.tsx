@@ -102,7 +102,7 @@ export default function IniciarSesion() {
                     formAction={logIn}
                     className="p-2 bg-blue-800 h-10 pointer hover:bg-blue-700 transition-all rounded-sm flex items-center justify-center text-white font-bold w-full"
                   >
-                    Iniciar sesion
+                    Iniciar Sesion
                   </button>
                 </div>
                 {/* Mostrar el error si ocurre */}

@@ -11,7 +11,7 @@ import {
   startOfYear,
   endOfYear,
   startOfDay,
-  endOfDay
+  endOfDay,
 } from "date-fns";
 import { toDate, formatInTimeZone } from "date-fns-tz";
 import { DateRange } from "react-day-picker";
@@ -22,14 +22,14 @@ import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue
+  SelectValue,
 } from "@/components/ui/select";
 import { Calendar } from "./ui/calendar";
 
@@ -45,7 +45,7 @@ const months = [
   "September",
   "October",
   "November",
-  "December"
+  "December",
 ];
 
 const multiSelectVariants = cva(
@@ -61,12 +61,12 @@ const multiSelectVariants = cva(
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground text-background",
-        link: " underline-offset-4 hover:underline text-background"
-      }
+        link: " underline-offset-4 hover:underline text-background",
+      },
     },
     defaultVariants: {
-      variant: "default"
-    }
+      variant: "default",
+    },
   }
 );
 
@@ -270,30 +270,30 @@ export const CalendarDatePicker = React.forwardRef<
       {
         label: "This Week",
         start: startOfWeek(today, { weekStartsOn: 1 }),
-        end: endOfWeek(today, { weekStartsOn: 1 })
+        end: endOfWeek(today, { weekStartsOn: 1 }),
       },
       {
         label: "Last Week",
         start: subDays(startOfWeek(today, { weekStartsOn: 1 }), 7),
-        end: subDays(endOfWeek(today, { weekStartsOn: 1 }), 7)
+        end: subDays(endOfWeek(today, { weekStartsOn: 1 }), 7),
       },
       { label: "Last 7 Days", start: subDays(today, 6), end: today },
       {
         label: "This Month",
         start: startOfMonth(today),
-        end: endOfMonth(today)
+        end: endOfMonth(today),
       },
       {
         label: "Last Month",
         start: startOfMonth(subDays(today, today.getDate())),
-        end: endOfMonth(subDays(today, today.getDate()))
+        end: endOfMonth(subDays(today, today.getDate())),
       },
       { label: "This Year", start: startOfYear(today), end: endOfYear(today) },
       {
         label: "Last Year",
         start: startOfYear(subDays(today, 365)),
-        end: endOfYear(subDays(today, 365))
-      }
+        end: endOfYear(subDays(today, 365)),
+      },
     ];
 
     const handleMouseOver = (part: string) => {
@@ -359,7 +359,7 @@ export const CalendarDatePicker = React.forwardRef<
         firstYearElement,
         secondDayElement,
         secondMonthElement,
-        secondYearElement
+        secondYearElement,
       ];
 
       const addPassiveEventListener = (element: HTMLElement | null) => {
@@ -368,7 +368,7 @@ export const CalendarDatePicker = React.forwardRef<
             "wheel",
             handleWheel as unknown as EventListener,
             {
-              passive: false
+              passive: false,
             }
           );
         }
@@ -537,7 +537,7 @@ export const CalendarDatePicker = React.forwardRef<
                     </>
                   )
                 ) : (
-                  <span>Pick a date</span>
+                  <span>Filtrar por fecha</span>
                 )}
               </span>
             </Button>
@@ -551,7 +551,7 @@ export const CalendarDatePicker = React.forwardRef<
               onEscapeKeyDown={handleClose}
               style={{
                 maxHeight: "var(--radix-popover-content-available-height)",
-                overflowY: "auto"
+                overflowY: "auto",
               }}
             >
               <div className="flex">
