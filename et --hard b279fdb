@@ -1,0 +1,22 @@
+[33m6d4350c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Funciones para la tabla registros
+[33mb279fdb[m feat: :sparkles: Creating the module: recording the movement
+[33mdac79df[m feat: :art: Integration the leyend cards
+[33mb1c2b31[m feat: :sparkles: Table modification and adding the function edit and delete successfully
+[33mcc9f506[m feat: :sparkles: Adding delete function, fixes issues with filters and dates
+[33mc49414e[m feat: :sparkles: Creation and select modal
+[33m84b1888[m feat: :art: Changes
+[33m102f89a[m feat: :fire: Notifications and chatbot
+[33me2dea2e[m feat: :sparkles: Improved input and output tables
+[33mce65eb7[m feat: :sparkles: Creating, editing and deleting the module
+[33mad6bd5f[m feat: :art: Creating CRUD and Modal Addition
+[33m400cd8a[m fix: :bug: Solution in pages not found and page error
+[33m6911540[m fix: :fire: Fix for vercel and remove unnecesary coding
+[33m39b8723[m feat: :sparkles: Auth creation and implement new features
+[33m8faf33c[m style: :lipstick: Modification the logo for dark style
+[33me44db67[m feat: :lipstick: Edicion de los widgets
+[33m57cda14[m fix: :ambulance: Fix react version compatibility
+[33m251d54b[m fix: :fire: He removido la carpeta pruebas para poder generar archivos estaticos para el deploy
+[33m5e9c02f[m fix: :bug: Bajamos la version a React 18.2 por conflictos de una libreria
+[33m0929fcb[m feat: :art: Culminacion del Front-End
+[33meaddb78[m feat: :art:
+[33m938a1c2[m Initial commit

@@ -156,7 +156,7 @@ export function DataTableRowActions<TData>({
   const handleDelete = async () => {
     try {
       const { error } = await supabase
-        .from("base_operativa")
+        .from("movimientos_inventario")
         .delete()
         .eq("id", data.id);
       if (error) throw error;

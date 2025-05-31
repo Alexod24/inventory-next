@@ -9,14 +9,14 @@ import { cn } from "@/lib/utils";
 
 export const columns: ColumnDef<BaseOperativa>[] = [
   {
-    accessorKey: "producto_id",
+    accessorKey: "producto",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Producto" />
     ),
     cell: ({ row }) => (
       <div className="flex space-x-2">
         <span className="max-w-[500px] truncate capitalize font-medium">
-          {row.getValue("producto_id")}
+          {row.getValue("producto")}
         </span>
       </div>
     ),
@@ -29,14 +29,14 @@ export const columns: ColumnDef<BaseOperativa>[] = [
     },
   },
   {
-    accessorKey: "espacio_id",
+    accessorKey: "espacio",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Espacio" />
     ),
     cell: ({ row }) => (
       <div className="flex space-x-2">
         <span className="max-w-[500px] truncate capitalize font-medium">
-          {row.getValue("espacio_id")}
+          {row.getValue("espacio")}
         </span>
       </div>
     ),

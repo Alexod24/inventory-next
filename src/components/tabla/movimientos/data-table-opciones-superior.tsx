@@ -33,20 +33,17 @@ type Crear = {
   fecha: string;
   usuario: string;
 };
-
 const opcionesMovimiento = [
   { value: "bueno", label: "Bueno" },
   { value: "dañado", label: "Dañado" },
   { value: "roto", label: "Roto" },
 ];
-
 const opcionesOperacion = [
-  { value: "ok", label: "Ok" },
-  { value: "faltante", label: "Faltante" },
-  { value: "pendiente", label: "Pendiente" },
-  // { value: "reparacion", label: "Reparación" },
-  // { value: "baja", label: "Baja" },
+  { value: "bueno", label: "Bueno" },
+  { value: "dañado", label: "Dañado" },
+  { value: "roto", label: "Roto" },
 ];
+
 // ---------------------------------------------------------------------------------------------
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
@@ -59,18 +56,18 @@ export function DataTableViewOptions<TData>({
 }: DataTableViewOptionsProps<TData>) {
   const { isOpen, openModal, closeModal } = useModal();
   const [items, setItems] = useState<Crear[]>([]);
-  const [options, setOptions] = useState({
+  const [options, setOptions] = useState<
+    Record<string, { value: string; label: string }[]>
+  >({
     producto: [],
     espacio: [],
+    movimiento: [],
+    operacion: [],
   });
 
   const [isMiniModalOpen, setMiniModalOpen] = useState(false);
   const [newValue, setNewValue] = useState("");
   const [currentType, setCurrentType] = useState("");
-  const [selectedProducto, setSelectedProducto] = useState(null);
-  const [selectedEspacio, setSelectedEspacio] = useState(null);
-  const [selectedMovimiento, setSelectedMovimiento] = useState(null);
-  const [selectedOperacion, setSelectedOperacion] = useState(null);
 
   const loadData = async () => {
     const { data, error } = await supabase
@@ -88,34 +85,73 @@ export function DataTableViewOptions<TData>({
   // -----------------------------------------------------------------------------------------------
 
   const fetchOptions = async () => {
-    // Define las tablas y sus respectivos campos
-    const types = [
-      { table: "base_operativa", field: "descripcion" }, // Para productos
-      { table: "espacios", field: "nombre" }, // Para espacios
-    ];
+    try {
+      // Consulta para obtener valores únicos de "movimientos_inventario"
+      const { data: movimientosData, error: movimientosError } = await supabase
+        .from("movimientos_inventario")
+        .select("movimiento, operacion");
 
-    // Realiza consultas a cada tabla
-    const promises = types.map(async ({ table, field }) => {
-      const { data, error } = await supabase.from(table).select(field);
-      if (error) {
-        console.error(`Error al cargar ${table}:`, error);
-        return { producto: [], espacio: [] };
+      if (movimientosError) {
+        console.error(
+          "Error al cargar opciones desde movimientos_inventario:",
+          movimientosError
+        );
+        return;
       }
-      return {
-        [table === "base_operativa" ? "producto" : "espacio"]: data.map(
-          (item) => ({
-            value: item[field],
-            label: item[field],
-          })
-        ),
-      };
-    });
 
-    // Espera a que todas las consultas se completen
-    const results = await Promise.all(promises);
+      const movimientos = [
+        ...new Set(movimientosData.map((item) => item.movimiento)),
+      ];
+      const operaciones = [
+        ...new Set(movimientosData.map((item) => item.operacion)),
+      ];
 
-    // Combina los resultados y actualiza el estado
-    setOptions(Object.assign({}, ...results));
+      // Consulta para obtener valores únicos de "espacios"
+      const { data: espaciosData, error: espaciosError } = await supabase
+        .from("espacios")
+        .select("nombre");
+      console.log("Opciones de espacios:", options.espacio);
+
+      if (espaciosError) {
+        console.error(
+          "Error al cargar opciones desde espacios:",
+          espaciosError
+        );
+
+        return;
+      }
+
+      const espacios = [...new Set(espaciosData.map((item) => item.nombre))];
+
+      // Consulta para obtener valores únicos de "espacios"
+      const { data: productosData, error: productosError } = await supabase
+        .from("base_operativa")
+        .select("descripcion");
+      console.log("Opciones de espacios:", options.producto);
+
+      if (productosError) {
+        console.error(
+          "Error al cargar opciones desde espacios:",
+          productosError
+        );
+
+        return;
+      }
+
+      const productos = [
+        ...new Set(productosData.map((item) => item.descripcion)),
+      ];
+
+      // Actualizar opciones en el estado
+      setOptions({
+        producto: productos.map((item) => ({ value: item, label: item })),
+        movimiento: movimientos.map((item) => ({ value: item, label: item })),
+        operacion: operaciones.map((item) => ({ value: item, label: item })),
+        espacio: espacios.map((item) => ({ value: item, label: item })),
+      });
+    } catch (err) {
+      console.error("Error al cargar opciones:", err);
+    }
   };
 
   useEffect(() => {
@@ -125,103 +161,45 @@ export function DataTableViewOptions<TData>({
   // -----------------------------------------------------------------------------------------------
 
   const handleCreate = async (e: FormEvent) => {
-    if (
-      !selectedProducto ||
-      !selectedEspacio ||
-      !selectedMovimiento ||
-      !selectedOperacion
-    ) {
-      alert("¡Completa todos los campos obligatorios! 🛑");
-      console.error("ERROR: Algún campo select no está seleccionado.");
-      return;
-    }
     e.preventDefault();
-
-    console.log("selectedProducto:", selectedProducto);
-
-    if (!selectedProducto || !selectedProducto.value) {
-      alert("Selecciona un producto antes de enviar.");
-      return;
-    }
-
-    // Captura todo lo que envía el form
     const formData = new FormData(e.target as HTMLFormElement);
+    const productData = Object.fromEntries(formData);
 
-    // Para debug: lista todas las keys y valores recibidos
-    console.log("Datos recibidos del form:");
-    for (const [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value);
-    }
-
-    // Extraer valores normales (inputs)
-    const descripcion = formData.get("descripcion")?.toString() || "";
-    const cantidadStr = formData.get("cantidad")?.toString() || "0";
-    const usuario = formData.get("usuario")?.toString() || "";
-    const fechaInput = formData.get("fecha")?.toString() || "";
-
-    // Convertir cantidad a número
-    const cantidad = Number(cantidadStr);
-    if (isNaN(cantidad) || cantidad < 1) {
-      console.warn("Cantidad inválida:", cantidadStr);
-    }
-
-    // Convertir fecha
-    const fecha = fechaInput
-      ? new Date(fechaInput).toISOString()
-      : new Date().toISOString();
-
-    // Revisar selects que no vienen en formData (porque react-select no usa inputs nativos)
-    console.log("Valores seleccionados (de estado o variables):");
-    console.log("Producto:", selectedProducto);
-    console.log("Espacio:", selectedEspacio);
-    console.log("Movimiento:", selectedMovimiento);
-    console.log("Operacion:", selectedOperacion);
-
-    if (
-      !selectedProducto ||
-      !selectedEspacio ||
-      !selectedMovimiento ||
-      !selectedOperacion
-    ) {
-      console.error("ERROR: Algún campo select no está seleccionado.");
+    // Validar y mapear producto
+    const productoSeleccionado = options.producto.find(
+      (opcion) => opcion.value === productData.producto
+    );
+    if (!productoSeleccionado) {
+      alert("El producto seleccionado no es válido.");
       return;
     }
+    productData.producto = productoSeleccionado.value;
 
-    // Armar objeto para insertar
-    const productData: Crear = {
-      producto: selectedProducto.value,
-      espacio: selectedEspacio.value,
-      movimiento: selectedMovimiento.value,
-      operacion: selectedOperacion.value,
-      cantidad,
-      descripcion,
-      fecha,
-      usuario,
-    };
+    const espacioSeleccionado = options.espacio.find(
+      (opcion) => opcion.value === productData.espacio
+    );
+    if (!espacioSeleccionado) {
+      alert("El espacio seleccionado no es válido.");
+      return;
+    }
+    productData.espacio = espacioSeleccionado.value;
 
-    console.log("Objeto final a insertar:", productData);
+    if (productData.fecha) {
+      productData.fecha = new Date(productData.fecha as string).toISOString();
+    }
 
     try {
       const { data, error } = await supabase
         .from("movimientos_inventario")
         .insert([productData])
         .select("*");
-
-      if (error) {
-        console.error(
-          "Error al insertar movimiento (detallado):",
-          JSON.stringify(error, null, 2)
-        );
-        return;
-      }
-
-      console.log("Registro insertado con éxito:", data);
+      if (error) throw error;
 
       setItems((prev) => [...prev, ...data]);
       closeModal();
       await fetchData();
     } catch (err) {
-      console.error("Error en try-catch al crear producto:", err);
+      console.log("Error al crear producto:", err);
     }
   };
 
@@ -229,24 +207,24 @@ export function DataTableViewOptions<TData>({
     e.preventDefault();
     if (!newValue.trim() || !currentType) return;
 
-    try {
-      const columnName =
-        currentType === "base_operativa" ? "descripcion" : "nombre";
+    // Define el campo que usarás para insertar según la tabla
+    const campoNombre =
+      currentType === "base_operativa" ? "descripcion" : "nombre";
 
+    try {
       const { error } = await supabase
         .from(currentType)
-        .insert([{ [columnName]: newValue }]);
+        .insert([{ nombre: newValue }]);
       if (error) throw error;
 
       await fetchOptions();
       setMiniModalOpen(false);
       setNewValue("");
-      setCurrentType("");
+      setCurrentType(null);
     } catch (err) {
       console.error(`Error al crear ${currentType}:`, err);
     }
   };
-
   return (
     <div className="flex space-x-2 ml-auto">
       <DropdownMenu>
@@ -281,7 +259,6 @@ export function DataTableViewOptions<TData>({
             ))}
         </DropdownMenuContent>
       </DropdownMenu>
-
       <Button
         variant="outline"
         size="sm"
@@ -290,7 +267,6 @@ export function DataTableViewOptions<TData>({
       >
         Exportar
       </Button>
-
       <Button
         variant="solid"
         size="sm"
@@ -301,7 +277,6 @@ export function DataTableViewOptions<TData>({
         <PlusIcon className="mr-2 h-4 w-4" />
         Agregar
       </Button>
-
       <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
         <div
           className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11"
@@ -318,15 +293,16 @@ export function DataTableViewOptions<TData>({
           <form className="flex flex-col" onSubmit={handleCreate}>
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                <div className="lg:col-span-2">
+                <div>
                   <Label>Producto</Label>
                   <div className="flex items-center space-x-2">
                     <Select
                       name="producto"
                       options={options.producto}
-                      placeholder="Selecciona un proveedor"
-                      value={selectedProducto || ""}
-                      onChange={(option) => setSelectedProducto(option)}
+                      placeholder="Selecciona un items"
+                      onChange={(selectedOption) =>
+                        console.log("Producto seleccionado:", selectedOption)
+                      }
                       className="dark:bg-dark-900"
                     />
                   </div>
@@ -338,19 +314,11 @@ export function DataTableViewOptions<TData>({
                       name="espacio"
                       options={options.espacio}
                       placeholder="Selecciona un Espacio"
-                      value={selectedEspacio || ""}
-                      onChange={setSelectedEspacio}
+                      onChange={(selectedOption) =>
+                        console.log("Producto seleccionado:", selectedOption)
+                      }
                       className="dark:bg-dark-900"
                     />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("proveedores");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
                   </div>
                 </div>
                 <div>
@@ -360,19 +328,11 @@ export function DataTableViewOptions<TData>({
                       name="movimiento"
                       options={opcionesMovimiento}
                       placeholder="Selecciona una marca"
-                      value={selectedMovimiento || ""}
-                      onChange={setSelectedMovimiento}
+                      onChange={(selectedOpciones) =>
+                        console.log("Estado seleccionado:", selectedOpciones)
+                      }
                       className="dark:bg-dark-900 flex-1"
                     />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("marcas");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
                   </div>
                 </div>
                 <div>
@@ -382,19 +342,11 @@ export function DataTableViewOptions<TData>({
                       name="operacion"
                       options={opcionesOperacion}
                       placeholder="Selecciona una operacion"
-                      value={selectedOperacion || ""}
-                      onChange={setSelectedOperacion}
+                      onChange={(selectedOpciones) =>
+                        console.log("Estado seleccionado:", selectedOpciones)
+                      }
                       className="dark:bg-dark-900 flex-1"
                     />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("marcas");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
                   </div>
                 </div>
                 <div>
@@ -406,14 +358,6 @@ export function DataTableViewOptions<TData>({
                     placeholder="Ej. 10"
                   />
                 </div>
-                <div className="lg:col-span-2">
-                  <Label>Descripción</Label>
-                  <Input
-                    type="text"
-                    name="descripcion"
-                    placeholder="Ej. Caja de herramientas"
-                  />
-                </div>
                 <div>
                   <Label>Fecha</Label>
                   <Input
@@ -421,6 +365,14 @@ export function DataTableViewOptions<TData>({
                     name="fecha"
                     defaultValue={new Date().toISOString().split("T")[0]}
                     disabled
+                  />
+                </div>
+                <div className="lg:col-span-2">
+                  <Label>Descripción</Label>
+                  <Input
+                    type="text"
+                    name="descripcion"
+                    placeholder="Ej. Caja de herramientas"
                   />
                 </div>
 
@@ -443,53 +395,7 @@ export function DataTableViewOptions<TData>({
           </form>
         </div>
       </Modal>
-
       {/* ------------------------------------------------------------------------------------- */}
-
-      {isMiniModalOpen && currentType && (
-        <Modal
-          isOpen={isMiniModalOpen}
-          onClose={() => {
-            setMiniModalOpen(false);
-            setCurrentType(null);
-            setNewValue("");
-          }}
-          className="max-w-[400px] m-4"
-        >
-          <div className="w-full p-4 bg-white rounded-lg dark:bg-gray-900">
-            <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90">
-              Agregar Nuevo{" "}
-              {currentType.charAt(0).toUpperCase() + currentType.slice(1, -1)}
-            </h4>
-            <form onSubmit={handleCreateOption}>
-              <Label>Nombre del {currentType.slice(0, -1)}</Label>
-              <Input
-                type="text"
-                name="newValue"
-                value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
-                placeholder={`Ej. Nombre de ${currentType.slice(0, -1)}`}
-              />
-              <div className="flex justify-end mt-4 gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setMiniModalOpen(false);
-                    setCurrentType(null);
-                    setNewValue("");
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button size="sm" type="submit">
-                  Crear
-                </Button>
-              </div>
-            </form>
-          </div>
-        </Modal>
-      )}
     </div>
   );
 }
