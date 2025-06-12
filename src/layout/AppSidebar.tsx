@@ -16,6 +16,7 @@ import {
   PageIcon,
   UserCircleIcon,
   TableIcon,
+  DocsIcon,
 } from "../icons/index";
 // import SidebarWidget from "./SidebarWidget";
 
@@ -34,9 +35,22 @@ const navItems: NavItem[] = [
     // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
   },
   {
-    icon: <UserCircleIcon />,
+    icon: <TaskIcon />,
+    name: "Bienes",
+    path: "/bienes",
+    // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+  },
+  {
+    icon: <PageIcon />,
     name: "Movimientos",
     path: "/movimientos",
+    // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+  },
+
+  {
+    icon: <DocsIcon />,
+    name: "Documentos",
+    path: "/documentos",
     // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
   },
 
@@ -58,7 +72,7 @@ const navItems: NavItem[] = [
   // },
   {
     name: "Espacios",
-    icon: <PieChartIcon />,
+    icon: <ListIcon />,
     subItems: [
       { name: "Phone Booth", path: "/", pro: false },
       { name: "El Hangar", path: "/", pro: false },
@@ -175,6 +189,12 @@ const othersItems: NavItem[] = [
     icon: <UserCircleIcon />,
     name: "Perfil Usuario",
     path: "/perfil",
+  },
+  {
+    icon: <UserCircleIcon />,
+    name: "Usuarios",
+    path: "/usuarios",
+    // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
   },
   // {
   //   icon: <PieChartIcon />,

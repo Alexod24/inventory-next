@@ -66,10 +66,7 @@ export function DataTableToolbar<TData>({
     table.getColumn("fecha")?.setFilterValue([from, to]);
   };
 
-  useEffect(() => {
-    console.log("Filtros activos:", table.getState().columnFilters);
-    console.log("Datos filtrados:", table.getRowModel().rows);
-  }, [table]);
+  useEffect(() => {}, [table]);
 
   return (
     <div className="flex flex-wrap items-center justify-between">

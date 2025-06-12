@@ -49,6 +49,16 @@ export default function SignUp() {
           <div>
             <form>
               <div className="space-y-5">
+                <div>
+                  <Label>
+                    Nombre<span className="text-error-500">*</span>
+                  </Label>
+                  <Input
+                    type="nombre"
+                    name="nombre"
+                    placeholder="Nombre de usuario"
+                  />
+                </div>
                 {/* Email */}
                 <div>
                   <Label>
