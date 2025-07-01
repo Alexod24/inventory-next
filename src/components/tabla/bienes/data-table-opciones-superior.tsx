@@ -153,7 +153,13 @@ export function DataTableViewOptions<TData>({
         setCodigo(codigoGenerado);
       }
     }
-  }, [categoriaSeleccionada, subcategoriaSeleccionada, nombreBien, options]);
+  }, [
+    categoriaSeleccionada,
+    subcategoriaSeleccionada,
+    nombreBien,
+    options.categorias,
+    filteredSubcategories,
+  ]);
   // -----------------------------------------------------------------------------------------------
   const loadData = async () => {
     const { data, error } = await supabase.from("bienes").select(`
