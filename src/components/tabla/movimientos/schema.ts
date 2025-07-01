@@ -1,21 +1,15 @@
 import { z } from "zod";
 
-// Definimos el esquema para BaseOperativa
-export const baseOperativaSchema = z.object({
-  id: z.string(),
-  proveedor: z.string(),
-  descripcion: z.string(),
-  marca: z.string(),
-  color: z.string(),
-  cantidad: z.number(),
-  tamaño: z.string(),
-  material: z.string(),
-  fecha: z.string(), // Fecha como cadena en formato ISO
-  valor: z.number(),
-  estado: z.string(),
-  disponibilidad: z.string(),
-  type: z.enum(["income", "expense"]).optional(), // Opcional si aplica
+// Definimos el esquema para Movimientos
+export const movimientosSchema = z.object({
+  id: z.string(), // Identificador único del movimiento
+  bien_id: z.string(), // Referencia al bien afectado
+  usuario_id: z.string(), // Usuario responsable del movimiento
+  tipo: z.enum(["Ingreso", "Salida", "Traslado"]), // Tipo de movimiento
+  cantidad: z.number(), // Cantidad afectada
+  fecha: z.number(),
+  observaciones: z.string().optional(), // Observaciones opcionales
 });
 
 // Inferimos el tipo automáticamente a partir del esquema
-export type BaseOperativa = z.infer<typeof baseOperativaSchema>;
+export type Movimientos = z.infer<typeof movimientosSchema>;

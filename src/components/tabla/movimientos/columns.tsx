@@ -1,112 +1,94 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { BaseOperativa } from "./schema";
+import { Bienes } from "./schema";
 import { DataTableColumnHeader } from "./data-table-column-header";
 // import { DataTableRowActions } from "./data-table-acciones-tabla";
 // import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const columns: ColumnDef<BaseOperativa>[] = [
+export const columns: ColumnDef<Bienes>[] = [
   {
-    accessorKey: "producto",
+    accessorKey: "bien_id", // Ruta completa al nombre de la categoría
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Producto" />
+      <DataTableColumnHeader column={column} title="Nombre del bien" />
     ),
-    cell: ({ row }) => (
-      <div className="flex space-x-2">
-        <span className="max-w-[500px] truncate capitalize font-medium">
-          {row.getValue("producto")}
-        </span>
-      </div>
-    ),
-    // Agregamos filtro de texto simple para que funcione con input tipo string
-    filterFn: (row, id, filterValue) => {
-      const value = row.getValue(id) as string;
-      return value
-        .toLowerCase()
-        .includes((filterValue as string).toLowerCase());
+    cell: ({ row }) => {
+      const bienNombre = row.original.bien?.nombre || "Sin usuario";
+      return (
+        <div className="flex space-x-2">
+          <span className="max-w-[500px] truncate capitalize font-medium">
+            {bienNombre}
+          </span>
+        </div>
+      );
     },
   },
-  {
-    accessorKey: "espacio",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Espacio" />
-    ),
-    cell: ({ row }) => (
-      <div className="flex space-x-2">
-        <span className="max-w-[500px] truncate capitalize font-medium">
-          {row.getValue("espacio")}
-        </span>
-      </div>
-    ),
-    // Agregamos filtro de texto simple para que funcione con input tipo string
-    filterFn: (row, id, filterValue) => {
-      const value = row.getValue(id) as string;
-      return value
-        .toLowerCase()
-        .includes((filterValue as string).toLowerCase());
-    },
-  },
-  {
-    accessorKey: "movimiento",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Movimiento" />
-    ),
-    cell: ({ row }) => (
-      <div className="w-[150px] capitalize">{row.getValue("movimiento")}</div>
-    ),
-  },
-
   {
     accessorKey: "cantidad",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Cantidad" />
     ),
-    cell: ({ row }) => (
-      <div className="flex w-[100px] items-center">
-        <span className="capitalize">{row.getValue("cantidad")}</span>
-      </div>
-    ),
-    filterFn: (row, id, filterValue) => {
-      // filtro simple de texto, no includes de array
-      const value = row.getValue(id) as string;
-      return value
-        .toLowerCase()
-        .includes((filterValue as string).toLowerCase());
+    cell: ({ row }) => {
+      const cantidad = row.getValue("cantidad") as number;
+      const isPositive = cantidad > 0;
+      return (
+        <div className="flex w-[100px] items-center">
+          <span
+            className={cn(
+              "capitalize",
+              isPositive ? "text-green-500" : "text-red-500"
+            )}
+          >
+            {cantidad}
+          </span>
+        </div>
+      );
+    },
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
     },
   },
-
   {
-    accessorKey: "descripcion",
+    accessorKey: "tipo_movimiento",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Descripcion" />
+      <DataTableColumnHeader column={column} title="Tipo de movimiento" />
     ),
-    cell: ({ row }) => (
-      <div className="flex space-x-2">
-        <span className="max-w-[500px] truncate capitalize font-medium">
-          {row.getValue("descripcion")}
-        </span>
-      </div>
-    ),
-    // Agregamos filtro de texto simple para que funcione con input tipo string
-    filterFn: (row, id, filterValue) => {
-      const value = row.getValue(id) as string;
-      return value
-        .toLowerCase()
-        .includes((filterValue as string).toLowerCase());
+    cell: ({ row }) => {
+      const estado = row.getValue("tipo_movimiento") as string;
+      const isIngreso = estado.toLowerCase() === "ingreso";
+      const isSalida = estado.toLowerCase() === "salida";
+
+      return (
+        <div className="flex w-[100px] items-center">
+          <span
+            className={cn(
+              "capitalize font-semibold",
+              isIngreso ? "text-green-600" : "",
+              isSalida ? "text-red-500" : ""
+            )}
+          >
+            {estado}
+          </span>
+        </div>
+      );
+    },
+    filterFn: (row, id, value) => {
+      return value.includes(row.getValue(id));
     },
   },
 
-  // ---------------------------------------------------------------------------------
   {
     accessorKey: "fecha",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Fecha" />
+      <DataTableColumnHeader column={column} title="Fecha de Creacion" />
     ),
     cell: ({ row }) => {
       const date = new Date(row.getValue("fecha"));
-      const formattedDate = date.toLocaleDateString("es-ES", {
+      const offsetDate = new Date(
+        date.getTime() + date.getTimezoneOffset() * 60 * 1000
+      );
+      const formattedDate = offsetDate.toLocaleDateString("es-ES", {
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -124,15 +106,17 @@ export const columns: ColumnDef<BaseOperativa>[] = [
       return rowDate >= startDate && rowDate <= endDate;
     },
   },
+  // ---------------------------------------------------------------------------------
+
   {
-    accessorKey: "usuario",
+    accessorKey: "motivo",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Usuario" />
+      <DataTableColumnHeader column={column} title="Motivos" />
     ),
     cell: ({ row }) => (
       <div className="flex space-x-2">
         <span className="max-w-[500px] truncate capitalize font-medium">
-          {row.getValue("usuario")}
+          {row.getValue("motivo")}
         </span>
       </div>
     ),
@@ -142,6 +126,23 @@ export const columns: ColumnDef<BaseOperativa>[] = [
       return value
         .toLowerCase()
         .includes((filterValue as string).toLowerCase());
+    },
+  },
+
+  {
+    accessorKey: "usuario_id", // Ruta completa al nombre de la categoría
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Responsable" />
+    ),
+    cell: ({ row }) => {
+      const usuarioNombre = row.original.usuario?.nombre || "Sin usuario";
+      return (
+        <div className="flex space-x-2">
+          <span className="max-w-[500px] truncate capitalize font-medium">
+            {usuarioNombre}
+          </span>
+        </div>
+      );
     },
   },
 ];

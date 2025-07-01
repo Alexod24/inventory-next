@@ -15,7 +15,7 @@ import Input from "../../form/input/Input";
 import Label from "../../form/Label";
 import Select from "../../form/Seleccionar";
 import { Button } from "@/components/ui/button";
-import { exportarToPDF } from "@/components/exportar/exportarPDF";
+import { exportarToPDF } from "./exportar";
 import { useState, useEffect, FormEvent } from "react";
 import { Modal } from "../../ui/modal";
 import { useModal } from "../../../hooks/useModal";
@@ -23,32 +23,20 @@ import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { MixerHorizontalIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Table } from "@tanstack/react-table";
 
-type Crear = {
-  descripcion: string;
-  proveedor: string;
-  marca: string;
+type Bienes = {
+  bien_id?: { nombre: string };
   cantidad: number;
-  tamano: string;
-  material: string;
-  fecha: string;
-  valor: number;
-  estado: string;
-  disponibilidad: string;
+  tipo_movimiento: boolean;
+  fecha?: string;
+  motivo?: string;
+  usuario_id: { nombre: string };
 };
 
-const opcionesEstado = [
-  { value: "bueno", label: "Bueno" },
-  { value: "dañado", label: "Dañado" },
-  { value: "roto", label: "Roto" },
+const opcionesMovimiento = [
+  { value: true, label: "Ingreso" },
+  { value: false, label: "Salida" },
 ];
 
-const opcionesDisponibilidad = [
-  { value: "ok", label: "Ok" },
-  { value: "faltante", label: "Faltante" },
-  { value: "pendiente", label: "Pendiente" },
-  // { value: "reparacion", label: "Reparación" },
-  // { value: "baja", label: "Baja" },
-];
 // ---------------------------------------------------------------------------------------------
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
@@ -60,42 +48,66 @@ export function DataTableViewOptions<TData>({
   fetchData,
 }: DataTableViewOptionsProps<TData>) {
   const { isOpen, openModal, closeModal } = useModal();
-  const [items, setItems] = useState<Crear[]>([]);
+  const [items, setItems] = useState<Bienes[]>([]);
   const [options, setOptions] = useState({
-    marcas: [],
-    colores: [],
-    materiales: [],
-    proveedores: [],
-    estados: [],
+    bienes: [] as { value: number; label: string }[],
+    usuarios: [] as { value: number; label: string }[],
   });
   const [isMiniModalOpen, setMiniModalOpen] = useState(false);
   const [newValue, setNewValue] = useState("");
   const [currentType, setCurrentType] = useState("");
+  const [codigo, setCodigo] = useState("");
+  const [bienSeleccionada, setBienSeleccionada] = useState<string | null>(null);
+  const [usuarioSeleccionada, setUsuarioSeleccionada] = useState("");
+  const [nombreBien, setNombreBien] = useState("");
+  const [fechaPredeterminada, setFechaPredeterminada] = useState(
+    new Date().toISOString().split("T")[0] // Fecha actual en formato "YYYY-MM-DD"
+  );
+  // -----------------------------------------------------------------------------------------------
 
+  // -----------------------------------------------------------------------------------------------
   const loadData = async () => {
-    const { data, error } = await supabase.from("base_operativa").select("*");
-    if (!error) setItems(data || []);
-    else console.error(error);
-    console.log(items);
+    const { data, error } = await supabase.from("movimientos").select(`
+    id,
+    bien_id,
+    cantidad,
+    tipo_movimiento,
+    fecha,
+    motivo,
+    bienes (
+          nombre
+        ),
+    usuarios (
+          nombre
+        )
+  `);
+
+    if (error) {
+      console.error("Error cargando datos:", error);
+    } else {
+      setItems(data); // Guarda los datos en el estado para usarlos luego
+    }
   };
 
   useEffect(() => {
     loadData();
   }, []);
 
+  useEffect(() => {}, [items]);
+
   // -----------------------------------------------------------------------------------------------
 
   const fetchOptions = async () => {
-    const types = ["marcas", "colores", "materiales", "proveedores", "estados"];
-    const promises = types.map(async (type) => {
-      const { data, error } = await supabase.from(type).select("nombre");
+    const tables = ["bienes", "usuarios"];
+    const promises = tables.map(async (table) => {
+      const { data, error } = await supabase.from(table).select("id, nombre");
       if (error) {
-        console.error(`Error al cargar ${type}:`, error);
-        return { [type]: [] };
+        console.error(`Error al cargar ${table}:`, error);
+        return { [table]: [] };
       }
       return {
-        [type]: data.map((item) => ({
-          value: item.nombre,
+        [table]: data.map((item) => ({
+          value: item.id,
           label: item.nombre,
         })),
       };
@@ -105,36 +117,55 @@ export function DataTableViewOptions<TData>({
     setOptions(Object.assign({}, ...results));
   };
 
+  // Llama a la función en el useEffect
   useEffect(() => {
     fetchOptions();
   }, []);
-
   // -----------------------------------------------------------------------------------------------
-
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const productData = Object.fromEntries(formData);
 
-    if (productData.fecha) {
-      productData.fecha = new Date(productData.fecha as string).toISOString();
+    const formData = new FormData(e.target as HTMLFormElement);
+    const reportData = Object.fromEntries(formData);
+
+    const mappedData = {
+      bien_id: parseInt(reportData.bien_id as string, 10) || null,
+      usuario_id: reportData.usuario_id || null,
+      responsable_id: parseInt(reportData.responsable_id as string, 10) || null,
+      cantidad: reportData.cantidad
+        ? parseInt(reportData.cantidad as string, 10)
+        : null,
+      fecha: reportData.fecha || new Date().toISOString(),
+      descripcion: reportData.descripcion || "",
+      acciones: reportData.acciones || null,
+    };
+
+    if (!mappedData.responsable_id) {
+      console.error("Error: Campo 'responsable_id' es obligatorio.");
+      return;
     }
+
+    console.log("Datos a insertar en reportes:", mappedData);
 
     try {
       const { data, error } = await supabase
-        .from("base_operativa")
-        .insert([productData])
+        .from("reportes")
+        .insert([mappedData])
         .select("*");
+
       if (error) throw error;
 
-      setItems((prev) => [...prev, ...data]);
+      console.log("Reporte creado:", data);
+
+      setItems((prev) => [...prev, ...(data || [])]);
       closeModal();
       await fetchData();
     } catch (err) {
-      console.log("Error al crear producto:", err);
+      console.error("Error al crear reporte:", err);
     }
   };
 
+  // -----------------------------------------------------------------------------------------------
   const handleCreateOption = async (e: FormEvent) => {
     e.preventDefault();
     if (!newValue.trim() || !currentType) return;
@@ -153,6 +184,7 @@ export function DataTableViewOptions<TData>({
       console.error(`Error al crear ${currentType}:`, err);
     }
   };
+  // -----------------------------------------------------------------------------------------------
 
   return (
     <div className="flex space-x-2 ml-auto">
@@ -216,39 +248,35 @@ export function DataTableViewOptions<TData>({
         >
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              Crear Producto
+              Crear Registro
             </h4>
             <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-              Llena los campos para registrar un nuevo producto.
+              Completa los campos para registrar un nuevo bien interno.
             </p>
           </div>
           <form className="flex flex-col" onSubmit={handleCreate}>
+            {/* Contenedor para las columnas */}
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                <div className="lg:col-span-2">
-                  <Label>Descripción</Label>
-                  <Input
-                    type="text"
-                    name="descripcion"
-                    placeholder="Ej. Caja de herramientas"
-                  />
-                </div>
+                {/* Categoría */}
                 <div>
-                  <Label>Proveedor</Label>
+                  <Label>Nombre</Label>
                   <div className="flex items-center space-x-2">
                     <Select
-                      name="proveedor"
-                      options={options.proveedores}
-                      placeholder="Selecciona un proveedor"
-                      onChange={(selectedOption) =>
-                        console.log("Producto seleccionado:", selectedOption)
-                      }
+                      name="bien_id"
+                      options={options.bienes}
+                      placeholder="Selecciona el bien"
                       className="dark:bg-dark-900"
+                      onChange={(selectedOption) =>
+                        setBienSeleccionada(
+                          selectedOption?.value.toString() || ""
+                        )
+                      }
                     />
                     <Button
                       size="sm"
                       onClick={() => {
-                        setCurrentType("proveedores");
+                        setCurrentType("categorias");
                         setMiniModalOpen(true);
                       }}
                     >
@@ -258,82 +286,16 @@ export function DataTableViewOptions<TData>({
                 </div>
 
                 <div>
-                  <Label>Marca</Label>
+                  <Label>Responsable</Label>
                   <div className="flex items-center space-x-2">
                     <Select
-                      name="marca"
-                      options={options.marcas}
-                      placeholder="Selecciona una marca"
-                      onChange={(selectedOption) =>
-                        console.log("Marca seleccionado:", selectedOption)
-                      }
-                      className="dark:bg-dark-900 flex-1"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("marcas");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Tamaño</Label>
-                  <Input type="text" name="tamano" placeholder="Ej. Grande" />
-                </div>
-
-                <div>
-                  <Label>Cantidad</Label>
-                  <Input
-                    type="number"
-                    name="cantidad"
-                    min="1"
-                    placeholder="Ej. 10"
-                  />
-                </div>
-
-                <div>
-                  <Label>Material</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      type="text"
-                      name="material"
-                      options={options.materiales}
-                      placeholder="Selecciona un material"
-                      onChange={(selectedOption) =>
-                        console.log("Material seleccionado:", selectedOption)
-                      }
-                      className="dark:bg-dark-900 flex-1"
-                    />
-
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("materiales");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Color</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      type="text"
-                      name="color"
-                      options={options.colores}
-                      placeholder="Selecciona un color"
-                      onChange={(selectedOption) =>
-                        console.log("Material seleccionado:", selectedOption)
-                      }
+                      name="responsable_id"
+                      options={options.usuarios}
+                      placeholder="Selecciona una subcategoría"
                       className="dark:bg-dark-900"
+                      onChange={(selectedOption) => {
+                        setUsuarioSeleccionada(selectedOption?.value || ""); // Asegúrate de que el valor esté definido
+                      }}
                     />
                     <Button
                       size="sm"
@@ -347,58 +309,61 @@ export function DataTableViewOptions<TData>({
                   </div>
                 </div>
 
+                {/* Cantidad */}
                 <div>
-                  <Label>Fecha</Label>
+                  <Label>Cantidad</Label>
+                  <Input
+                    type="number"
+                    name="cantidad"
+                    min="1"
+                    placeholder="Ej. 10"
+                    required
+                  />
+                </div>
+
+                {/* Fecha de Creación */}
+                <div>
+                  <Label>Fecha de Creación</Label>
                   <Input
                     type="date"
                     name="fecha"
                     defaultValue={new Date().toISOString().split("T")[0]}
-                    disabled
+                    className="!bg-gray-200 cursor-not-allowed"
+                    readOnly
                   />
                 </div>
 
-                <div>
-                  <Label>Valor</Label>
-                  <Input type="number" name="valor" placeholder="Ej. 250.00" />
+                {/* Observaciones */}
+                <div className="lg:col-span-2">
+                  <Label>Descripcion</Label>
+                  <textarea
+                    name="descripcion"
+                    rows={3}
+                    className="w-full p-2 border rounded-lg dark:bg-dark-900 dark:text-white"
+                    placeholder="Notas adicionales..."
+                  ></textarea>
                 </div>
 
-                <div>
-                  <Label>Estado</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      name="estado"
-                      options={opcionesEstado}
-                      placeholder="Selecciona el estado"
-                      onChange={(selectedOpciones) =>
-                        console.log("Estado seleccionado:", selectedOpciones)
-                      }
-                      className="dark:bg-dark-900"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Disponibilidad</Label>
-                  <Select
-                    name="disponibilidad"
-                    options={opcionesDisponibilidad}
-                    placeholder="Selecciona la disponibilidad"
-                    onChange={(selectedOpciones) =>
-                      console.log("Estado seleccionado:", selectedOpciones)
-                    }
-                    className="dark:bg-dark-900"
-                  />
+                {/* Observaciones */}
+                <div className="lg:col-span-2">
+                  <Label>Acciones</Label>
+                  <textarea
+                    name="acciones"
+                    rows={3}
+                    className="w-full p-2 border rounded-lg dark:bg-dark-900 dark:text-white"
+                    placeholder="Notas adicionales..."
+                  ></textarea>
                 </div>
               </div>
             </div>
 
+            {/* Botones de acción */}
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
               <Button size="sm" variant="outline" onClick={closeModal}>
                 Cancelar
               </Button>
-
               <Button size="sm" type="submit">
-                Crear Producto
+                Crear Registro
               </Button>
             </div>
           </form>

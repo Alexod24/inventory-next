@@ -1,46 +1,132 @@
+// src/middleware.ts
 import { NextRequest, NextResponse } from "next/server";
-import { getUser, updateSession } from "./app/utils/supabase/middleware";
+// Asegúrate de que la ruta sea correcta si moviste el archivo
+import { updateSession, getUser } from "./app/utils/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
-  const protectedRoutesList = ["/dashboard", "/profile"]; // Rutas que requieren autenticación
-  const authRoutesList = ["/login", "/register"]; // Rutas públicas para no autenticados
+  // <--- REVISA Y EDITA ESTA LISTA DE RUTAS PROTEGIDAS ---
+  // AÑADE AQUÍ CUALQUIER OTRA RUTA QUE SOLO DEBA SER ACCESIBLE SI EL USUARIO ESTÁ LOGUEADO
+  const protectedRoutesList = [
+    "/base", // Tu dashboard principal
+    "/bienes",
+    "/movimientos",
+    "/reportes",
+    "/documentos",
+    "/espacios", // Si quieres proteger el menú padre
+    "/espacios/phone-booth",
+    "/espacios/el-hangar",
+    "/espacios/bunkers",
+    "/espacios/unidades",
+    "/espacios/la-brigada",
+    "/espacios/counter",
+    "/espacios/limpieza",
+    "/espacios/almacen",
+    "/calendario",
+    "/usuarios", // Asegúrate de que esta ruta esté protegida
+    "/perfil", // Añadida ruta de perfil si no estaba explícitamente
+  ];
+  // --- FIN REVISIÓN ---
+
+  const authRoutesList = ["/login"]; // Rutas públicas para no autenticados
   const currentPath = new URL(request.url).pathname;
 
   console.log("Middleware ejecutado para la ruta:", currentPath);
 
-  // Actualizar sesión
-  await updateSession(request);
-  console.log("Cookies después de updateSession:", request.cookies.getAll());
+  // 1. Actualizar sesión y obtener la respuesta con cookies actualizadas
+  // Esta 'response' es la que contendrá las cookies de sesión.
+  let response = NextResponse.next({
+    // Inicializar response con NextResponse.next()
+    request: request,
+  });
+  response = await updateSession(request); // Asegúrate de que updateSession devuelve una NextResponse
 
-  // Obtener usuario
+  console.log(
+    "Cookies después de updateSession (en response):",
+    response.cookies.getAll()
+  );
+
+  // 2. Obtener usuario usando la respuesta que viene de updateSession
+  // Ahora getUser devuelve el usuario Y la respuesta con las cookies.
+  // Es importante que getUser reciba la 'response' para que pueda modificar las cookies si es necesario.
   const {
     data: { user },
     error,
-  } = await getUser(request, NextResponse.next());
+    response: userResponse,
+  } = await getUser(request, response); // Pasa la respuesta aquí
+
+  // Usa la respuesta que viene de getUser para las redirecciones
+  response = userResponse;
 
   if (error) {
-    console.error("Error al obtener usuario:", error);
+    console.error("Error al obtener usuario en middleware:", error);
   } else {
-    console.log("Usuario obtenido:", user);
+    console.log("Usuario obtenido en middleware:", user);
   }
 
-  // Redirección para rutas protegidas
-  if (protectedRoutesList.includes(currentPath) && !user) {
-    console.log("Redirigiendo a login: Usuario no autenticado");
+  // Lógica de Redirección:
+  // Caso 1: Usuario NO autenticado
+  if (!user) {
+    // Si intenta acceder a una ruta protegida
+    if (protectedRoutesList.includes(currentPath)) {
+      console.log(
+        "Redirigiendo a login: Usuario no autenticado intentó acceder a ruta protegida",
+        currentPath
+      );
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+    // Si intenta acceder a una ruta de autenticación (login/register), permitir
+    if (authRoutesList.includes(currentPath)) {
+      return response; // Permite el acceso a /login o /register
+    }
+    // Si es la página de inicio (homepage), permitir acceso
+    if (currentPath === "/") {
+      return response;
+    }
+
+    // Si no es ninguna de las anteriores (protegida, auth, homepage)
+    // y el usuario NO está autenticado, redirigir a /login.
+    // Esto captura rutas no existentes o cualquier otra ruta no autorizada para no autenticados.
+    console.log(
+      "Redirigiendo a login: Usuario no autenticado intentó acceder a ruta no autorizada/inexistente",
+      currentPath
+    );
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Evitar que usuarios autenticados accedan a rutas públicas
-  if (authRoutesList.includes(currentPath) && user) {
-    console.log("Redirigiendo a dashboard: Usuario ya autenticado");
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // Caso 2: Usuario SÍ autenticado
+  if (user) {
+    // Si intenta acceder a una ruta de autenticación (login/register), redirigir a /base
+    if (authRoutesList.includes(currentPath)) {
+      console.log(
+        "Redirigiendo a /base: Usuario ya autenticado intentó acceder a ruta de autenticación",
+        currentPath
+      );
+      const redirectUrl = new URL("/base", request.url);
+      return NextResponse.redirect(redirectUrl);
+    }
+    // Para todas las demás rutas (protegidas, existentes, no existentes), permitir acceso.
+    // Next.js manejará el 404 si la ruta no existe y el usuario está autenticado.
+    return response;
   }
 
-  // Permitir acceso
-  return NextResponse.next();
+  // Fallback (debería ser inalcanzable con la lógica anterior si el matcher es amplio)
+  return response;
 }
 
-// Configuración del matcher
+// Configuración del matcher del middleware:
+// Esto le dice a Next.js qué rutas debe interceptar el middleware.
+// Hemos añadido exclusiones para archivos estáticos comunes en la carpeta 'public'.
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"], // Captura rutas dinámicas
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files generated by Next.js)
+     * - _next/image (image optimization files generated by Next.js)
+     * - favicon.ico (favicon file)
+     * - Cualquier otro archivo o carpeta estática en 'public/' que no necesite autenticación
+     * (ej. /images/, /fonts/, /videos/, etc.)
+     * - /api/ (si tienes APIs públicas que no requieren autenticación)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|images/|test-image.jpg|api).*)", // <-- CAMBIO CLAVE AQUÍ
+  ],
 };

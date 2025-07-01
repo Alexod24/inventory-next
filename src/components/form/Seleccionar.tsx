@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 
 interface Option {
-  value: string;
+  value: string | number; // CAMBIO CLAVE: Permite que 'value' sea string o number
   label: string;
-  id?: string; // Añadido para permitir id en cada opción
-  customValue?: string; // Nuevo atributo para un valor personalizado
+  id?: string;
+  customValue?: string;
 }
 
 interface SelectProps {
@@ -12,11 +12,11 @@ interface SelectProps {
   placeholder?: string;
   onChange: (value: string) => void;
   className?: string;
-  defaultValue?: string; // Valor inicial en caso de que no sea controlado
+  defaultValue?: string;
   value?: string; // Valor controlado externo
   name?: string;
-  type?: string; // Aunque no es estándar para select, lo agrego por si quieres usarlo
-  id?: string; // Añadido para permitir id en el select
+  type?: string;
+  id?: string;
 }
 
 const Select: React.FC<SelectProps> = ({
@@ -30,8 +30,7 @@ const Select: React.FC<SelectProps> = ({
   type,
   id, // Nuevo prop para el id del select
 }) => {
-  // Internamente, manejamos el estado solo si no se pasa `value`
-  options = options || [];
+  options = options || []; // Asegura que options sea un array
   const [internalValue, setInternalValue] = useState<string>(defaultValue);
 
   useEffect(() => {
@@ -48,21 +47,25 @@ const Select: React.FC<SelectProps> = ({
     onChange(newValue); // Notifica al componente padre
   };
 
+  // El valor que se le pasa al elemento <select> de HTML debe ser una cadena.
+  // Si 'value' o 'internalValue' son undefined/null, se usa una cadena vacía.
+  const controlledHtmlValue = (value ?? internalValue ?? "").toString();
+
   return (
     <select
-      id={id} // Asignar el id al select
+      id={id}
       name={name}
-      {...(type ? { type } : {})} // Si pasas type, se agrega
+      {...(type ? { type } : {})}
       className={`h-11 w-full appearance-none rounded-lg border border-gray-300 px-4 py-2.5 pr-11 text-sm shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${
-        value ?? internalValue
+        controlledHtmlValue
           ? "text-gray-800 dark:text-white/90"
           : "text-gray-400 dark:text-gray-400"
       } ${className}`}
-      value={value ?? internalValue} // Usa `value` si es controlado, de lo contrario usa `internalValue`
+      value={controlledHtmlValue} // Usa el valor controlado y asegurado como string
       onChange={handleChange}
     >
       <option
-        value=""
+        value="" // Valor vacío para la opción de placeholder
         disabled
         className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
       >
@@ -70,9 +73,9 @@ const Select: React.FC<SelectProps> = ({
       </option>
       {options.map((option) => (
         <option
-          key={option.value}
-          id={option.id} // Asignar el id a cada opción si está disponible
-          value={option.customValue || option.value} // Usar customValue si está disponible
+          key={String(option.value)} // CAMBIO CLAVE: Asegura que la key sea siempre una cadena
+          id={option.id}
+          value={String(option.customValue || option.value)} // CAMBIO CLAVE: Asegura que el valor de la opción sea siempre una cadena
           className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
         >
           {option.label}

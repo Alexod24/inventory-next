@@ -1,21 +1,138 @@
-"use client";
-import { useState } from "react";
+"use client"; // Asegúrate de que este componente sea un Client Component
+
+import React, { useState, FormEvent, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { logIn } from "@/app/actions/auth"; // Tu Server Action de login
+import ReCAPTCHA from "react-google-recaptcha";
+
+// Importa tus componentes de UI
 import Caja from "@/components/form/input/Caja";
 import Input from "@/components/form/input/Input";
 import Label from "@/components/form/Label";
-// import Boton from "@/components/ui/boton/Boton";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
-// import { useRouter } from "next/navigation"; // Importa useRouter para redirección
-import { logIn } from "@/app/actions/auth";
+import Alert from "@/components/ui/alerta/AlertaExito"; // <--- IMPORTACIÓN DE TU COMPONENTE ALERT
+import { useUser } from "@/context/UserContext"; // <--- NUEVA IMPORTACIÓN: useUser
 
 export default function IniciarSesion() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
-  // const [email, setEmail] = useState("");
-  // const [password, setPassword] = useState("");
-  const [error] = useState("");
-  // const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  // Estados para controlar las alertas
+  const [currentAlert, setCurrentAlert] = useState<{
+    visible: boolean;
+    variant: "success" | "error" | "warning"; // Asumo que 'error' es un variant válido, si no, usa 'warning'
+    title: string;
+    message: string;
+  } | null>(null);
+
+  const [loading, setLoading] = useState(false); // Estado para el indicador de carga
+
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [recaptchaValue, setRecaptchaValue] = useState<string | null>(null);
+
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
+
+  const MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA = 2;
+
+  const router = useRouter();
+  const { refreshUser } = useUser(); // <--- Obtén la función refreshUser del contexto
+
+  const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+
+  const onRecaptchaChange = (token: string | null) => {
+    setRecaptchaValue(token);
+    // Limpiar alerta si el CAPTCHA se resuelve
+    if (token) {
+      setCurrentAlert(null);
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setCurrentAlert(null); // Limpia cualquier alerta anterior
+    setLoading(true); // Activa el indicador de carga
+
+    const formData = new FormData();
+    formData.append("email", email);
+    formData.append("password", password);
+
+    const captchaIsVisible =
+      failedAttempts >= MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA;
+    if (captchaIsVisible) {
+      if (!recaptchaSiteKey) {
+        setCurrentAlert({
+          visible: true,
+          variant: "error", // O "warning" si "error" no es válido
+          title: "Error de Configuración",
+          message: "reCAPTCHA Site Key no está definida.",
+        });
+        setLoading(false);
+        return;
+      }
+      if (!recaptchaValue) {
+        setCurrentAlert({
+          visible: true,
+          variant: "warning",
+          title: "Verificación Requerida",
+          message: "Por favor, completa la verificación reCAPTCHA.",
+        });
+        setLoading(false);
+        return;
+      }
+      formData.append("recaptchaToken", recaptchaValue);
+      formData.append("captchaRequired", "true");
+    } else {
+      formData.append("captchaRequired", "false");
+    }
+
+    const result = await logIn(formData);
+
+    // IMPORTANTE: Reiniciar el reCAPTCHA después de cada intento de envío
+    if (recaptchaRef.current) {
+      recaptchaRef.current.reset();
+    }
+    setRecaptchaValue(null); // También limpia el estado interno del token
+
+    if (result.success) {
+      console.log("Login exitoso. Redirigiendo...");
+      setFailedAttempts(0); // Reinicia los intentos fallidos al éxito
+      setCurrentAlert({
+        visible: true,
+        variant: "success",
+        title: "¡Inicio de Sesión Exitoso!",
+        message: "Serás redirigido en breve.",
+      });
+      // Redirige después de un breve tiempo para que el usuario vea la alerta
+      setTimeout(async () => {
+        // <--- Hacemos el setTimeout async
+        await refreshUser(); // Fuerza la recarga del usuario en el contexto
+        router.push(result.redirectPath || "/base");
+        // router.refresh(); // <--- ELIMINADO: Ya no es necesario aquí
+      }, 1500);
+    } else {
+      setCurrentAlert({
+        visible: true,
+        variant: "error", // O "warning" si "error" no es válido
+        title: "Error de Inicio de Sesión",
+        message: result.error || "Ocurrió un error desconocido.",
+      });
+
+      if (result.error && result.error.includes("Credenciales inválidas")) {
+        if (captchaIsVisible) {
+          setFailedAttempts(1); // Reinicia a 1 intento fallido si el CAPTCHA ya estaba visible
+        } else {
+          setFailedAttempts((prev) => prev + 1); // Incrementa normalmente
+        }
+      } else if (result.error && result.error.includes("CAPTCHA")) {
+        setFailedAttempts(MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA); // Mantiene el CAPTCHA visible
+      } else {
+        setFailedAttempts((prev) => prev + 1);
+      }
+    }
+    setLoading(false); // Desactiva el indicador de carga
+  };
 
   return (
     <div className="flex flex-col flex-1 lg:w-1/2 w-full">
@@ -39,19 +156,22 @@ export default function IniciarSesion() {
             </p>
           </div>
           <div>
-            {/* AQUI EMPIEZA EL FORM */}
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 <div>
                   <Label>
                     Correo Electronico <span className="text-error-500">*</span>{" "}
                   </Label>
-
                   <Input
                     id="email"
                     name="email"
                     type="email"
                     placeholder="alex@gmail.com"
+                    value={email}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setEmail(e.target.value)
+                    }
+                    required
                   />
                 </div>
 
@@ -59,15 +179,18 @@ export default function IniciarSesion() {
                   <Label>
                     Contraseña <span className="text-error-500">*</span>{" "}
                   </Label>
-
                   <div className="relative">
                     <Input
                       id="password"
                       name="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       placeholder="Ingresa tu contraseña"
+                      value={password}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setPassword(e.target.value)
+                      }
+                      required
                     />
-
                     <span
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
@@ -80,51 +203,68 @@ export default function IniciarSesion() {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Caja checked={isChecked} onChange={setIsChecked} />
-                    <span className="block font-normal text-gray-700 text-theme-sm dark:text-gray-400">
-                      Recordarme siempre
-                    </span>
+
+                {/* Aquí se muestra el Google reCAPTCHA condicionalmente */}
+                {failedAttempts >= MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA && (
+                  <div className="mt-4">
+                    {recaptchaSiteKey ? (
+                      <ReCAPTCHA
+                        sitekey={recaptchaSiteKey}
+                        onChange={onRecaptchaChange}
+                        onExpired={() => setRecaptchaValue(null)}
+                        onErrored={() => setRecaptchaValue(null)}
+                        ref={recaptchaRef}
+                      />
+                    ) : (
+                      <p className="text-red-500 text-sm">
+                        Error: reCAPTCHA Site Key no configurada.
+                      </p>
+                    )}
                   </div>
+                )}
+
+                {/* Mensaje de intentos restantes */}
+                {failedAttempts > 0 &&
+                  failedAttempts < MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA && (
+                    <p className="text-sm text-yellow-600 mb-4 text-center">
+                      Credenciales inválidas. Te quedan{" "}
+                      {MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA - failedAttempts}{" "}
+                      intentos antes del CAPTCHA.
+                    </p>
+                  )}
+
+                <div className="flex items-center justify-between">
                   <Link
                     href="/reset-password"
-                    className="text-sm text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                    className="text-sm text-amber-500 hover:text-yellow-500 dark:text-amber-400"
                   >
                     Olvidaste tu contraseña?
                   </Link>
                 </div>
                 <div>
-                  {/* <Boton className="w-full" size="sm">
-                    Iniciar Sesion
-                  </Boton> */}
                   <button
-                    formAction={logIn}
-                    className="p-2 bg-blue-800 h-10 pointer hover:bg-blue-700 transition-all rounded-sm flex items-center justify-center text-white font-bold w-full"
+                    type="submit"
+                    disabled={loading}
+                    className="p-2 bg-amber-500 h-10 pointer hover:bg-yellow-500 transition-all rounded-sm flex items-center justify-center text-white font-bold w-full"
                   >
-                    Iniciar Sesion
+                    {loading ? "Iniciando..." : "Iniciar Sesion"}
                   </button>
                 </div>
-                {/* Mostrar el error si ocurre */}
-                {error && (
-                  <div className="text-red-500 text-sm mt-2 text-center">
-                    {error}
+                {/* Aquí se renderiza la alerta */}
+                {currentAlert && currentAlert.visible && (
+                  <div className="mt-4">
+                    {" "}
+                    {/* Contenedor para la alerta */}
+                    <Alert
+                      variant={currentAlert.variant}
+                      title={currentAlert.title}
+                      message={currentAlert.message}
+                      showLink={false} // Asumo que no quieres enlaces en estas alertas
+                    />
                   </div>
                 )}
               </div>
             </form>
-
-            <div className="mt-5">
-              <p className="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start">
-                No tienes una cuenta?{" "}
-                <Link
-                  href="/register"
-                  className="text-brand-500 hover:text-brand-600 dark:text-brand-400"
-                >
-                  Crea una
-                </Link>
-              </p>
-            </div>
           </div>
         </div>
       </div>

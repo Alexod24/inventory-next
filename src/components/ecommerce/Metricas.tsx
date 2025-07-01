@@ -22,7 +22,7 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
       try {
         // Obtener el total de productos
         const { data: products, error: productsError } = await supabase
-          .from("productos") // Cambia "productos" por el nombre real de tu tabla
+          .from("bienes") // Cambia "productos" por el nombre real de tu tabla
           .select("*", { count: "exact" });
 
         if (productsError) throw productsError;
@@ -31,8 +31,8 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
 
         // Obtener el total del stock
         const { data: stockData, error: stockError } = await supabase
-          .from("productos") // Cambia "productos" por el nombre real de tu tabla
-          .select("stock");
+          .from("bienes") // Cambia "productos" por el nombre real de tu tabla
+          .select("cantidad");
 
         if (stockError) throw stockError;
 
@@ -53,7 +53,7 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
 
   return (
     <div
-      className={`grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-6 ${className}`}
+      className={`grid grid-cols-1 gap-4 sm:grid-cols-3 md:gap-6 ${className}`}
     >
       {/* Metric Item: Total Products */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
@@ -63,7 +63,7 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
         <div className="flex items-end justify-between mt-5">
           <div>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              Nº Productos
+              Nº de Bienes
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
               {totalProducts}
@@ -85,7 +85,7 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
         <div className="flex items-end justify-between mt-5">
           <div>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              Total Stock
+              Nº de Espacios
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
               {totalStock}
@@ -95,6 +95,27 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
             <ArrowDownIcon />
             {/* Este porcentaje también puede ser dinámico */}
             -3.00%
+          </Badge>
+        </div>
+      </div>
+      {/* Metric Item: Total Products */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+        <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
+          <BoxIconLine className="text-gray-800 dark:text-white/90" />
+        </div>
+        <div className="flex items-end justify-between mt-5">
+          <div>
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              Cantidad Total
+            </span>
+            <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
+              {totalProducts}
+            </h4>
+          </div>
+          <Badge color="success">
+            <ArrowUpIcon />
+            {/* Este porcentaje puede ser dinámico si tienes un historial */}
+            +5.00%
           </Badge>
         </div>
       </div>

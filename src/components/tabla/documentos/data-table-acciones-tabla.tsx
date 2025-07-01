@@ -3,14 +3,18 @@
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 import { Row } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-hot-toast";
-import { supabase } from "@/app/utils/supabase/supabase";
+// import { toast } from "react-hot-toast"; // Eliminamos toast ya que usaremos alertas personalizadas
+// import { supabase } from "@/app/utils/supabase/supabase"; // Eliminamos esta importación duplicada/incorrecta
+import { createClientComponentClient } from "@/app/utils/supabase/browser"; // Cliente de Supabase para el navegador
 import { Modal } from "../../ui/modal";
 import { useModal } from "../../../hooks/useModal";
 import { useState, useEffect, FormEvent } from "react";
 import Input from "../../form/input/Input";
 import Label from "../../form/Label";
 import Select from "../../form/Seleccionar";
+import Alert from "@/components/ui/alerta/AlertaExito"; // <--- IMPORTACIÓN DE TU COMPONENTE ALERT
+import ReactDOM from "react-dom"; // <--- IMPORTACIÓN NECESARIA PARA REACT PORTALS
+import { useUser } from "@/context/UserContext"; // <--- IMPORTACIÓN DEL CONTEXTO DE USUARIO
 
 import {
   DropdownMenu,
@@ -26,125 +30,111 @@ interface Option {
   label: string;
 }
 
+// Opciones de estado para documentos (ej. físico del documento o su validez)
+const opcionesEstadoDocumento = [
+  { value: "activo", label: "Activo" },
+  { value: "archivado", label: "Archivado" },
+  { value: "obsoleto", label: "Obsoleto" },
+  { value: "en_revision", label: "En Revisión" },
+];
+
 interface OptionsState {
-  marcas: Option[];
-  colores: Option[];
-  materiales: Option[];
-  proveedores: Option[];
-  estados: Option[];
+  usuarios: Option[];
+  // Si tuvieras otras tablas relacionadas con documentos que necesitas añadir dinámicamente, irían aquí.
 }
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
   refreshData: (triggeredBy?: string) => Promise<void>;
-  // Nueva prop para refrescar datos
 }
-interface MarcaOption {
-  value: string;
-  label: string;
-}
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const options = {
-  marcas: [
-    { value: "marca1", label: "Marca 1" },
-    { value: "marca2", label: "Marca 2" },
-  ] as MarcaOption[],
-};
-
-const opcionesEstado = [
-  { value: "bueno", label: "Bueno" },
-  { value: "dañado", label: "Dañado" },
-  { value: "roto", label: "Roto" },
-];
-
-const opcionesDisponibilidad = [
-  { value: "ok", label: "OK" },
-  { value: "pendiente", label: "Pendiente" },
-  { value: "faltante", label: "Faltante" },
-];
 
 export function DataTableRowActions<TData>({
   row,
   refreshData,
 }: DataTableRowActionsProps<TData>) {
-  const data: any = row.original;
+  const data: any = row.original; // Los datos de la fila actual (un documento)
   const { isOpen, openModal, closeModal } = useModal();
+  const supabase = createClientComponentClient(); // Inicializa el cliente de Supabase para el navegador
+  const { user, loading: userLoading } = useUser(); // <--- OBTENEMOS EL USUARIO Y SU ESTADO DE CARGA
 
   const [options, setOptions] = useState<OptionsState>({
-    marcas: [],
-    colores: [],
-    materiales: [],
-    proveedores: [],
-    estados: [],
+    usuarios: [],
   });
 
   const [isMiniModalOpen, setMiniModalOpen] = useState(false);
   const [currentType, setCurrentType] = useState<string | null>(null);
   const [newValue, setNewValue] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
-  const [selectedProveedor, setSelectedProveedor] = useState<
+  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false); // Nuevo estado para el modal de confirmación
+
+  // Estados para los valores seleccionados en los Selects del modal de documentos
+  const [selectedUsuario, setSelectedUsuario] = useState<string | undefined>(
+    data.usuario_id || undefined
+  );
+  const [selectedEstadoDocumento, setSelectedEstadoDocumento] = useState<
     string | undefined
-  >(data.proveedor || undefined);
-  const [selectedMarca, setSelectedMarca] = useState<string | undefined>(
-    data.marca || undefined
-  );
-  const [selectedMaterial, setSelectedMaterial] = useState<string | undefined>(
-    data.material || undefined
-  );
-  const [selectedColor, setSelectedColor] = useState<string | undefined>(
-    data.color || undefined
-  );
+  >(data.estado || undefined);
+
+  // Nuevo estado para controlar la alerta personalizada
+  const [currentAlert, setCurrentAlert] = useState<{
+    visible: boolean;
+    variant: "success" | "error" | "warning";
+    title: string;
+    message: string;
+  } | null>(null);
+
+  // -----------------------------------------------------------------------------------------
 
   useEffect(() => {
     if (isEditModalOpen) {
-      if (options.proveedores.length > 0) {
-        setSelectedProveedor(
-          options.proveedores.find((opt) => opt.value === data.proveedor)?.value
-        );
-      }
-      if (options.marcas.length > 0) {
-        setSelectedMarca(
-          options.marcas.find((opt) => opt.value === data.marca)?.value
-        );
-      }
-      if (options.materiales.length > 0) {
-        setSelectedMaterial(
-          options.materiales.find((opt) => opt.value === data.material)?.value
-        );
-      }
-      if (options.colores.length > 0) {
-        setSelectedColor(
-          options.colores.find((opt) => opt.value === data.color)?.value
-        );
-      }
-      // Repite para otros selects si los tienes (colores, materiales, estados, etc.)
+      // Asegurar que los estados de los selects se inicialicen con los IDs de la data
+      setSelectedUsuario(data.usuario_id || undefined);
+      setSelectedEstadoDocumento(data.estado || undefined);
     }
-  }, [options, data, isEditModalOpen]);
+  }, [data, isEditModalOpen]);
 
   // -----------------------------------------------------------------------------------------
   const handleOpenEdit = () => {
+    console.log("Abriendo modal de edición de documento...");
     setIsEditModalOpen(true);
     openModal();
   };
   // ------------------------------------------------------------------------------------------
   const fetchOptions = async () => {
+    console.log("Iniciando fetch de opciones para documentos...");
     try {
-      const types = ["marcas", "colores", "materiales", "proveedores"];
+      // Solo necesitamos usuarios para los documentos
+      const types = ["usuarios"];
       const promises = types.map(async (type) => {
-        const { data, error } = await supabase.from(type).select("nombre");
-        if (error) throw error;
+        const { data, error } = await supabase.from(type).select("id, nombre");
+        if (error) {
+          console.warn(
+            `Advertencia: No se pudo cargar la tabla '${type}'. Error: ${error.message}`
+          );
+          return { [type]: [] }; // Retorna un array vacío para este tipo si hay error
+        }
+        console.log(`Datos obtenidos para ${type}:`, data);
         return {
           [type]: data.map((item) => ({
-            value: item.nombre,
+            value: item.id, // Asegúrate de usar el ID como valor
             label: item.nombre,
           })),
         };
       });
 
       const results = await Promise.all(promises);
+      console.log("Opciones cargadas exitosamente:", results);
       setOptions(Object.assign({}, ...results));
     } catch (err) {
       console.error("Error fetching options:", err);
+      setCurrentAlert({
+        visible: true,
+        variant: "error",
+        title: "Error de Carga",
+        message:
+          "No se pudieron cargar las opciones para los campos. Inténtalo de nuevo.",
+      });
+      setTimeout(() => setCurrentAlert(null), 5000);
     }
   };
 
@@ -153,86 +143,182 @@ export function DataTableRowActions<TData>({
   }, []);
 
   // -----------------------------------------------------------------------------------------
-  const handleDelete = async () => {
+
+  const handleInitiateDelete = () => {
+    setShowConfirmDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setShowConfirmDeleteModal(false); // Cierra el modal de confirmación
     try {
       const { error } = await supabase
-        .from("base_operativa")
+        .from("documentos") // <--- TABLA CORRECTA PARA ELIMINAR DOCUMENTOS
         .delete()
         .eq("id", data.id);
       if (error) throw error;
       await refreshData("delete");
+      setCurrentAlert({
+        visible: true,
+        variant: "success",
+        title: "¡Eliminado!",
+        message: "El registro ha sido eliminado exitosamente.",
+      });
+      setTimeout(() => setCurrentAlert(null), 3000);
     } catch (err) {
-      toast.error("Error al eliminar el registro");
       console.error("Error eliminando el registro:", err);
+      setCurrentAlert({
+        visible: true,
+        variant: "error",
+        title: "Error al Eliminar",
+        message:
+          "Ocurrió un error al eliminar el registro. Por favor, inténtalo de nuevo.",
+      });
+      setTimeout(() => setCurrentAlert(null), 5000);
     }
   };
   // -----------------------------------------------------------------------------------------
 
   const handleEdit = async (e: FormEvent<HTMLFormElement>, id: string) => {
     e.preventDefault();
+    setCurrentAlert(null); // Limpia cualquier alerta anterior
+
+    console.log("Procesando formulario de edición de documento...");
+    console.log("ID del documento a actualizar:", id);
 
     const formData = new FormData(e.target as HTMLFormElement);
+    console.log("Datos del formulario:", Array.from(formData.entries()));
 
     const updatedData = {
-      descripcion: formData.get("descripcion")?.toString() || "",
-      tamano: formData.get("tamano")?.toString() || "",
-      cantidad: Number(formData.get("cantidad")) || 0,
-      valor: Number(formData.get("valor")) || 0,
-      proveedor: selectedProveedor || "",
-      marca: selectedMarca || "",
-      material: selectedMaterial || "",
-      color: selectedColor || "",
-      estado: formData.get("estado")?.toString() || "bueno", // default si es obligatorio
-      disponibilidad: formData.get("disponibilidad")?.toString() || "ok", // default
+      nombre: formData.get("nombre")?.toString() || data.nombre,
+      usuario_id: selectedUsuario || data.usuario_id,
+      fecha_subida:
+        formData.get("fecha_subida")?.toString() || data.fecha_subida, // Asumiendo 'fecha_subida'
+      estado: selectedEstadoDocumento || data.estado, // Usar el estado controlado
+      motivo: formData.get("motivo")?.toString() || data.motivo, // Asumiendo 'motivo' para observaciones
+      // 'url' no se edita directamente desde aquí, se gestiona en la subida
+      // 'cantidad' y 'valor' son campos de producto, no de documento, se eliminan
     };
 
-    // Validación básica
+    console.log("Datos actualizados para el documento:", updatedData);
+
+    // Validación básica para campos de documento
     if (
-      !updatedData.descripcion ||
-      !updatedData.cantidad ||
-      !updatedData.valor ||
-      !updatedData.proveedor
+      !updatedData.nombre ||
+      !updatedData.usuario_id ||
+      !updatedData.fecha_subida ||
+      !updatedData.estado
     ) {
-      console.error("Campos obligatorios faltantes.");
+      console.error("Campos obligatorios faltantes para el documento.");
+      setCurrentAlert({
+        visible: true,
+        variant: "warning",
+        title: "Campos Incompletos",
+        message:
+          "Por favor, completa todos los campos obligatorios (Nombre, Responsable, Fecha de Subida, Estado).",
+      });
+      setTimeout(() => setCurrentAlert(null), 4000);
       return;
     }
 
     try {
       const { error } = await supabase
-        .from("base_operativa")
+        .from("documentos") // <--- TABLA CORRECTA PARA EDITAR DOCUMENTOS
         .update(updatedData)
         .eq("id", id);
 
       if (error) throw error;
 
-      // Refrescar datos de la tabla
-      await refreshData();
-
-      // Cerrar modal
+      console.log("Actualización de documento exitosa.");
+      await refreshData("edit");
       closeModal();
+      setCurrentAlert({
+        visible: true,
+        variant: "success",
+        title: "¡Documento Actualizado!",
+        message: "El registro del documento ha sido actualizado exitosamente.",
+      });
+      setTimeout(() => setCurrentAlert(null), 3000);
     } catch (err) {
-      console.error("Error al editar el producto:", err);
-      alert("Hubo un error al guardar los cambios. Inténtalo de nuevo.");
+      console.error("Error al actualizar el documento:", err);
+      setCurrentAlert({
+        visible: true,
+        variant: "error",
+        title: "Error al Actualizar",
+        message: `Hubo un error al guardar los cambios del documento. Detalles: ${
+          err instanceof Error ? err.message : String(err)
+        }`,
+      });
+      setTimeout(() => setCurrentAlert(null), 5000);
     }
   };
+
   // -----------------------------------------------------------------------------------------
+  // Mini modal para agregar nuevas opciones (solo usuarios en este contexto)
   const handleCreateOption = async (e: FormEvent) => {
     e.preventDefault();
+    setCurrentAlert(null); // Limpia cualquier alerta anterior
 
-    if (!newValue.trim() || !currentType) return;
+    if (!newValue.trim() || !currentType) {
+      setCurrentAlert({
+        visible: true,
+        variant: "warning",
+        title: "Campo Vacío",
+        message: "Por favor, ingresa un valor para la nueva opción.",
+      });
+      setTimeout(() => setCurrentAlert(null), 3000);
+      return;
+    }
 
     try {
-      const { error } = await supabase
+      // currentType es el nombre de la tabla (ej. 'usuarios')
+      const { data: newEntry, error } = await supabase
         .from(currentType)
-        .insert([{ nombre: newValue }]);
+        .insert([{ nombre: newValue.trim() }])
+        .select("id, nombre") // Selecciona el ID y nombre para actualizar las opciones
+        .single(); // Espera un solo resultado
+
       if (error) throw error;
 
-      await fetchOptions(); // Actualiza las opciones dinámicamente
+      // Actualiza el estado de las opciones con el nuevo elemento
+      setOptions((prevOptions) => {
+        const updatedTypeOptions = [
+          ...(prevOptions[currentType as keyof OptionsState] || []),
+          { value: newEntry.id, label: newEntry.nombre },
+        ];
+        return {
+          ...prevOptions,
+          [currentType]: updatedTypeOptions,
+        };
+      });
+
+      // Si el tipo actual es 'usuarios', selecciona el nuevo usuario automáticamente
+      if (currentType === "usuarios") setSelectedUsuario(newEntry.id);
+
       setMiniModalOpen(false);
       setNewValue("");
       setCurrentType(null);
+      setCurrentAlert({
+        visible: true,
+        variant: "success",
+        title: "¡Opción Creada!",
+        message: `Nueva opción de ${currentType.slice(
+          0,
+          -1
+        )} agregada exitosamente.`,
+      });
+      setTimeout(() => setCurrentAlert(null), 3000);
     } catch (err) {
       console.error(`Error al crear ${currentType}:`, err);
+      setCurrentAlert({
+        visible: true,
+        variant: "error",
+        title: "Error al Crear Opción",
+        message: `Ocurrió un error al agregar la opción de ${currentType.slice(
+          0,
+          -1
+        )}. Detalles: ${err instanceof Error ? err.message : String(err)}`,
+      });
+      setTimeout(() => setCurrentAlert(null), 5000);
     }
   };
 
@@ -240,7 +326,14 @@ export function DataTableRowActions<TData>({
     console.log("Intentando abrir PDF...");
     if (!data.url) {
       console.error("No hay archivo PDF: data.url es undefined o vacío");
-      toast.error("No hay archivo PDF");
+      setCurrentAlert({
+        visible: true,
+        variant: "warning",
+        title: "Archivo No Disponible",
+        message:
+          "No hay un archivo PDF asociado a este documento para previsualizar.",
+      });
+      setTimeout(() => setCurrentAlert(null), 4000);
       return;
     }
     console.log("URL del PDF:", data.url);
@@ -249,16 +342,31 @@ export function DataTableRowActions<TData>({
       console.error(
         "No se pudo abrir la nueva ventana. ¿Está bloqueado el popup?"
       );
-      toast.error(
-        "No se pudo abrir la vista previa. Revisa tu bloqueador de ventanas."
-      );
+      setCurrentAlert({
+        visible: true,
+        variant: "warning",
+        title: "Bloqueador de Pop-ups",
+        message:
+          "No se pudo abrir la vista previa. Revisa tu bloqueador de ventanas emergentes.",
+      });
+      setTimeout(() => setCurrentAlert(null), 5000);
     } else {
       console.log("Ventana abierta con éxito.");
     }
   };
 
   const handleDownloadPdf = async () => {
-    if (!data.url) return toast.error("No hay archivo PDF");
+    if (!data.url) {
+      setCurrentAlert({
+        visible: true,
+        variant: "warning",
+        title: "Archivo No Disponible",
+        message:
+          "No hay un archivo PDF asociado a este documento para descargar.",
+      });
+      setTimeout(() => setCurrentAlert(null), 4000);
+      return;
+    }
 
     try {
       const response = await fetch(data.url, { mode: "cors" });
@@ -270,7 +378,7 @@ export function DataTableRowActions<TData>({
       const link = document.createElement("a");
       link.href = urlBlob;
       const filename =
-        data.url.split("/").pop()?.split("?")[0] || "archivo.pdf";
+        data.url.split("/").pop()?.split("?")[0] || "documento.pdf"; // Nombre por defecto más apropiado
       link.download = filename;
 
       document.body.appendChild(link);
@@ -278,11 +386,30 @@ export function DataTableRowActions<TData>({
       document.body.removeChild(link);
 
       window.URL.revokeObjectURL(urlBlob);
+      setCurrentAlert({
+        visible: true,
+        variant: "success",
+        title: "Descarga Exitosa",
+        message: "El documento se ha descargado correctamente.",
+      });
+      setTimeout(() => setCurrentAlert(null), 3000);
     } catch (error) {
       console.error("Error descargando archivo:", error);
-      toast.error("No se pudo descargar el archivo");
+      setCurrentAlert({
+        visible: true,
+        variant: "error",
+        title: "Error de Descarga",
+        message: `No se pudo descargar el archivo. Detalles: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      });
+      setTimeout(() => setCurrentAlert(null), 5000);
     }
   };
+
+  // Determinar si el usuario actual es 'admin'
+  const isAdmin = user && user.rol === "admin";
+  const canEditOrDelete = isAdmin && !userLoading; // Solo puede editar/eliminar si es admin y los datos del usuario han cargado
 
   return (
     <>
@@ -297,7 +424,11 @@ export function DataTableRowActions<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[160px]">
-          <DropdownMenuItem onClick={handleOpenEdit}>Editar</DropdownMenuItem>
+          {/* Renderizar "Editar" solo si el usuario es admin */}
+          {canEditOrDelete && (
+            <DropdownMenuItem onClick={handleOpenEdit}>Editar</DropdownMenuItem>
+          )}
+
           <DropdownMenuSeparator />
 
           <DropdownMenuItem onClick={handleViewPdf}>Ver PDF</DropdownMenuItem>
@@ -305,17 +436,24 @@ export function DataTableRowActions<TData>({
             Descargar PDF
           </DropdownMenuItem>
 
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem
-            onClick={(e) => {
-              e.preventDefault();
-              handleDelete();
-            }}
-          >
-            Eliminar
-            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-          </DropdownMenuItem>
+          {/* Renderizar "Eliminar" solo si el usuario es admin */}
+          {canEditOrDelete && <DropdownMenuSeparator />}
+          {canEditOrDelete && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.preventDefault();
+                handleInitiateDelete(); // Llama a la función para abrir el modal de confirmación
+              }}
+            >
+              Eliminar
+              <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          )}
+          {!canEditOrDelete && (
+            <DropdownMenuItem disabled className="text-gray-500">
+              No autorizado
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -326,65 +464,47 @@ export function DataTableRowActions<TData>({
         >
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              Crear Producto
+              Editar Documento
             </h4>
             <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-              Llena los campos para registrar un nuevo producto.
+              Completa los campos para editar el registro del documento.
             </p>
           </div>
           <form
             className="flex flex-col"
             onSubmit={(e) => handleEdit(e, data.id)}
           >
+            {/* Contenedor para las columnas */}
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
+                {/* Nombre del Documento */}
                 <div className="lg:col-span-2">
-                  <Label>Descripción</Label>
+                  <Label>Nombre del Documento</Label>
                   <Input
                     type="text"
-                    name="descripcion"
-                    placeholder="Ej. Caja de herramientas"
-                    defaultValue={data.descripcion}
+                    name="nombre"
+                    placeholder="Ej. Contrato de Arriendo"
+                    defaultValue={data.nombre}
+                    required
                   />
                 </div>
+
+                {/* Responsable (Usuario) */}
                 <div>
-                  <Label>Proveedor</Label>
+                  <Label>Responsable</Label>
                   <div className="flex items-center space-x-2">
                     <Select
-                      value={selectedProveedor} // Valor actual
-                      onChange={(selectedOption) =>
-                        setSelectedProveedor(selectedOption)
-                      }
-                      options={options.proveedores} // Opciones dinámicas
-                    />
-
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Evita la propagación del evento.
-                        setCurrentType("proveedores");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Marca</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      value={selectedMarca} // Valor actual
-                      onChange={(selectedOption) =>
-                        setSelectedMarca(selectedOption)
-                      }
-                      options={options.marcas} // Opciones dinámicas
+                      name="usuario_id" // Usar el nombre de la columna FK
+                      options={options.usuarios}
+                      placeholder="Selecciona un responsable"
+                      value={selectedUsuario}
+                      onChange={(value) => setSelectedUsuario(value)}
+                      required
                     />
                     <Button
                       size="sm"
                       onClick={() => {
-                        setCurrentType("marcas");
+                        setCurrentType("usuarios"); // <--- Corregido a 'usuarios'
                         setMiniModalOpen(true);
                       }}
                     >
@@ -393,183 +513,157 @@ export function DataTableRowActions<TData>({
                   </div>
                 </div>
 
+                {/* Fecha de Subida */}
                 <div>
-                  <Label>Tamaño</Label>
-                  <Input
-                    type="text"
-                    name="tamano"
-                    placeholder="Ej. Grande"
-                    defaultValue={data.tamano}
-                  />
-                </div>
-
-                <div>
-                  <Label>Cantidad</Label>
-                  <Input
-                    type="number"
-                    name="cantidad"
-                    min="1"
-                    placeholder="Ej. 10"
-                    defaultValue={data.cantidad}
-                  />
-                </div>
-
-                <div>
-                  <Label>Material</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      value={selectedMaterial} // Valor actual
-                      onChange={(selectedOption) =>
-                        setSelectedMaterial(selectedOption)
-                      }
-                      options={options.materiales} // Opciones dinámicas
-                    />
-
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("materiales");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Color</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      value={selectedColor} // Valor actual
-                      onChange={(selectedOption) =>
-                        setSelectedColor(selectedOption)
-                      }
-                      options={options.colores} // Opciones dinámicas
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("colores");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Fecha</Label>
+                  <Label>Fecha de Subida</Label>
                   <Input
                     type="date"
-                    name="fecha"
-                    disabled
-                    defaultValue={data.fecha}
+                    name="fecha_subida" // Asumiendo este nombre de columna
+                    defaultValue={data.fecha_subida || ""}
+                    required
                   />
                 </div>
 
+                {/* Estado del Documento */}
                 <div>
-                  <Label>Valor</Label>
-                  <Input
-                    type="number"
-                    name="valor"
-                    placeholder="Ej. 250.00"
-                    defaultValue={data.valor}
-                  />
-                </div>
-
-                <div>
-                  <Label>Estado</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      name="estado"
-                      options={opcionesEstado}
-                      placeholder="Selecciona el estado"
-                      onChange={(selectedOpciones) =>
-                        console.log("Estado seleccionado:", selectedOpciones)
-                      }
-                      className="dark:bg-dark-900"
-                      defaultValue={data.estado}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Disponibilidad</Label>
+                  <Label>Estado del Documento</Label>
                   <Select
-                    name="disponibilidad"
-                    options={opcionesDisponibilidad}
-                    placeholder="Selecciona la disponibilidad"
-                    onChange={(selectedOpciones) =>
-                      console.log("Estado seleccionado:", selectedOpciones)
-                    }
+                    name="estado" // Usar el nombre de la columna real en la BD
+                    options={opcionesEstadoDocumento}
+                    placeholder="Selecciona el estado"
                     className="dark:bg-dark-900"
-                    defaultValue={data.disponibilidad}
+                    value={selectedEstadoDocumento}
+                    onChange={(value) => setSelectedEstadoDocumento(value)}
+                    required
                   />
+                </div>
+
+                {/* Motivos / Observaciones */}
+                <div className="lg:col-span-2">
+                  <Label>Motivos / Observaciones</Label>
+                  <textarea
+                    name="motivo" // Asumiendo este nombre de columna
+                    className="w-full p-2 border rounded-lg dark:bg-dark-900 dark:text-white"
+                    placeholder="Notas adicionales sobre el documento..."
+                    defaultValue={data.motivo}
+                  ></textarea>
                 </div>
               </div>
             </div>
 
+            {/* Botones de acción */}
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
               <Button size="sm" variant="outline" onClick={closeModal}>
                 Cancelar
               </Button>
-
               <Button size="sm" type="submit">
-                Editar Registro
+                Actualizar
               </Button>
             </div>
           </form>
         </div>
       </Modal>
 
-      {/* ------------------------------------------------------------------------------------- */}
+      {/* Mini modal para agregar nuevas opciones (solo usuarios en este contexto) */}
+      {isMiniModalOpen &&
+        currentType &&
+        ReactDOM.createPortal(
+          <Modal
+            isOpen={isMiniModalOpen}
+            onClose={() => {
+              setMiniModalOpen(false);
+              setCurrentType(null);
+              setNewValue("");
+            }}
+            className="max-w-[400px] m-4"
+          >
+            <div className="w-full p-4 bg-white rounded-lg dark:bg-gray-900">
+              <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90">
+                Agregar Nuevo{" "}
+                {currentType.charAt(0).toUpperCase() + currentType.slice(0, -1)}{" "}
+                {/* Ajuste para singular */}
+              </h4>
+              <form onSubmit={handleCreateOption}>
+                <Label>Nombre del {currentType.slice(0, -1)}</Label>
+                <Input
+                  type="text"
+                  name="newValue"
+                  value={newValue}
+                  onChange={(e) => setNewValue(e.target.value)}
+                  placeholder={`Ej. Nombre de ${currentType.slice(0, -1)}`}
+                  required
+                />
+                <div className="flex justify-end mt-4 gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => {
+                      setMiniModalOpen(false);
+                      setCurrentType(null);
+                      setNewValue("");
+                    }}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button size="sm" type="submit">
+                    Crear
+                  </Button>
+                </div>
+              </form>
+            </div>
+          </Modal>,
+          document.body // Renderiza directamente en el body
+        )}
 
-      {isMiniModalOpen && currentType && (
-        <Modal
-          isOpen={isMiniModalOpen}
-          onClose={() => {
-            setMiniModalOpen(false);
-            setCurrentType(null);
-            setNewValue("");
-          }}
-          className="max-w-[400px] m-4"
-        >
-          <div className="w-full p-4 bg-white rounded-lg dark:bg-gray-900">
-            <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90">
-              Agregar Nuevo{" "}
-              {currentType.charAt(0).toUpperCase() + currentType.slice(1, -1)}
-            </h4>
-            <form onSubmit={handleCreateOption}>
-              <Label>Nombre del {currentType.slice(0, -1)}</Label>
-              <Input
-                type="text"
-                name="newValue"
-                value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
-                placeholder={`Ej. Nombre de ${currentType.slice(0, -1)}`}
-              />
-              <div className="flex justify-end mt-4 gap-2">
+      {/* Modal de confirmación de eliminación */}
+      {showConfirmDeleteModal &&
+        ReactDOM.createPortal(
+          <Modal
+            isOpen={showConfirmDeleteModal}
+            onClose={() => setShowConfirmDeleteModal(false)} // Permite cerrar el modal sin confirmar
+            className="max-w-sm m-4"
+          >
+            <div className="p-6 text-center bg-white rounded-lg dark:bg-gray-900">
+              <h4 className="mb-4 text-xl font-semibold text-gray-800 dark:text-white/90">
+                ¿Estás seguro?
+              </h4>
+              <p className="mb-6 text-gray-600 dark:text-gray-400">
+                Esta acción no se puede deshacer. ¿Realmente deseas eliminar
+                este registro?
+              </p>
+              <div className="flex justify-center gap-4">
                 <Button
-                  size="sm"
                   variant="outline"
-                  onClick={() => {
-                    setMiniModalOpen(false);
-                    setCurrentType(null);
-                    setNewValue("");
-                  }}
+                  onClick={() => setShowConfirmDeleteModal(false)}
                 >
-                  Cancelar
+                  No, Cancelar
                 </Button>
-                <Button size="sm" type="submit">
-                  Crear
+                <Button variant="destructive" onClick={handleConfirmDelete}>
+                  Sí, Eliminar
                 </Button>
               </div>
-            </form>
-          </div>
-        </Modal>
-      )}
+            </div>
+          </Modal>,
+          document.body
+        )}
+
+      {/* Renderiza la alerta personalizada usando un Portal */}
+      {currentAlert &&
+        currentAlert.visible &&
+        typeof document !== "undefined" &&
+        ReactDOM.createPortal(
+          <div className="fixed top-4 right-4 z-[99999]">
+            {" "}
+            {/* Z-index muy alto */}
+            <Alert
+              variant={currentAlert.variant}
+              title={currentAlert.title}
+              message={currentAlert.message}
+              showLink={false}
+            />
+          </div>,
+          document.body // Renderiza directamente en el body
+        )}
     </>
   );
 }

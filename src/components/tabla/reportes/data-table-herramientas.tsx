@@ -21,12 +21,9 @@ const opcionesEstado = [
   { value: "roto", label: "Roto" },
 ];
 
-const opcionesDisponibilidad = [
-  { value: "ok", label: "OK" },
-  { value: "faltante", label: "Faltante" },
-  { value: "pendiente", label: "Pendiente" },
-  { value: "reparacion", label: "Reparación" },
-  { value: "baja", label: "Baja" },
+const opcionesMovimiento = [
+  { value: true, label: "Ingreso" },
+  { value: false, label: "Salida" },
 ];
 
 // Filtro personalizado rango fecha
@@ -63,28 +60,23 @@ export function DataTableToolbar<TData>({
   // ------------------------------------------------------------------------------------------------------
   const handleDateSelect = ({ from, to }: { from: Date; to: Date }) => {
     setDateRange({ from, to });
-    table.getColumn("fecha")?.setFilterValue([from, to]);
+    table.getColumn("creado_en")?.setFilterValue([from, to]);
   };
 
-  useEffect(() => {
-    console.log("Filtros activos:", table.getState().columnFilters);
-    console.log("Datos filtrados:", table.getRowModel().rows);
-  }, [table]);
+  useEffect(() => {}, [table]);
 
   return (
     <div className="flex flex-wrap items-center justify-between">
       <div className="flex flex-1 flex-wrap items-center gap-2">
         <Input
-          placeholder="Filtrar descripción..."
-          value={
-            (table.getColumn("descripcion")?.getFilterValue() as string) ?? ""
-          }
+          placeholder="Filtrar nombre..."
+          value={(table.getColumn("bien_id")?.getFilterValue() as string) ?? ""}
           onChange={(event) => {
-            table.getColumn("descripcion")?.setFilterValue(event.target.value);
+            table.getColumn("bien_id")?.setFilterValue(event.target.value);
           }}
           className="h-8 w-[150px] lg:w-[250px]"
         />
-
+        {/* 
         {table.getColumn("disponibilidad") && (
           <DataTableFacetedFilter
             column={table.getColumn("disponibilidad")}
@@ -99,7 +91,7 @@ export function DataTableToolbar<TData>({
             title="Estado"
             options={opcionesEstado}
           />
-        )}
+        )} */}
 
         {isFiltered && (
           <Button
@@ -158,13 +150,13 @@ export default function App() {
   const [data, setData] = useState([
     {
       descripcion: "Producto 1",
-      disponibilidad: "ok",
+      disponibilidad: "Disponible",
       estado: "bueno",
       date: "2023-05-01",
     },
     {
       descripcion: "Producto 2",
-      disponibilidad: "faltante",
+      disponibilidad: "No disponible",
       estado: "bueno",
       fecha: "2023-05-02",
     },

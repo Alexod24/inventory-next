@@ -21,12 +21,9 @@ const opcionesEstado = [
   { value: "roto", label: "Roto" },
 ];
 
-const opcionesDisponibilidad = [
-  { value: "ok", label: "OK" },
-  { value: "faltante", label: "Faltante" },
-  { value: "pendiente", label: "Pendiente" },
-  { value: "reparacion", label: "Reparación" },
-  { value: "baja", label: "Baja" },
+const opcionesRoles = [
+  { value: "admin", label: "Admin" },
+  { value: "empleado", label: "Empleado" },
 ];
 
 // Filtro personalizado rango fecha
@@ -66,38 +63,25 @@ export function DataTableToolbar<TData>({
     table.getColumn("fecha")?.setFilterValue([from, to]);
   };
 
-  useEffect(() => {
-    console.log("Filtros activos:", table.getState().columnFilters);
-    console.log("Datos filtrados:", table.getRowModel().rows);
-  }, [table]);
+  useEffect(() => {}, [table]);
 
   return (
     <div className="flex flex-wrap items-center justify-between">
       <div className="flex flex-1 flex-wrap items-center gap-2">
         <Input
           placeholder="Filtrar descripción..."
-          value={
-            (table.getColumn("descripcion")?.getFilterValue() as string) ?? ""
-          }
+          value={(table.getColumn("nombre")?.getFilterValue() as string) ?? ""}
           onChange={(event) => {
-            table.getColumn("descripcion")?.setFilterValue(event.target.value);
+            table.getColumn("nombre")?.setFilterValue(event.target.value);
           }}
           className="h-8 w-[150px] lg:w-[250px]"
         />
 
-        {table.getColumn("disponibilidad") && (
+        {table.getColumn("rol") && (
           <DataTableFacetedFilter
-            column={table.getColumn("disponibilidad")}
-            title="Disponibilidad"
-            options={opcionesDisponibilidad}
-          />
-        )}
-
-        {table.getColumn("estado") && (
-          <DataTableFacetedFilter
-            column={table.getColumn("estado")}
-            title="Estado"
-            options={opcionesEstado}
+            column={table.getColumn("rol")}
+            title="Roles"
+            options={opcionesRoles}
           />
         )}
 

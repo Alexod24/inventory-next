@@ -1,15 +1,18 @@
 "use client";
-import React, { useEffect, useRef, useState, useCallback } from "react";
+
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useSidebar } from "../context/SidebarContext";
+import { useSidebar } from "../context/SidebarContext"; // Asegúrate de que la ruta sea correcta
+import { useUser } from "@/context/UserContext"; // <--- IMPORTANTE: Nueva importación
+
 import {
   BoxCubeIcon,
   CalenderIcon,
   ChevronDownIcon,
   GridIcon,
-  HorizontaLDots,
+  HorizontaLDots, // Asegúrate de que esta importación es correcta
   PieChartIcon,
   TaskIcon,
   ListIcon,
@@ -17,331 +20,126 @@ import {
   UserCircleIcon,
   TableIcon,
   DocsIcon,
-} from "../icons/index";
-// import SidebarWidget from "./SidebarWidget";
+} from "../icons/index"; // Asegúrate de que esta ruta sea correcta
+// import SidebarWidget from "./SidebarWidget"; // Si lo usas, asegúrate de que sea un Client Component
 
-type NavItem = {
+// Define la interfaz para tus elementos de navegación, incluyendo la propiedad 'roles'
+interface NavItem {
   name: string;
   icon: React.ReactNode;
   path?: string;
-  subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
-};
+  subItems?: {
+    name: string;
+    path: string;
+    pro?: boolean;
+    new?: boolean;
+    roles?: string[];
+  }[]; // Añade roles a subItems también
+  roles?: string[]; // <--- NUEVA PROPIEDAD: Array de roles permitidos
+}
 
+// Define tus elementos de navegación con roles.
 const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    path: "/base-operativa",
-    // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    path: "/base",
+    roles: ["admin", "empleado"], // Todos los roles autenticados
   },
   {
     icon: <TaskIcon />,
     name: "Bienes",
     path: "/bienes",
-    // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    roles: ["admin", "empleado"], // Admin y Empleado
   },
   {
     icon: <PageIcon />,
     name: "Movimientos",
     path: "/movimientos",
-    // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    roles: ["admin", "empleado"], // Admin y Empleado
   },
-
+  {
+    icon: <PieChartIcon />,
+    name: "Reportes",
+    path: "/reportes",
+    roles: ["admin", "empleado"], // Solo Admin
+  },
   {
     icon: <DocsIcon />,
     name: "Documentos",
     path: "/documentos",
-    // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    roles: ["admin", "empleado"], // Todos los roles autenticados
   },
-
   // {
-  //   icon: <CalenderIcon />,
-  //   name: "Calendario",
-  //   path: "/calendario",
-  // },
-  // {
-  //   icon: <UserCircleIcon />,
-  //   name: "Perfil Usuario",
-  //   path: "/perfil",
-  // },
-
-  // {
-  //   name: "Formularios",
+  //   name: "Espacios",
   //   icon: <ListIcon />,
-  //   subItems: [{ name: "Formulario", path: "/formularios", pro: false }],
-  // },
-  {
-    name: "Espacios",
-    icon: <ListIcon />,
-    subItems: [
-      { name: "Phone Booth", path: "/", pro: false },
-      { name: "El Hangar", path: "/", pro: false },
-      { name: "Bunkers", path: "/", pro: false },
-      { name: "Unidades", path: "/", pro: false },
-      { name: "La Brigada", path: "/", pro: false },
-      { name: "Counter", path: "/", pro: false },
-      { name: "Limpieza", path: "/", pro: false },
-      { name: "Almacen", path: "/", pro: false },
-    ],
-  },
-
-  // {
-  //   name: "Paginas",
-  //   icon: <PageIcon />,
+  //   // Si el menú padre agrupa items, el padre también debe tener roles si sus hijos los tienen.
+  //   // Si es un menú "general" que contiene sub-ítems con roles específicos, puedes dejarlo amplio.
+  //   roles: ["admin", "empleado", "usuario"],
   //   subItems: [
-  //     { name: "Pagina en blanca", path: "/blank", pro: false },
-  //     { name: "404 Error", path: "/error-404", pro: false },
+  //     {
+  //       name: "Phone Booth",
+  //       path: "/espacios/phone-booth",
+  //       roles: ["admin", "empleado", "usuario"],
+  //     },
+  //     {
+  //       name: "El Hangar",
+  //       path: "/espacios/el-hangar",
+  //       roles: ["admin", "empleado", "usuario"],
+  //     },
+  //     {
+  //       name: "Bunkers",
+  //       path: "/espacios/bunkers",
+  //       roles: ["admin", "empleado", "usuario"],
+  //     },
+  //     {
+  //       name: "Unidades",
+  //       path: "/espacios/unidades",
+  //       roles: ["admin", "empleado", "usuario"],
+  //     },
+  //     {
+  //       name: "La Brigada",
+  //       path: "/espacios/la-brigada",
+  //       roles: ["admin", "empleado", "usuario"],
+  //     },
+  //     {
+  //       name: "Counter",
+  //       path: "/espacios/counter",
+  //       roles: ["admin", "empleado", "usuario"],
+  //     },
+  //     {
+  //       name: "Limpieza",
+  //       path: "/espacios/limpieza",
+  //       roles: ["admin", "empleado", "usuario"],
+  //     },
+  //     {
+  //       name: "Almacen",
+  //       path: "/espacios/almacen",
+  //       roles: ["admin", "empleado", "usuario"],
+  //     },
   //   ],
-  // },
-  // {
-  //   icon: <PieChartIcon />,
-  //   name: "Base Operativa",
-  //   path: "/base-operativa",
-  // },
-  // {
-  //   icon: <PageIcon />,
-  //   name: "Phone Booth",
-  //   path: "/phone-booth",
-  // },
-  // {
-  //   icon: <ListIcon />,
-  //   name: "El Hangar",
-  //   path: "/hangar",
-  // },
-  // {
-  //   icon: <UserCircleIcon />,
-  //   name: "Bunkers",
-  //   path: "/bunkers",
-  // },
-  // {
-  //   icon: <PieChartIcon />,
-  //   name: "Unidades",
-  //   path: "/unidades",
-  // },
-  // {
-  //   icon: <GridIcon />,
-  //   name: "La Brigada",
-  //   path: "/brigada",
-  // },
-  // {
-  //   icon: <BoxCubeIcon />,
-  //   name: "Base de Mando",
-  //   path: "/base-de-mando",
-  // },
-  // {
-  //   icon: <PieChartIcon />,
-  //   name: "Counter",
-  //   path: "/counter",
-  // },
-  // {
-  //   icon: <TaskIcon />,
-  //   name: "SSHH Limpieza",
-  //   path: "/limpieza",
-  // },
-  // {
-  //   icon: <PieChartIcon />,
-  //   name: "Almacen",
-  //   path: "/almacen",
   // },
 ];
 
 const othersItems: NavItem[] = [
-  // {
-  //   icon: <PieChartIcon />,
-  //   name: "Graficos",
-  //   subItems: [
-  //     { name: "Grafico Lineales", path: "/grafico-lineal", pro: false },
-  //     { name: "Grafico Barras", path: "/grafico-barras", pro: false },
-  //   ],
-  // },
-  // {
-  //   icon: <BoxCubeIcon />,
-  //   name: "UI Elementos",
-  //   subItems: [
-  //     { name: "Alerts", path: "/alertas", pro: false },
-  //     { name: "Avatar", path: "/avatars", pro: false },
-  //     { name: "Badge", path: "/insignias", pro: false },
-  //     { name: "Buttons", path: "/botones", pro: false },
-  //     { name: "Images", path: "/imagenes", pro: false },
-  //     { name: "Videos", path: "/videos", pro: false },
-  //   ],
-  // },
-  // {
-  //   icon: <PlugInIcon />,
-  //   name: "Authentication",
-  //   subItems: [
-  //     { name: "Iniciar Sesion", path: "/login", pro: false },
-  //     { name: "Registrar", path: "/register", pro: false },
-  //   ],
-  // },
-  // {
-  //   icon: <GridIcon />,
-  //   name: "Dashboard",
-  //   path: "/dashboard",
-  //   // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
-  // },
   {
     icon: <CalenderIcon />,
     name: "Calendario",
     path: "/calendario",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "Perfil Usuario",
-    path: "/perfil",
+    roles: ["admin", "empleado"], // Todos los roles autenticados
   },
   {
     icon: <UserCircleIcon />,
     name: "Usuarios",
     path: "/usuarios",
-    // subItems: [{ name: "Ecommerce", path: "/", pro: false }],
+    roles: ["admin"], // <--- SOLO ADMIN PUEDE VER ESTE MÓDULO
   },
-  // {
-  //   icon: <PieChartIcon />,
-  //   name: "Lista de productos",
-  //   path: "/productos",
-  // },
-  // {
-  //   icon: <BoxCubeIcon />,
-  //   name: "Registro de Salida",
-  //   path: "/salida",
-  // },
-  // {
-  //   icon: <TaskIcon />,
-  //   name: "Registro de Ingreso",
-  //   path: "/ingreso",
-  // },
 ];
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const pathname = usePathname();
-
-  const renderMenuItems = (
-    navItems: NavItem[],
-    menuType: "main" | "others"
-  ) => (
-    <ul className="flex flex-col gap-4">
-      {navItems.map((nav, index) => (
-        <li key={nav.name}>
-          {nav.subItems ? (
-            <button
-              onClick={() => handleSubmenuToggle(index, menuType)}
-              className={`menu-item group  ${
-                openSubmenu?.type === menuType && openSubmenu?.index === index
-                  ? "menu-item-active"
-                  : "menu-item-inactive"
-              } cursor-pointer ${
-                !isExpanded && !isHovered
-                  ? "lg:justify-center"
-                  : "lg:justify-start"
-              }`}
-            >
-              <span
-                className={` ${
-                  openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? "menu-item-icon-active"
-                    : "menu-item-icon-inactive"
-                }`}
-              >
-                {nav.icon}
-              </span>
-              {(isExpanded || isHovered || isMobileOpen) && (
-                <span className={`menu-item-text`}>{nav.name}</span>
-              )}
-              {(isExpanded || isHovered || isMobileOpen) && (
-                <ChevronDownIcon
-                  className={`ml-auto w-5 h-5 transition-transform duration-200  ${
-                    openSubmenu?.type === menuType &&
-                    openSubmenu?.index === index
-                      ? "rotate-180 text-brand-500"
-                      : ""
-                  }`}
-                />
-              )}
-            </button>
-          ) : (
-            nav.path && (
-              <Link
-                href={nav.path}
-                className={`menu-item group ${
-                  isActive(nav.path) ? "menu-item-active" : "menu-item-inactive"
-                }`}
-              >
-                <span
-                  className={`${
-                    isActive(nav.path)
-                      ? "menu-item-icon-active"
-                      : "menu-item-icon-inactive"
-                  }`}
-                >
-                  {nav.icon}
-                </span>
-                {(isExpanded || isHovered || isMobileOpen) && (
-                  <span className={`menu-item-text`}>{nav.name}</span>
-                )}
-              </Link>
-            )
-          )}
-          {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
-            <div
-              ref={(el) => {
-                subMenuRefs.current[`${menuType}-${index}`] = el;
-              }}
-              className="overflow-hidden transition-all duration-300"
-              style={{
-                height:
-                  openSubmenu?.type === menuType && openSubmenu?.index === index
-                    ? `${subMenuHeight[`${menuType}-${index}`]}px`
-                    : "0px",
-              }}
-            >
-              <ul className="mt-2 space-y-1 ml-9">
-                {nav.subItems.map((subItem) => (
-                  <li key={subItem.name}>
-                    <Link
-                      href={subItem.path}
-                      className={`menu-dropdown-item ${
-                        isActive(subItem.path)
-                          ? "menu-dropdown-item-active"
-                          : "menu-dropdown-item-inactive"
-                      }`}
-                    >
-                      {subItem.name}
-                      <span className="flex items-center gap-1 ml-auto">
-                        {subItem.new && (
-                          <span
-                            className={`ml-auto ${
-                              isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge `}
-                          >
-                            new
-                          </span>
-                        )}
-                        {subItem.pro && (
-                          <span
-                            className={`ml-auto ${
-                              isActive(subItem.path)
-                                ? "menu-dropdown-badge-active"
-                                : "menu-dropdown-badge-inactive"
-                            } menu-dropdown-badge `}
-                          >
-                            pro
-                          </span>
-                        )}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </li>
-      ))}
-    </ul>
-  );
+  const { user, loading } = useUser(); // <--- OBTÉN EL USUARIO Y EL ESTADO DE CARGA
 
   const [openSubmenu, setOpenSubmenu] = useState<{
     type: "main" | "others";
@@ -352,37 +150,206 @@ const AppSidebar: React.FC = () => {
   );
   const subMenuRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // const isActive = (path: string) => path === pathname;
   const isActive = useCallback((path: string) => path === pathname, [pathname]);
 
-  useEffect(() => {
-    // Check if the current path matches any submenu item
-    let submenuMatched = false;
-    ["main", "others"].forEach((menuType) => {
-      const items = menuType === "main" ? navItems : othersItems;
-      items.forEach((nav, index) => {
-        if (nav.subItems) {
-          nav.subItems.forEach((subItem) => {
-            if (isActive(subItem.path)) {
-              setOpenSubmenu({
-                type: menuType as "main" | "others",
-                index,
-              });
-              submenuMatched = true;
-            }
-          });
+  // Función para renderizar los elementos del menú
+  const renderMenuItems = (
+    navItemsToRender: NavItem[],
+    menuType: "main" | "others"
+  ) => (
+    <ul className="flex flex-col gap-4">
+      {navItemsToRender.map((nav, index) => {
+        // Lógica de visibilidad basada en el rol
+        // Un elemento es visible si:
+        // 1. El usuario ya cargó (no está en estado 'loading')
+        // 2. El elemento de navegación NO tiene la propiedad 'roles' definida (es visible para todos por defecto)
+        // 3. O, si tiene 'roles' definidos, el usuario está autenticado, tiene un rol, Y su rol está incluido en los 'roles' permitidos.
+        // 4. O, si el usuario está autenticado pero NO tiene un rol definido en la BD, y el elemento permite 'usuario_sin_rol'.
+        const isVisible =
+          !loading && // Asegúrate de que el usuario ya cargó
+          (nav.roles === undefined || // Si no tiene roles definidos, es visible por defecto
+            (user && user.rol && nav.roles.includes(user.rol)) || // Si el usuario tiene un rol y está permitido
+            (user && !user.rol && nav.roles.includes("usuario_sin_rol"))); // Si el usuario está autenticado pero sin rol en la tabla 'usuarios'
+
+        if (!isVisible) {
+          return null; // No renderiza el elemento si el usuario no tiene permiso
         }
-      });
+
+        return (
+          <li key={nav.name}>
+            {nav.subItems ? (
+              <button
+                onClick={() => handleSubmenuToggle(index, menuType)}
+                className={`menu-item group  ${
+                  openSubmenu?.type === menuType && openSubmenu?.index === index
+                    ? "menu-item-active"
+                    : "menu-item-inactive"
+                } cursor-pointer ${
+                  !isExpanded && !isHovered
+                    ? "lg:justify-center"
+                    : "lg:justify-start"
+                }`}
+              >
+                <span
+                  className={` ${
+                    openSubmenu?.type === menuType &&
+                    openSubmenu?.index === index
+                      ? "menu-item-icon-active"
+                      : "menu-item-icon-inactive"
+                  }`}
+                >
+                  {nav.icon}
+                </span>
+                {(isExpanded || isHovered || isMobileOpen) && (
+                  <span className={`menu-item-text`}>{nav.name}</span>
+                )}
+                {(isExpanded || isHovered || isMobileOpen) && (
+                  <ChevronDownIcon
+                    className={`ml-auto w-5 h-5 transition-transform duration-200  ${
+                      openSubmenu?.type === menuType &&
+                      openSubmenu?.index === index
+                        ? "rotate-180 text-brand-500"
+                        : ""
+                    }`}
+                  />
+                )}
+              </button>
+            ) : (
+              nav.path && (
+                <Link
+                  href={nav.path}
+                  className={`menu-item group ${
+                    isActive(nav.path)
+                      ? "menu-item-active"
+                      : "menu-item-inactive"
+                  }`}
+                >
+                  <span
+                    className={`${
+                      isActive(nav.path)
+                        ? "menu-item-icon-active"
+                        : "menu-item-icon-inactive"
+                    }`}
+                  >
+                    {nav.icon}
+                  </span>
+                  {(isExpanded || isHovered || isMobileOpen) && (
+                    <span className={`menu-item-text`}>{nav.name}</span>
+                  )}
+                </Link>
+              )
+            )}
+            {nav.subItems && (isExpanded || isHovered || isMobileOpen) && (
+              <div
+                ref={(el) => {
+                  subMenuRefs.current[`${menuType}-${index}`] = el;
+                }}
+                className="overflow-hidden transition-all duration-300"
+                style={{
+                  height:
+                    openSubmenu?.type === menuType &&
+                    openSubmenu?.index === index
+                      ? `${subMenuHeight[`${menuType}-${index}`]}px`
+                      : "0px",
+                }}
+              >
+                <ul className="mt-2 space-y-1 ml-9">
+                  {nav.subItems.map((subItem) => {
+                    // Lógica de visibilidad para sub-ítems (similar a los ítems principales)
+                    const isSubItemVisible =
+                      !loading &&
+                      (subItem.roles === undefined ||
+                        (user &&
+                          user.rol &&
+                          subItem.roles.includes(user.rol)) ||
+                        (user &&
+                          !user.rol &&
+                          subItem.roles.includes("usuario_sin_rol")));
+
+                    if (!isSubItemVisible) {
+                      return null;
+                    }
+
+                    return (
+                      <li key={subItem.name}>
+                        <Link
+                          href={subItem.path || "#"} // Asegúrate de que subItem.path exista
+                          className={`menu-dropdown-item ${
+                            isActive(subItem.path || "") // Asegúrate de que subItem.path exista
+                              ? "menu-dropdown-item-active"
+                              : "menu-dropdown-item-inactive"
+                          }`}
+                        >
+                          {subItem.name}
+                          <span className="flex items-center gap-1 ml-auto">
+                            {subItem.new && (
+                              <span
+                                className={`ml-auto ${
+                                  isActive(subItem.path || "")
+                                    ? "menu-dropdown-badge-active"
+                                    : "menu-dropdown-badge-inactive"
+                                } menu-dropdown-badge `}
+                              >
+                                new
+                              </span>
+                            )}
+                            {subItem.pro && (
+                              <span
+                                className={`ml-auto ${
+                                  isActive(subItem.path || "")
+                                    ? "menu-dropdown-badge-active"
+                                    : "menu-dropdown-badge-inactive"
+                                } menu-dropdown-badge `}
+                              >
+                                pro
+                              </span>
+                            )}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+
+  useEffect(() => {
+    let submenuMatched = false;
+    // Combina ambos arrays para la búsqueda, asegurando el orden correcto si es relevante
+    const allNavItems = [...navItems, ...othersItems];
+
+    allNavItems.forEach((nav, index) => {
+      if (nav.subItems) {
+        nav.subItems.forEach((subItem) => {
+          if (subItem.path && isActive(subItem.path)) {
+            // Asegúrate de que subItem.path exista
+            // Encuentra el índice del elemento padre en su array original (navItems o othersItems)
+            const parentIndexInMain = navItems.indexOf(nav);
+            const parentIndexInOthers = othersItems.indexOf(nav);
+
+            if (parentIndexInMain !== -1) {
+              setOpenSubmenu({ type: "main", index: parentIndexInMain });
+            } else if (parentIndexInOthers !== -1) {
+              setOpenSubmenu({ type: "others", index: parentIndexInOthers });
+            }
+            submenuMatched = true;
+          }
+        });
+      }
     });
 
-    // If no submenu item matches, close the open submenu
     if (!submenuMatched) {
       setOpenSubmenu(null);
     }
-  }, [pathname, isActive]);
+    // Añade navItems y othersItems a las dependencias si sus contenidos pueden cambiar
+  }, [pathname, isActive, navItems, othersItems]);
 
   useEffect(() => {
-    // Set the height of the submenu items when the submenu is opened
     if (openSubmenu !== null) {
       const key = `${openSubmenu.type}-${openSubmenu.index}`;
       if (subMenuRefs.current[key]) {
@@ -407,6 +374,24 @@ const AppSidebar: React.FC = () => {
     });
   };
 
+  // Muestra un estado de carga o un menú vacío mientras se carga el usuario
+  if (loading) {
+    return (
+      <aside
+        className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
+        ${!isExpanded && !isHovered ? "w-[90px]" : "w-[290px]"}
+        ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
+        lg:translate-x-0`}
+      >
+        <div className="py-8 flex justify-center items-center h-full">
+          <span className="text-gray-500 dark:text-gray-400">
+            Cargando menú...
+          </span>
+        </div>
+      </aside>
+    );
+  }
+
   return (
     <aside
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
@@ -423,11 +408,11 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`py-8 flex  ${
+        className={`py-8 flex  ${
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
-        <Link href="/">
+        <Link href="/base">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
               <Image
@@ -447,7 +432,7 @@ const AppSidebar: React.FC = () => {
             </>
           ) : (
             <Image
-              src="/images/logo/logo-icon.svg"
+              src="/images/logo/logo-icono.png"
               alt="Logo"
               width={32}
               height={32}

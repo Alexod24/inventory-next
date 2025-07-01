@@ -75,13 +75,16 @@ export function DataTable<TData, TValue>({
   const fetchData = async (triggeredBy?: string) => {
     setLoading(true);
 
-    const { data: fetchedData, error } = await supabase
-      .from("usuarios")
-      .select("*");
+    const { data: fetchedData, error } = await supabase.rpc(
+      "get_users_with_profile_and_email"
+    );
 
     if (error) {
-      console.error(error);
+      console.error("Error al llamar a la RPC:", error.message); // <-- ¡Cambia a error.message!
+      console.error("Detalles completos del error:", error); // También loggea el objeto completo
       setLoading(false);
+      // Opcional: Muestra un mensaje en la UI
+      // setErrorFetchingData("Error al cargar los usuarios: " + error.message);
       return;
     }
 

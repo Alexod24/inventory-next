@@ -1,4 +1,5 @@
 import IniciarSesion from "@/components/auth/Login";
+import LoginForm from "@/components/auth/LoginForm";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {

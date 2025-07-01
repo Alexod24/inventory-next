@@ -1,6 +1,6 @@
 import React from "react";
 import Imagen from "@/components/ui/imagenes/ImagenResponsive";
-import { EcommerceMetrics } from "@/components/ecommerce/EcomerceMetrics";
+import { EcommerceMetrics } from "@/components/ecommerce/Metricas";
 // import { Payment } from "@/components/tabla/base-operativa/columns";
 // import { DataTable as PaymentTable } from "@/components/tabla/base-operativa/data-table";
 import fs from "fs";

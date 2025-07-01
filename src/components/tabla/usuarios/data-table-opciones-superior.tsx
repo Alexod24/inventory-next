@@ -9,7 +9,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-import { supabase } from "@/app/utils/supabase/supabase";
+// CAMBIO IMPORTANTE: Usar el cliente de Supabase para el navegador
+import { createClientComponentClient } from "@/app/utils/supabase/browser"; // <--- Nueva ruta y nombre
 
 import Input from "../../form/input/Input";
 import Label from "../../form/Label";
@@ -23,10 +24,18 @@ import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { MixerHorizontalIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Table } from "@tanstack/react-table";
 
-type Crear = {
+import { signUp } from "@/app/actions/auth";
+import Alert from "@/components/ui/alerta/AlertaExito"; // <--- IMPORTACIÓN DE TU COMPONENTE ALERT
+import ReactDOM from "react-dom"; // <--- IMPORTACIÓN NECESARIA PARA REACT PORTALS
+
+// ---------------------------------------------------------------------------------------------
+interface DataTableViewOptionsProps<TData> {
+  table: Table<TData>;
+  fetchData: () => Promise<void>;
+}
+interface Crear {
   descripcion: string;
   proveedor: string;
-  marca: string;
   cantidad: number;
   tamano: string;
   material: string;
@@ -34,26 +43,12 @@ type Crear = {
   valor: number;
   estado: string;
   disponibilidad: string;
-};
-
-const opcionesEstado = [
-  { value: "bueno", label: "Bueno" },
-  { value: "dañado", label: "Dañado" },
-  { value: "roto", label: "Roto" },
-];
-
-const opcionesDisponibilidad = [
-  { value: "ok", label: "Ok" },
-  { value: "faltante", label: "Faltante" },
-  { value: "pendiente", label: "Pendiente" },
-  // { value: "reparacion", label: "Reparación" },
-  // { value: "baja", label: "Baja" },
-];
-// ---------------------------------------------------------------------------------------------
-interface DataTableViewOptionsProps<TData> {
-  table: Table<TData>;
-  fetchData: () => Promise<void>;
 }
+
+const opcionesRol = [
+  { value: "empleado", label: "Empleado" },
+  { value: "admin", label: "Admin" },
+];
 // ---------------------------------------------------------------------------------------------
 export function DataTableViewOptions<TData>({
   table,
@@ -61,98 +56,87 @@ export function DataTableViewOptions<TData>({
 }: DataTableViewOptionsProps<TData>) {
   const { isOpen, openModal, closeModal } = useModal();
   const [items, setItems] = useState<Crear[]>([]);
-  const [options, setOptions] = useState({
-    marcas: [],
-    colores: [],
-    materiales: [],
-    proveedores: [],
-    estados: [],
-  });
-  const [isMiniModalOpen, setMiniModalOpen] = useState(false);
-  const [newValue, setNewValue] = useState("");
-  const [currentType, setCurrentType] = useState("");
+  // Nuevo estado para controlar la alerta personalizada
+  const [currentAlert, setCurrentAlert] = useState<{
+    visible: boolean;
+    variant: "success" | "error" | "warning"; // Asume que 'error' es un variant válido en tu componente Alert
+    title: string;
+    message: string;
+  } | null>(null);
+
+  // Inicializa el cliente de Supabase para el navegador aquí
+  const supabase = createClientComponentClient(); // <--- Inicialización del cliente de navegador
 
   const loadData = async () => {
-    const { data, error } = await supabase.from("base_operativa").select("*");
+    // Usa la instancia de Supabase creada
+    const { data, error } = await supabase.from("usuarios").select("*");
     if (!error) setItems(data || []);
-    else console.error(error);
-    console.log(items);
+    else console.error("Error al cargar datos de usuarios:", error);
+    console.log("Datos de usuarios cargados:", data);
   };
 
   useEffect(() => {
     loadData();
   }, []);
 
-  // -----------------------------------------------------------------------------------------------
-
-  const fetchOptions = async () => {
-    const types = ["marcas", "colores", "materiales", "proveedores", "estados"];
-    const promises = types.map(async (type) => {
-      const { data, error } = await supabase.from(type).select("nombre");
-      if (error) {
-        console.error(`Error al cargar ${type}:`, error);
-        return { [type]: [] };
-      }
-      return {
-        [type]: data.map((item) => ({
-          value: item.nombre,
-          label: item.nombre,
-        })),
-      };
-    });
-
-    const results = await Promise.all(promises);
-    setOptions(Object.assign({}, ...results));
-  };
-
-  useEffect(() => {
-    fetchOptions();
-  }, []);
-
-  // -----------------------------------------------------------------------------------------------
-
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
+    setCurrentAlert(null); // Limpia cualquier alerta anterior al intentar crear
+
     const formData = new FormData(e.target as HTMLFormElement);
-    const productData = Object.fromEntries(formData);
-
-    if (productData.fecha) {
-      productData.fecha = new Date(productData.fecha as string).toISOString();
-    }
 
     try {
-      const { data, error } = await supabase
-        .from("base_operativa")
-        .insert([productData])
-        .select("*");
-      if (error) throw error;
+      console.log("DataTableViewOptions: Llamando a signUp con formData...");
+      const result = await signUp(formData); // Usa la función `signUp` del archivo `auth`.
 
-      setItems((prev) => [...prev, ...data]);
-      closeModal();
-      await fetchData();
-    } catch (err) {
-      console.log("Error al crear producto:", err);
+      if (result.success) {
+        console.log(
+          "DataTableViewOptions: Usuario registrado exitosamente. Cerrando modal y actualizando tabla."
+        );
+        closeModal(); // Cierra el modal si se usa uno.
+        await fetchData(); // Actualiza la tabla.
+        setCurrentAlert({
+          visible: true,
+          variant: "success",
+          title: "¡Usuario Creado!",
+          message: "El nuevo usuario ha sido registrado exitosamente.",
+        });
+        // Opcional: Ocultar la alerta después de un tiempo
+        setTimeout(() => setCurrentAlert(null), 3000);
+      } else {
+        // Muestra el error específico que viene de la Server Action
+        console.error(
+          "DataTableViewOptions: Tienes que colocar un correo válido"
+        );
+        setCurrentAlert({
+          visible: true,
+          variant: "error", // O "warning" si tu componente Alert no tiene el tipo 'error'
+          title: "Error al Registrar",
+          message:
+            result.error ||
+            "Ocurrió un error desconocido al registrar el usuario.",
+        });
+        // Opcional: Ocultar la alerta después de un tiempo
+        setTimeout(() => setCurrentAlert(null), 5000);
+      }
+    } catch (err: any) {
+      console.error(
+        "DataTableViewOptions: Error CRÍTICO en handleCreate:",
+        err
+      );
+      // Aquí podrías mostrar un mensaje de error genérico al usuario
+      setCurrentAlert({
+        visible: true,
+        variant: "error",
+        title: "Error Inesperado",
+        message:
+          "Ocurrió un error inesperado al intentar registrar el usuario.",
+      });
+      setTimeout(() => setCurrentAlert(null), 5000);
     }
   };
 
-  const handleCreateOption = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!newValue.trim() || !currentType) return;
-
-    try {
-      const { error } = await supabase
-        .from(currentType)
-        .insert([{ nombre: newValue }]);
-      if (error) throw error;
-
-      await fetchOptions();
-      setMiniModalOpen(false);
-      setNewValue("");
-      setCurrentType(null);
-    } catch (err) {
-      console.error(`Error al crear ${currentType}:`, err);
-    }
-  };
+  // -----------------------------------------------------------------------------------------------
 
   return (
     <div className="flex space-x-2 ml-auto">
@@ -216,177 +200,61 @@ export function DataTableViewOptions<TData>({
         >
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              Crear Producto
+              Crear Usuario
             </h4>
             <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-              Llena los campos para registrar un nuevo producto.
+              Llena los campos para registrar un nuevo usuario.
             </p>
           </div>
           <form className="flex flex-col" onSubmit={handleCreate}>
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div className="lg:col-span-2">
-                  <Label>Descripción</Label>
+                  <Label>Correo</Label>
+                  <Input
+                    name="email"
+                    type="email"
+                    placeholder="Correo electrónico"
+                    required
+                  />
+                </div>
+
+                <div className="relative">
+                  <Label>Contraseña</Label>
+                  <Input
+                    type="password"
+                    name="password"
+                    placeholder="Contraseña"
+                  />
+                </div>
+
+                <div>
+                  <Label>Repetir Contraseña</Label>
+                  <Input
+                    type="password"
+                    name="repeatPassword"
+                    placeholder="Repetir Contraseña"
+                  />
+                </div>
+
+                <div>
+                  <Label>Nombre</Label>
                   <Input
                     type="text"
-                    name="descripcion"
-                    placeholder="Ej. Caja de herramientas"
-                  />
-                </div>
-                <div>
-                  <Label>Proveedor</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      name="proveedor"
-                      options={options.proveedores}
-                      placeholder="Selecciona un proveedor"
-                      onChange={(selectedOption) =>
-                        console.log("Producto seleccionado:", selectedOption)
-                      }
-                      className="dark:bg-dark-900"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("proveedores");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Marca</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      name="marca"
-                      options={options.marcas}
-                      placeholder="Selecciona una marca"
-                      onChange={(selectedOption) =>
-                        console.log("Marca seleccionado:", selectedOption)
-                      }
-                      className="dark:bg-dark-900 flex-1"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("marcas");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Tamaño</Label>
-                  <Input type="text" name="tamano" placeholder="Ej. Grande" />
-                </div>
-
-                <div>
-                  <Label>Cantidad</Label>
-                  <Input
-                    type="number"
-                    name="cantidad"
-                    min="1"
-                    placeholder="Ej. 10"
+                    name="nombre"
+                    placeholder="Nombre de usuario"
                   />
                 </div>
 
+                {/* Disponibilidad */}
                 <div>
-                  <Label>Material</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      type="text"
-                      name="material"
-                      options={options.materiales}
-                      placeholder="Selecciona un material"
-                      onChange={(selectedOption) =>
-                        console.log("Material seleccionado:", selectedOption)
-                      }
-                      className="dark:bg-dark-900 flex-1"
-                    />
-
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("materiales");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Color</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      type="text"
-                      name="color"
-                      options={options.colores}
-                      placeholder="Selecciona un color"
-                      onChange={(selectedOption) =>
-                        console.log("Material seleccionado:", selectedOption)
-                      }
-                      className="dark:bg-dark-900"
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("colores");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Fecha</Label>
-                  <Input
-                    type="date"
-                    name="fecha"
-                    defaultValue={new Date().toISOString().split("T")[0]}
-                    disabled
-                  />
-                </div>
-
-                <div>
-                  <Label>Valor</Label>
-                  <Input type="number" name="valor" placeholder="Ej. 250.00" />
-                </div>
-
-                <div>
-                  <Label>Estado</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      name="estado"
-                      options={opcionesEstado}
-                      placeholder="Selecciona el estado"
-                      onChange={(selectedOpciones) =>
-                        console.log("Estado seleccionado:", selectedOpciones)
-                      }
-                      className="dark:bg-dark-900"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Disponibilidad</Label>
+                  <Label>Rol</Label>
                   <Select
-                    name="disponibilidad"
-                    options={opcionesDisponibilidad}
-                    placeholder="Selecciona la disponibilidad"
-                    onChange={(selectedOpciones) =>
-                      console.log("Estado seleccionado:", selectedOpciones)
-                    }
+                    name="rol"
+                    options={opcionesRol}
+                    placeholder="Selecciona el rol"
                     className="dark:bg-dark-900"
+                    required
                   />
                 </div>
               </div>
@@ -398,59 +266,30 @@ export function DataTableViewOptions<TData>({
               </Button>
 
               <Button size="sm" type="submit">
-                Crear Producto
+                Crear Usuario
               </Button>
             </div>
           </form>
         </div>
       </Modal>
 
-      {/* ------------------------------------------------------------------------------------- */}
-
-      {isMiniModalOpen && currentType && (
-        <Modal
-          isOpen={isMiniModalOpen}
-          onClose={() => {
-            setMiniModalOpen(false);
-            setCurrentType(null);
-            setNewValue("");
-          }}
-          className="max-w-[400px] m-4"
-        >
-          <div className="w-full p-4 bg-white rounded-lg dark:bg-gray-900">
-            <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90">
-              Agregar Nuevo{" "}
-              {currentType.charAt(0).toUpperCase() + currentType.slice(1, -1)}
-            </h4>
-            <form onSubmit={handleCreateOption}>
-              <Label>Nombre del {currentType.slice(0, -1)}</Label>
-              <Input
-                type="text"
-                name="newValue"
-                value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
-                placeholder={`Ej. Nombre de ${currentType.slice(0, -1)}`}
-              />
-              <div className="flex justify-end mt-4 gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setMiniModalOpen(false);
-                    setCurrentType(null);
-                    setNewValue("");
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button size="sm" type="submit">
-                  Crear
-                </Button>
-              </div>
-            </form>
-          </div>
-        </Modal>
-      )}
+      {/* Renderiza la alerta personalizada usando un Portal */}
+      {currentAlert &&
+        currentAlert.visible &&
+        typeof document !== "undefined" &&
+        ReactDOM.createPortal(
+          <div className="fixed top-4 right-4 z-[99999]">
+            {" "}
+            {/* Z-index muy alto */}
+            <Alert
+              variant={currentAlert.variant}
+              title={currentAlert.title}
+              message={currentAlert.message}
+              showLink={false} // Ajusta esto según si quieres enlaces en tus alertas
+            />
+          </div>,
+          document.body // Renderiza directamente en el body
+        )}
     </div>
   );
 }

@@ -22,11 +22,8 @@ const opcionesEstado = [
 ];
 
 const opcionesDisponibilidad = [
-  { value: "ok", label: "OK" },
-  { value: "faltante", label: "Faltante" },
-  { value: "pendiente", label: "Pendiente" },
-  { value: "reparacion", label: "Reparación" },
-  { value: "baja", label: "Baja" },
+  { value: true, label: "Ok" },
+  { value: false, label: "Faltante" },
 ];
 
 // Filtro personalizado rango fecha
@@ -63,7 +60,7 @@ export function DataTableToolbar<TData>({
   // ------------------------------------------------------------------------------------------------------
   const handleDateSelect = ({ from, to }: { from: Date; to: Date }) => {
     setDateRange({ from, to });
-    table.getColumn("fecha")?.setFilterValue([from, to]);
+    table.getColumn("creado_en")?.setFilterValue([from, to]);
   };
 
   useEffect(() => {}, [table]);
@@ -143,7 +140,7 @@ const columns = [
     header: "Estado",
   },
   {
-    accessorKey: "fecha",
+    accessorKey: "fechaCreacion",
     header: "Fecha",
     filterFn: filterDateRange,
   },
@@ -153,13 +150,13 @@ export default function App() {
   const [data, setData] = useState([
     {
       descripcion: "Producto 1",
-      disponibilidad: "ok",
+      disponibilidad: "Disponible",
       estado: "bueno",
       date: "2023-05-01",
     },
     {
       descripcion: "Producto 2",
-      disponibilidad: "faltante",
+      disponibilidad: "No disponible",
       estado: "bueno",
       fecha: "2023-05-02",
     },

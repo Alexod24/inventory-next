@@ -1,6 +1,6 @@
 import React from "react";
 import Imagen from "@/components/ui/imagenes/ImagenResponsive";
-import { EcommerceMetrics } from "@/components/ecommerce/EcomerceMetrics";
+import { EcommerceMetrics } from "@/components/ecommerce/Metricas";
 // import { Payment } from "@/components/tabla/base-operativa/columns";
 // import { DataTable as PaymentTable } from "@/components/tabla/base-operativa/data-table";
 import fs from "fs";
@@ -12,19 +12,6 @@ export const metadata = {
   title: "Bienvenido - Sistema de inventario",
   description: "Landing page para iniciar sesión o registrarse",
 };
-
-// Simulamos fetch async para obtener pagos
-// async function getPaymentData(): Promise<Payment[]> {
-//   return [
-//     {
-//       id: "728ed52f",
-//       amount: 100,
-//       status: "pending",
-//       email: "m@example.com",
-//     },
-//     // Otros datos simulados
-//   ];
-// }
 
 // Función para obtener datos de gastos desde un archivo JSON
 async function getExpenseData() {
@@ -41,13 +28,13 @@ export default async function CombinedPage() {
   return (
     <div className="container mx-auto py-4 space-y-4 overflow-x-hidden">
       {/* Imagen principal ocupando todo el ancho */}
-      {/* <div className="w-full">
+      <div className="w-full">
         <Imagen
-          src="/images/espacios/.jpg"
+          src="/images/espacios/documentos.jpg"
           alt="Descripción personalizada"
           className="shadow-lg rounded-xl w-full h-[400px] object-cover"
         />
-      </div> */}
+      </div>
 
       {/* Métricas en una sola fila */}
       <div className="grid grid-cols-12 gap-4 items-center">

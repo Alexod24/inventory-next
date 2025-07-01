@@ -11,6 +11,9 @@ import { useState, useEffect, FormEvent } from "react";
 import Input from "../../form/input/Input";
 import Label from "../../form/Label";
 import Select from "../../form/Seleccionar";
+import Alert from "@/components/ui/alerta/AlertaExito"; // <--- IMPORTACIÓN DE TU COMPONENTE ALERT
+import ReactDOM from "react-dom"; // <--- IMPORTACIÓN NECESARIA PARA REACT PORTALS
+import { useUser } from "@/context/UserContext"; // <--- IMPORTACIÓN DEL CONTEXTO DE USUARIO
 
 import {
   DropdownMenu,
@@ -27,29 +30,17 @@ interface Option {
 }
 
 interface OptionsState {
-  marcas: Option[];
-  colores: Option[];
-  materiales: Option[];
+  bienes: Option[];
+  subcategorias: Option[];
+  usuarios: Option[];
+  espacios: Option[];
   proveedores: Option[];
-  estados: Option[];
 }
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
   refreshData: (triggeredBy?: string) => Promise<void>;
-  // Nueva prop para refrescar datos
 }
-interface MarcaOption {
-  value: string;
-  label: string;
-}
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const options = {
-  marcas: [
-    { value: "marca1", label: "Marca 1" },
-    { value: "marca2", label: "Marca 2" },
-  ] as MarcaOption[],
-};
 
 const opcionesEstado = [
   { value: "bueno", label: "Bueno" },
@@ -57,11 +48,12 @@ const opcionesEstado = [
   { value: "roto", label: "Roto" },
 ];
 
-const opcionesDisponibilidad = [
-  { value: "ok", label: "OK" },
-  { value: "pendiente", label: "Pendiente" },
-  { value: "faltante", label: "Faltante" },
+const opcionesMovimiento = [
+  { value: true, label: "Ingreso" },
+  { value: false, label: "Salida" },
 ];
+
+// -----------------------------------------------------------------------------------------
 
 export function DataTableRowActions<TData>({
   row,
@@ -71,77 +63,95 @@ export function DataTableRowActions<TData>({
   const { isOpen, openModal, closeModal } = useModal();
 
   const [options, setOptions] = useState<OptionsState>({
-    marcas: [],
-    colores: [],
-    materiales: [],
-    proveedores: [],
-    estados: [],
+    bienes: [] as { value: number; label: string }[],
+    usuarios: [] as { value: number; label: string }[],
   });
 
   const [isMiniModalOpen, setMiniModalOpen] = useState(false);
   const [currentType, setCurrentType] = useState<string | null>(null);
   const [newValue, setNewValue] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
-  const [selectedProveedor, setSelectedProveedor] = useState<
-    string | undefined
-  >(data.proveedor || undefined);
-  const [selectedMarca, setSelectedMarca] = useState<string | undefined>(
-    data.marca || undefined
+  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false); // Nuevo estado para el modal de confirmación
+
+  const [selectedBien, setSelectedBien] = useState<string | undefined>(
+    data.bien || undefined
   );
-  const [selectedMaterial, setSelectedMaterial] = useState<string | undefined>(
-    data.material || undefined
+
+  const [selectedUsuario, setSelectedUsuario] = useState<string | undefined>(
+    data.usuario || undefined
   );
-  const [selectedColor, setSelectedColor] = useState<string | undefined>(
-    data.color || undefined
-  );
+
+  // Nuevo estado para controlar la alerta personalizada
+  const [currentAlert, setCurrentAlert] = useState<{
+    visible: boolean;
+    variant: "success" | "error" | "warning";
+    title: string;
+    message: string;
+  } | null>(null);
+
+  // Manejadores onChange
+
+  const handleBienChange = (selectedOption: Option | null) => {
+    setSelectedBien(selectedOption?.value || undefined);
+  };
+
+  const handleUsuarioChange = (selectedOption: Option | null) => {
+    setSelectedUsuario(selectedOption?.value || undefined);
+  };
+
+  // -----------------------------------------------------------------------------------------
 
   useEffect(() => {
     if (isEditModalOpen) {
-      if (options.proveedores.length > 0) {
-        setSelectedProveedor(
-          options.proveedores.find((opt) => opt.value === data.proveedor)?.value
-        );
+      // Asegurar que las opciones estén cargadas antes de buscar valores
+      console.log("Modal de edición abierto. Verificando opciones y datos...");
+      console.log("Opciones actuales:", options);
+      console.log("Datos iniciales:", data);
+      if (options.bienes?.length > 0) {
+        const bien = options.bienes.find((opt) => opt.label === data.bien);
+        setSelectedBien(bien?.value || data.bien_id);
+        console.log("Bien seleccionado en efecto:", bien);
+      } else {
+        setSelectedBien(data.bien_id);
       }
-      if (options.marcas.length > 0) {
-        setSelectedMarca(
-          options.marcas.find((opt) => opt.value === data.marca)?.value
+
+      if (options.usuarios?.length > 0) {
+        const usuario = options.usuarios.find(
+          (opt) => opt.label === data.usuario
         );
+        setSelectedUsuario(usuario?.value || data.usuario_id);
+        console.log("Usuario seleccionado en efecto:", usuario);
+      } else {
+        setSelectedUsuario(data.usuario_id);
       }
-      if (options.materiales.length > 0) {
-        setSelectedMaterial(
-          options.materiales.find((opt) => opt.value === data.material)?.value
-        );
-      }
-      if (options.colores.length > 0) {
-        setSelectedColor(
-          options.colores.find((opt) => opt.value === data.color)?.value
-        );
-      }
-      // Repite para otros selects si los tienes (colores, materiales, estados, etc.)
     }
   }, [options, data, isEditModalOpen]);
 
   // -----------------------------------------------------------------------------------------
   const handleOpenEdit = () => {
+    console.log("Abriendo modal de edición...");
     setIsEditModalOpen(true);
     openModal();
   };
   // ------------------------------------------------------------------------------------------
   const fetchOptions = async () => {
+    console.log("Iniciando fetch de opciones...");
     try {
-      const types = ["marcas", "colores", "materiales", "proveedores"];
+      const types = ["bienes", "usuarios"];
       const promises = types.map(async (type) => {
-        const { data, error } = await supabase.from(type).select("nombre");
+        const { data, error } = await supabase.from(type).select("id, nombre");
         if (error) throw error;
+        console.log(`Datos obtenidos para ${type}:`, data);
         return {
           [type]: data.map((item) => ({
-            value: item.nombre,
+            value: item.id,
             label: item.nombre,
           })),
         };
       });
 
       const results = await Promise.all(promises);
+      console.log("Opciones cargadas exitosamente:", results);
       setOptions(Object.assign({}, ...results));
     } catch (err) {
       console.error("Error fetching options:", err);
@@ -153,17 +163,36 @@ export function DataTableRowActions<TData>({
   }, []);
 
   // -----------------------------------------------------------------------------------------
-  const handleDelete = async () => {
+  const handleInitiateDelete = () => {
+    setShowConfirmDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setShowConfirmDeleteModal(false); // Cierra el modal de confirmación
     try {
       const { error } = await supabase
-        .from("base_operativa")
+        .from("reportes")
         .delete()
         .eq("id", data.id);
       if (error) throw error;
       await refreshData("delete");
+      setCurrentAlert({
+        visible: true,
+        variant: "success",
+        title: "¡Eliminado!",
+        message: "El registro ha sido eliminado exitosamente.",
+      });
+      setTimeout(() => setCurrentAlert(null), 3000);
     } catch (err) {
-      toast.error("Error al eliminar el registro");
       console.error("Error eliminando el registro:", err);
+      setCurrentAlert({
+        visible: true,
+        variant: "error",
+        title: "Error al Eliminar",
+        message:
+          "Ocurrió un error al eliminar el registro. Por favor, inténtalo de nuevo.",
+      });
+      setTimeout(() => setCurrentAlert(null), 5000);
     }
   };
   // -----------------------------------------------------------------------------------------
@@ -171,70 +200,42 @@ export function DataTableRowActions<TData>({
   const handleEdit = async (e: FormEvent<HTMLFormElement>, id: string) => {
     e.preventDefault();
 
+    console.log("Procesando formulario de edición...");
+    console.log("Evento del formulario:", e);
+    console.log("ID del movimiento a actualizar:", id);
+
     const formData = new FormData(e.target as HTMLFormElement);
+    console.log("Datos del formulario:", Array.from(formData.entries()));
 
     const updatedData = {
-      descripcion: formData.get("descripcion")?.toString() || "",
-      tamano: formData.get("tamano")?.toString() || "",
-      cantidad: Number(formData.get("cantidad")) || 0,
-      valor: Number(formData.get("valor")) || 0,
-      proveedor: selectedProveedor || "",
-      marca: selectedMarca || "",
-      material: selectedMaterial || "",
-      color: selectedColor || "",
-      estado: formData.get("estado")?.toString() || "bueno", // default si es obligatorio
-      disponibilidad: formData.get("disponibilidad")?.toString() || "ok", // default
+      cantidad: Number(formData.get("cantidad")) || data.cantidad,
+      tipo_movimiento:
+        formData.get("tipo_movimiento") === "true" ? "Ingreso" : "Salida",
+      usuario_id: selectedUsuario || data.usuario_id,
+      bien_id: selectedBien || data.bien_id,
+      motivo: formData.get("motivo")?.toString() || data.motivo,
+      fecha: formData.get("fecha")?.toString() || data.fecha,
     };
 
-    // Validación básica
-    if (
-      !updatedData.descripcion ||
-      !updatedData.cantidad ||
-      !updatedData.valor ||
-      !updatedData.proveedor
-    ) {
-      console.error("Campos obligatorios faltantes.");
-      return;
-    }
+    console.log("Datos actualizados para el movimiento:", updatedData);
 
     try {
       const { error } = await supabase
-        .from("base_operativa")
+        .from("movimientos")
         .update(updatedData)
         .eq("id", id);
 
       if (error) throw error;
 
-      // Refrescar datos de la tabla
-      await refreshData();
-
-      // Cerrar modal
+      console.log("Actualización exitosa.");
+      await refreshData("edit");
       closeModal();
     } catch (err) {
-      console.error("Error al editar el producto:", err);
-      alert("Hubo un error al guardar los cambios. Inténtalo de nuevo.");
+      console.error("Error al actualizar:", err);
     }
   };
+
   // -----------------------------------------------------------------------------------------
-  const handleCreateOption = async (e: FormEvent) => {
-    e.preventDefault();
-
-    if (!newValue.trim() || !currentType) return;
-
-    try {
-      const { error } = await supabase
-        .from(currentType)
-        .insert([{ nombre: newValue }]);
-      if (error) throw error;
-
-      await fetchOptions(); // Actualiza las opciones dinámicamente
-      setMiniModalOpen(false);
-      setNewValue("");
-      setCurrentType(null);
-    } catch (err) {
-      console.error(`Error al crear ${currentType}:`, err);
-    }
-  };
 
   return (
     <>
@@ -249,12 +250,20 @@ export function DataTableRowActions<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[160px]">
-          <DropdownMenuItem onClick={handleOpenEdit}>Editar</DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.preventDefault();
+              handleOpenEdit();
+            }}
+          >
+            Editar
+          </DropdownMenuItem>
+
           <DropdownMenuSeparator />
           <DropdownMenuItem
             onClick={(e) => {
               e.preventDefault();
-              handleDelete();
+              handleInitiateDelete(); // Llama a la función para abrir el modal de confirmación
             }}
           >
             Eliminar
@@ -270,65 +279,36 @@ export function DataTableRowActions<TData>({
         >
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
-              Crear Producto
+              Editar Registro
             </h4>
             <p className="mb-6 text-sm text-gray-500 dark:text-gray-400 lg:mb-7">
-              Llena los campos para registrar un nuevo producto.
+              Completa los campos para editar el registro.
             </p>
           </div>
           <form
             className="flex flex-col"
             onSubmit={(e) => handleEdit(e, data.id)}
           >
+            {/* Contenedor para las columnas */}
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
-                <div className="lg:col-span-2">
-                  <Label>Descripción</Label>
-                  <Input
-                    type="text"
-                    name="descripcion"
-                    placeholder="Ej. Caja de herramientas"
-                    defaultValue={data.descripcion}
-                  />
-                </div>
+                {/* Categoría */}
                 <div>
-                  <Label>Proveedor</Label>
+                  <Label>Nombre</Label>
                   <div className="flex items-center space-x-2">
                     <Select
-                      value={selectedProveedor} // Valor actual
-                      onChange={(selectedOption) =>
-                        setSelectedProveedor(selectedOption)
-                      }
-                      options={options.proveedores} // Opciones dinámicas
+                      name="bien"
+                      options={options.bienes}
+                      placeholder="Selecciona una categoría"
+                      className="dark:bg-dark-900"
+                      value={selectedBien} // Solo el ID
+                      onChange={(value) => setSelectedBien(value)}
                     />
 
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation(); // Evita la propagación del evento.
-                        setCurrentType("proveedores");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Marca</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      value={selectedMarca} // Valor actual
-                      onChange={(selectedOption) =>
-                        setSelectedMarca(selectedOption)
-                      }
-                      options={options.marcas} // Opciones dinámicas
-                    />
                     <Button
                       size="sm"
                       onClick={() => {
-                        setCurrentType("marcas");
+                        setCurrentType("categorias");
                         setMiniModalOpen(true);
                       }}
                     >
@@ -337,16 +317,7 @@ export function DataTableRowActions<TData>({
                   </div>
                 </div>
 
-                <div>
-                  <Label>Tamaño</Label>
-                  <Input
-                    type="text"
-                    name="tamano"
-                    placeholder="Ej. Grande"
-                    defaultValue={data.tamano}
-                  />
-                </div>
-
+                {/* Cantidad */}
                 <div>
                   <Label>Cantidad</Label>
                   <Input
@@ -358,162 +329,102 @@ export function DataTableRowActions<TData>({
                   />
                 </div>
 
+                {/* Disponibilidad */}
                 <div>
-                  <Label>Material</Label>
+                  <Label>Tipo de Movimiento</Label>
+                  <Select
+                    name="disponibilidad"
+                    options={opcionesMovimiento}
+                    placeholder="Selecciona la disponibilidad"
+                    className="dark:bg-dark-900"
+                    defaultValue={data.tipo_movimiento}
+                  />
+                </div>
+
+                {/* Observaciones */}
+                <div className="lg:col-span-2">
+                  <Label>Motivos</Label>
+                  <textarea
+                    name="motivo"
+                    className="w-full p-2 border rounded-lg dark:bg-dark-900 dark:text-white"
+                    placeholder="Notas adicionales..."
+                    defaultValue={data.motivo}
+                  ></textarea>
+                </div>
+
+                {/* Responsable */}
+                <div>
+                  <Label>Responsable</Label>
                   <div className="flex items-center space-x-2">
                     <Select
-                      value={selectedMaterial} // Valor actual
-                      onChange={(selectedOption) =>
-                        setSelectedMaterial(selectedOption)
-                      }
-                      options={options.materiales} // Opciones dinámicas
+                      type="text"
+                      name="usuario_id"
+                      options={options.usuarios}
+                      placeholder="Ej. Juan Pérez"
+                      defaultValue={data.usuario}
+                      value={selectedUsuario}
+                      onChange={(value) => setSelectedUsuario(value)}
                     />
-
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("materiales");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
                   </div>
                 </div>
 
+                {/* Fecha de Creación */}
                 <div>
-                  <Label>Color</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      value={selectedColor} // Valor actual
-                      onChange={(selectedOption) =>
-                        setSelectedColor(selectedOption)
-                      }
-                      options={options.colores} // Opciones dinámicas
-                    />
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setCurrentType("colores");
-                        setMiniModalOpen(true);
-                      }}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Fecha</Label>
+                  <Label>Fecha de Creación</Label>
                   <Input
                     type="date"
                     name="fecha"
+                    defaultValue={new Date().toISOString().split("T")[0]}
                     disabled
-                    defaultValue={data.fecha}
-                  />
-                </div>
-
-                <div>
-                  <Label>Valor</Label>
-                  <Input
-                    type="number"
-                    name="valor"
-                    placeholder="Ej. 250.00"
-                    defaultValue={data.valor}
-                  />
-                </div>
-
-                <div>
-                  <Label>Estado</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      name="estado"
-                      options={opcionesEstado}
-                      placeholder="Selecciona el estado"
-                      onChange={(selectedOpciones) =>
-                        console.log("Estado seleccionado:", selectedOpciones)
-                      }
-                      className="dark:bg-dark-900"
-                      defaultValue={data.estado}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Disponibilidad</Label>
-                  <Select
-                    name="disponibilidad"
-                    options={opcionesDisponibilidad}
-                    placeholder="Selecciona la disponibilidad"
-                    onChange={(selectedOpciones) =>
-                      console.log("Estado seleccionado:", selectedOpciones)
-                    }
-                    className="dark:bg-dark-900"
-                    defaultValue={data.disponibilidad}
                   />
                 </div>
               </div>
             </div>
 
+            {/* Botones de acción */}
             <div className="flex items-center gap-3 px-2 mt-6 lg:justify-end">
               <Button size="sm" variant="outline" onClick={closeModal}>
                 Cancelar
               </Button>
-
               <Button size="sm" type="submit">
-                Editar Registro
+                Actualizar
               </Button>
             </div>
           </form>
         </div>
       </Modal>
 
-      {/* ------------------------------------------------------------------------------------- */}
-
-      {isMiniModalOpen && currentType && (
-        <Modal
-          isOpen={isMiniModalOpen}
-          onClose={() => {
-            setMiniModalOpen(false);
-            setCurrentType(null);
-            setNewValue("");
-          }}
-          className="max-w-[400px] m-4"
-        >
-          <div className="w-full p-4 bg-white rounded-lg dark:bg-gray-900">
-            <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90">
-              Agregar Nuevo{" "}
-              {currentType.charAt(0).toUpperCase() + currentType.slice(1, -1)}
-            </h4>
-            <form onSubmit={handleCreateOption}>
-              <Label>Nombre del {currentType.slice(0, -1)}</Label>
-              <Input
-                type="text"
-                name="newValue"
-                value={newValue}
-                onChange={(e) => setNewValue(e.target.value)}
-                placeholder={`Ej. Nombre de ${currentType.slice(0, -1)}`}
-              />
-              <div className="flex justify-end mt-4 gap-2">
+      {/* Modal de confirmación de eliminación */}
+      {showConfirmDeleteModal &&
+        ReactDOM.createPortal(
+          <Modal
+            isOpen={showConfirmDeleteModal}
+            onClose={() => setShowConfirmDeleteModal(false)} // Permite cerrar el modal sin confirmar
+            className="max-w-sm m-4"
+          >
+            <div className="p-6 text-center bg-white rounded-lg dark:bg-gray-900">
+              <h4 className="mb-4 text-xl font-semibold text-gray-800 dark:text-white/90">
+                ¿Estás seguro?
+              </h4>
+              <p className="mb-6 text-gray-600 dark:text-gray-400">
+                Esta acción no se puede deshacer. ¿Realmente deseas eliminar
+                este registro?
+              </p>
+              <div className="flex justify-center gap-4">
                 <Button
-                  size="sm"
                   variant="outline"
-                  onClick={() => {
-                    setMiniModalOpen(false);
-                    setCurrentType(null);
-                    setNewValue("");
-                  }}
+                  onClick={() => setShowConfirmDeleteModal(false)}
                 >
-                  Cancelar
+                  No, Cancelar
                 </Button>
-                <Button size="sm" type="submit">
-                  Crear
+                <Button variant="destructive" onClick={handleConfirmDelete}>
+                  Sí, Eliminar
                 </Button>
               </div>
-            </form>
-          </div>
-        </Modal>
-      )}
+            </div>
+          </Modal>,
+          document.body
+        )}
     </>
   );
 }

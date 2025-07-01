@@ -46,6 +46,7 @@ export function DataTable<TData, TValue>({
   const [loading, setLoading] = React.useState(true);
   const [alertaExito, setAlertaExito] = React.useState(false);
   const [alertaBorrado, setAlertaBorrado] = React.useState(false);
+  const [alertaEditar, setAlertaEditar] = React.useState(false);
   // -------------------------------------------------------------------------------------
   const renderAlerta = alertaExito && (
     <Alert
@@ -65,6 +66,15 @@ export function DataTable<TData, TValue>({
     />
   );
   // -------------------------------------------------------------------------------------
+  const renderAlertaEditar = alertaEditar && (
+    <Alert
+      variant="warning"
+      title="¡Operación exitosa!"
+      message="El registro ha sido actualizado correctamente."
+      showLink={false}
+    />
+  );
+  // -------------------------------------------------------------------------------------
   const [viewOptions, setViewOptions] = React.useState({
     showHiddenColumns: false,
     customView: "default",
@@ -75,9 +85,18 @@ export function DataTable<TData, TValue>({
   const fetchData = async (triggeredBy?: string) => {
     setLoading(true);
 
-    const { data: fetchedData, error } = await supabase
-      .from("base_operativa")
-      .select("*");
+    const { data: fetchedData, error } = await supabase.from("reportes")
+      .select(`
+        *,
+        bien:bienes(nombre),
+        usuario:usuarios(nombre)
+      `);
+
+    if (error) {
+      console.error("Supabase error:", error.message);
+    } else {
+      console.log("Fetched data:", data);
+    }
 
     if (error) {
       console.error(error);
@@ -95,6 +114,11 @@ export function DataTable<TData, TValue>({
     if (triggeredBy === "delete") {
       setAlertaBorrado(true);
       setTimeout(() => setAlertaBorrado(false), 3000);
+    }
+
+    if (triggeredBy === "edit") {
+      setAlertaEditar(true);
+      setTimeout(() => setAlertaEditar(false), 3000);
     }
 
     setLoading(false);
@@ -142,6 +166,7 @@ export function DataTable<TData, TValue>({
     <div className="space-y-4">
       {renderAlerta}
       {renderAlertaBorrado}
+      {renderAlertaEditar}
       <DataTableToolbar
         table={table}
         viewOptions={viewOptions}
