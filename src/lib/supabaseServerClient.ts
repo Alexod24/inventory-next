@@ -1,12 +1,12 @@
 // src/lib/supabaseServerClient.ts
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
-import { cookies } from "next/headers"; // <--- CORRECCIÓN DE SINTAXIS AQUÍ
+import { cookies } from "next/headers";
 import { Database } from "../types/supabase"; // Asegúrate de que esta ruta sea correcta para tu tipo Database
 
-// Asegúrate de que esta función sea async
-export async function createServerSupabaseClient() {
-  // Ya no necesitamos 'const cookieStore = cookies();' aquí.
-  // La función 'cookies()' se llamará directamente dentro de los métodos 'get', 'set', 'remove'.
+// Esta función ahora es SÍNCRONA, como se recomienda en la documentación de Supabase SSR.
+export function createServerSupabaseClient() {
+  // Captura la instancia de 'cookies()' una sola vez aquí.
+  const cookieStore = cookies();
 
   // --- LOGS DE DEPURACIÓN DE VARIABLES DE ENTORNO ---
   console.log(
@@ -24,29 +24,29 @@ export async function createServerSupabaseClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get: async (name: string) => {
-          // <--- CORRECCIÓN CLAVE AQUÍ: Llamar a cookies() directamente
-          const cookie = await cookies().get(name);
+        // Los métodos 'get', 'set', 'remove' ahora son SÍNCRONOS y usan 'cookieStore'.
+        get(name: string) {
+          const cookie = cookieStore.get(name);
           return cookie?.value;
         },
-        set: async (name: string, value: string, options: CookieOptions) => {
+        set(name: string, value: string, options: CookieOptions) {
           try {
-            // <--- CORRECCIÓN CLAVE AQUÍ: Llamar a cookies() directamente
-            await cookies().set({ name, value, ...options });
+            cookieStore.set({ name, value, ...options });
           } catch (error) {
+            // Este catch es principalmente para depuración en desarrollo
             console.warn(
-              "⚠️ [createServerSupabaseClient] No se pueden establecer cookies desde un contexto de Cliente.",
+              "⚠️ [createServerSupabaseClient] No se pueden establecer cookies (posiblemente en contexto de Cliente, lo cual es incorrecto para este cliente de servidor).",
               error
             );
           }
         },
-        remove: async (name: string, options: CookieOptions) => {
+        remove(name: string, options: CookieOptions) {
           try {
-            // <--- CORRECCIÓN CLAVE AQUÍ: Llamar a cookies() directamente y usar .delete
-            await cookies().delete(name);
+            cookieStore.delete(name); // Usa .delete() para eliminar la cookie
           } catch (error) {
+            // Este catch es principalmente para depuración en desarrollo
             console.warn(
-              "⚠️ [createServerSupabaseClient] No se pueden eliminar cookies desde un contexto de Cliente.",
+              "⚠️ [createServerSupabaseClient] No se pueden eliminar cookies (posiblemente en contexto de Cliente, lo cual es incorrecto para este cliente de servidor).",
               error
             );
           }

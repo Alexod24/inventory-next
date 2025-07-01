@@ -14,6 +14,7 @@ import Select from "../../form/Seleccionar";
 import Alert from "@/components/ui/alerta/AlertaExito"; // <--- IMPORTACIÓN DE TU COMPONENTE ALERT
 import ReactDOM from "react-dom"; // <--- IMPORTACIÓN NECESARIA PARA REACT PORTALS
 import { useUser } from "@/context/UserContext"; // <--- IMPORTACIÓN DEL CONTEXTO DE USUARIO
+import { createClientComponentClient } from "@/app/utils/supabase/browser"; // Cliente de Supabase para el navegador
 
 import {
   DropdownMenu,
@@ -72,6 +73,8 @@ export function DataTableRowActions<TData>({
   const [newValue, setNewValue] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false); // Nuevo estado para el modal de confirmación
+  const supabase = createClientComponentClient(); // Inicializa el cliente de Supabase para el navegador
+  const { user, loading: userLoading } = useUser(); // <--- OBTENEMOS EL USUARIO Y SU ESTADO DE CARGA
 
   const [selectedBien, setSelectedBien] = useState<string | undefined>(
     data.bien || undefined
@@ -221,7 +224,7 @@ export function DataTableRowActions<TData>({
 
     try {
       const { error } = await supabase
-        .from("movimientos")
+        .from("reportes")
         .update(updatedData)
         .eq("id", id);
 
@@ -235,6 +238,9 @@ export function DataTableRowActions<TData>({
     }
   };
 
+  // Determinar si el usuario actual es 'admin'
+  const isAdmin = user && user.rol === "admin";
+  const canEditOrDelete = isAdmin && !userLoading; // Solo puede editar/eliminar si es admin y los datos del usuario han cargado
   // -----------------------------------------------------------------------------------------
 
   return (
@@ -250,25 +256,28 @@ export function DataTableRowActions<TData>({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[160px]">
-          <DropdownMenuItem
-            onClick={(e) => {
-              e.preventDefault();
-              handleOpenEdit();
-            }}
-          >
-            Editar
-          </DropdownMenuItem>
+          {canEditOrDelete && (
+            <DropdownMenuItem onClick={handleOpenEdit}>Editar</DropdownMenuItem>
+          )}
 
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={(e) => {
-              e.preventDefault();
-              handleInitiateDelete(); // Llama a la función para abrir el modal de confirmación
-            }}
-          >
-            Eliminar
-            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-          </DropdownMenuItem>
+          {canEditOrDelete && <DropdownMenuSeparator />}
+          {canEditOrDelete && (
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.preventDefault();
+                handleInitiateDelete(); // Llama a la función para abrir el modal de confirmación
+              }}
+            >
+              Eliminar
+              <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          )}
+          {!canEditOrDelete && (
+            <DropdownMenuItem disabled className="text-gray-500">
+              No autorizado
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 

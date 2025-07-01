@@ -527,7 +527,7 @@ export function DataTableViewOptions<TData>({
                     <Select
                       name="espacio"
                       options={options.espacios}
-                      placeholder="Ej. Oficina 3"
+                      placeholder="Selecciona un espacio"
                       required
                     />
                     <Button

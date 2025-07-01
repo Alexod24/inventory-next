@@ -2,7 +2,7 @@
 // Este Route Handler procesa el enlace de confirmación de correo de Supabase.
 
 import { createServerSupabaseClient } from "@/lib/supabaseServerClient"; // Importa tu cliente de Supabase para el servidor
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server"; // Importado pero no usado directamente para redirecciones completas
 import { redirect } from "next/navigation"; // Para redirecciones server-side
 
 export async function GET(request: Request) {
@@ -14,8 +14,11 @@ export async function GET(request: Request) {
   const redirectTo = searchParams.get("next") || "/base";
 
   console.log(
-    `[auth/confirm/route.ts] Recibida solicitud de confirmación. Token: ${token_hash}, Tipo: ${type}`
+    `[auth/confirm/route.ts] Recibida solicitud de confirmación. Token: ${
+      token_hash ? "presente" : "ausente"
+    }, Tipo: ${type ? "presente" : "ausente"}`
   );
+  console.log(`[auth/confirm/route.ts] Destino de redirección: ${redirectTo}`);
 
   if (token_hash && type) {
     try {
@@ -31,19 +34,19 @@ export async function GET(request: Request) {
 
       if (!error) {
         console.log(
-          `✅ [auth/confirm/route.ts] Confirmación exitosa para token: ${token_hash}. Redirigiendo a: ${redirectTo}`
+          `✅ [auth/confirm/route.ts] Confirmación exitosa. Redirigiendo a: ${redirectTo}`
         );
         // Redirige al usuario a la página deseada después de la confirmación exitosa
         redirect(redirectTo); // Redirección server-side
       } else {
         console.error(
-          `❌ [auth/confirm/route.ts] Error en la verificación de OTP:`,
+          `❌ [auth/confirm/route.ts] Error en la verificación de OTP de Supabase:`,
           error.message
         );
         // Si hay un error, redirige a una página de error o al login con un mensaje
         redirect(
           `/login?error=${encodeURIComponent(
-            "Error al confirmar tu correo. Por favor, intenta de nuevo o contacta soporte."
+            `Error de confirmación: ${error.message}. Por favor, intenta de nuevo.`
           )}`
         );
       }
@@ -56,7 +59,7 @@ export async function GET(request: Request) {
       // En caso de un error inesperado, redirige a una página de error genérica
       redirect(
         `/login?error=${encodeURIComponent(
-          "Ocurrió un error inesperado durante la confirmación."
+          "Ocurrió un error inesperado durante la confirmación de tu correo."
         )}`
       );
     }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 interface Option {
-  value: string | number; // CAMBIO CLAVE: Permite que 'value' sea string o number
+  value: string | number; // Permite que 'value' sea string o number
   label: string;
   id?: string;
   customValue?: string;
@@ -10,7 +10,7 @@ interface Option {
 interface SelectProps {
   options: Option[];
   placeholder?: string;
-  onChange: (value: string) => void;
+  onChange?: (value: string) => void; // <--- CAMBIO CLAVE: 'onChange' ahora es opcional
   className?: string;
   defaultValue?: string;
   value?: string; // Valor controlado externo
@@ -22,7 +22,7 @@ interface SelectProps {
 const Select: React.FC<SelectProps> = ({
   options,
   placeholder = "Select an option",
-  onChange,
+  onChange, // Ahora puede ser undefined
   className = "",
   defaultValue = "",
   value, // Prop para manejar el componente como controlado
@@ -30,7 +30,8 @@ const Select: React.FC<SelectProps> = ({
   type,
   id, // Nuevo prop para el id del select
 }) => {
-  options = options || []; // Asegura que options sea un array
+  // Asegura que options sea un array, incluso si es null/undefined
+  options = options || [];
   const [internalValue, setInternalValue] = useState<string>(defaultValue);
 
   useEffect(() => {
@@ -44,7 +45,14 @@ const Select: React.FC<SelectProps> = ({
     if (value === undefined) {
       setInternalValue(newValue); // Actualiza solo si no es controlado externamente
     }
-    onChange(newValue); // Notifica al componente padre
+    // <--- CAMBIO CLAVE: Verifica si onChange es una función antes de llamarla
+    if (onChange && typeof onChange === "function") {
+      onChange(newValue); // Notifica al componente padre
+    } else {
+      console.warn(
+        "La prop 'onChange' no fue proporcionada o no es una función en el componente Select."
+      );
+    }
   };
 
   // El valor que se le pasa al elemento <select> de HTML debe ser una cadena.
@@ -73,9 +81,9 @@ const Select: React.FC<SelectProps> = ({
       </option>
       {options.map((option) => (
         <option
-          key={String(option.value)} // CAMBIO CLAVE: Asegura que la key sea siempre una cadena
+          key={String(option.value)} // Asegura que la key sea siempre una cadena
           id={option.id}
-          value={String(option.customValue || option.value)} // CAMBIO CLAVE: Asegura que el valor de la opción sea siempre una cadena
+          value={String(option.customValue || option.value)} // Asegura que el valor de la opción sea siempre una cadena
           className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
         >
           {option.label}

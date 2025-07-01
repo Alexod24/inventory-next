@@ -1,11 +1,72 @@
 // src/middleware.ts
 import { NextRequest, NextResponse } from "next/server";
-// Asegúrate de que la ruta sea correcta si moviste el archivo
-import { updateSession, getUser } from "./app/utils/supabase/middleware";
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { Database } from "./types/supabase"; // Asegúrate de que esta ruta sea correcta para tu tipo Database
 
 export async function middleware(request: NextRequest) {
-  // <--- REVISA Y EDITA ESTA LISTA DE RUTAS PROTEGIDAS ---
-  // AÑADE AQUÍ CUALQUIER OTRA RUTA QUE SOLO DEBA SER ACCESIBLE SI EL USUARIO ESTÁ LOGUEADO
+  const currentPath = request.nextUrl.pathname;
+
+  // <--- CAMBIO CLAVE: Permitir siempre el acceso a las rutas de restablecimiento de contraseña sin checks de autenticación ---
+  // Estas rutas deben ser accesibles para usuarios autenticados y no autenticados,
+  // ya que son parte del flujo de gestión de contraseña y no deben ser redirigidas por el middleware.
+  if (currentPath === "/reset-password" || currentPath === "/update-password") {
+    console.log(
+      `[Middleware] Permitir acceso directo a ${currentPath} (flujo de restablecimiento de contraseña).`
+    );
+    // Crucial: No inicializar Supabase client ni llamar getUser() para estas rutas
+    return NextResponse.next({ request: request });
+  }
+  // --- FIN CAMBIO CLAVE ---
+
+  // Crea un nuevo objeto de respuesta que será retornado,
+  // y que Supabase usará para establecer/actualizar las cookies.
+  const response = NextResponse.next({
+    request: request,
+  });
+
+  // Inicializa el cliente de Supabase para el lado del servidor (contexto del middleware).
+  // Este cliente leerá automáticamente las cookies de la solicitud entrante
+  // y escribirá las cookies actualizadas en la respuesta saliente.
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          response.cookies.set({ name, value, ...options });
+        },
+        remove(name: string, options: CookieOptions) {
+          response.cookies.set({ name, value: "", ...options, maxAge: -1 });
+        },
+      },
+    }
+  );
+
+  // Refresca la sesión del usuario.
+  // Esta llamada es crucial: si la sesión ha expirado, Supabase intentará refrescarla
+  // y automáticamente actualizará las cookies de sesión en el objeto 'response'.
+  // También obtiene los datos del usuario actual.
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser(); // Usa getUser directamente aquí
+
+  console.log("Middleware ejecutado para la ruta:", currentPath);
+  console.log(
+    "Usuario obtenido en middleware (después de getUser):",
+    user ? user.id : "null"
+  );
+  if (error) {
+    console.error(
+      "Error al obtener usuario en middleware (después de getUser):",
+      error.message
+    );
+  }
+
+  // --- REVISA Y EDITA ESTA LISTA DE RUTAS PROTEGIDAS ---
   const protectedRoutesList = [
     "/base", // Tu dashboard principal
     "/bienes",
@@ -27,46 +88,14 @@ export async function middleware(request: NextRequest) {
   ];
   // --- FIN REVISIÓN ---
 
-  const authRoutesList = ["/login"]; // Rutas públicas para no autenticados
-  const currentPath = new URL(request.url).pathname;
-
-  console.log("Middleware ejecutado para la ruta:", currentPath);
-
-  // 1. Actualizar sesión y obtener la respuesta con cookies actualizadas
-  // Esta 'response' es la que contendrá las cookies de sesión.
-  let response = NextResponse.next({
-    // Inicializar response con NextResponse.next()
-    request: request,
-  });
-  response = await updateSession(request); // Asegúrate de que updateSession devuelve una NextResponse
-
-  console.log(
-    "Cookies después de updateSession (en response):",
-    response.cookies.getAll()
-  );
-
-  // 2. Obtener usuario usando la respuesta que viene de updateSession
-  // Ahora getUser devuelve el usuario Y la respuesta con las cookies.
-  // Es importante que getUser reciba la 'response' para que pueda modificar las cookies si es necesario.
-  const {
-    data: { user },
-    error,
-    response: userResponse,
-  } = await getUser(request, response); // Pasa la respuesta aquí
-
-  // Usa la respuesta que viene de getUser para las redirecciones
-  response = userResponse;
-
-  if (error) {
-    console.error("Error al obtener usuario en middleware:", error);
-  } else {
-    console.log("Usuario obtenido en middleware:", user);
-  }
+  // Rutas de autenticación que deben ser accesibles para no autenticados
+  // y redirigir a autenticados (excepto las de restablecimiento de contraseña).
+  const authRoutesList = ["/login", "/auth/callback", "/auth/confirm"];
 
   // Lógica de Redirección:
+
   // Caso 1: Usuario NO autenticado
   if (!user) {
-    // Si intenta acceder a una ruta protegida
     if (protectedRoutesList.includes(currentPath)) {
       console.log(
         "Redirigiendo a login: Usuario no autenticado intentó acceder a ruta protegida",
@@ -74,18 +103,10 @@ export async function middleware(request: NextRequest) {
       );
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    // Si intenta acceder a una ruta de autenticación (login/register), permitir
-    if (authRoutesList.includes(currentPath)) {
-      return response; // Permite el acceso a /login o /register
-    }
-    // Si es la página de inicio (homepage), permitir acceso
-    if (currentPath === "/") {
-      return response;
+    if (authRoutesList.includes(currentPath) || currentPath === "/") {
+      return response; // Permite el acceso
     }
 
-    // Si no es ninguna de las anteriores (protegida, auth, homepage)
-    // y el usuario NO está autenticado, redirigir a /login.
-    // Esto captura rutas no existentes o cualquier otra ruta no autorizada para no autenticados.
     console.log(
       "Redirigiendo a login: Usuario no autenticado intentó acceder a ruta no autorizada/inexistente",
       currentPath
@@ -95,7 +116,6 @@ export async function middleware(request: NextRequest) {
 
   // Caso 2: Usuario SÍ autenticado
   if (user) {
-    // Si intenta acceder a una ruta de autenticación (login/register), redirigir a /base
     if (authRoutesList.includes(currentPath)) {
       console.log(
         "Redirigiendo a /base: Usuario ya autenticado intentó acceder a ruta de autenticación",
@@ -105,11 +125,10 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     }
     // Para todas las demás rutas (protegidas, existentes, no existentes), permitir acceso.
-    // Next.js manejará el 404 si la ruta no existe y el usuario está autenticado.
+    // Esto incluye /reset-password y /update-password para usuarios autenticados.
     return response;
   }
 
-  // Fallback (debería ser inalcanzable con la lógica anterior si el matcher es amplio)
   return response;
 }
 
@@ -127,6 +146,6 @@ export const config = {
      * (ej. /images/, /fonts/, /videos/, etc.)
      * - /api/ (si tienes APIs públicas que no requieren autenticación)
      */
-    "/((?!_next/static|_next/image|favicon.ico|images/|test-image.jpg|api).*)", // <-- CAMBIO CLAVE AQUÍ
+    "/((?!_next/static|_next/image|favicon.ico|images/|test-image.jpg|api).*)",
   ],
 };

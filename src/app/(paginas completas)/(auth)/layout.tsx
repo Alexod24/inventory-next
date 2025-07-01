@@ -67,7 +67,7 @@ export default function AuthLayout({
                 />
               </Link>
               <p className="text-center text-white/80 text-lg">
-                Bienvenido al sistema de invetnario de Bienes de La Base Cowork.
+                Bienvenido al sistema de inventario de Bienes de La Base Cowork.
               </p>
             </div>
           </div>
