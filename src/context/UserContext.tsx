@@ -51,15 +51,11 @@ export function UserProvider({
       if (!supabaseUser) {
         setUser(null);
         setLoading(false);
-        console.log(
-          "[UserContext] No hay usuario de Supabase para cargar perfil."
-        );
+        
         return;
       }
 
-      console.log(
-        `[UserContext] Cargando perfil para el usuario ID: ${supabaseUser.id}`
-      );
+  
       const { data: profile, error } = await supabase
         .from("usuarios")
         .select("nombre, rol")
@@ -67,7 +63,7 @@ export function UserProvider({
         .single();
 
       if (error) {
-        console.error("[UserContext] Error al cargar perfil:", error.message);
+        
         setUser({
           id: supabaseUser.id,
           email: supabaseUser.email,
@@ -81,7 +77,7 @@ export function UserProvider({
           nombre: profile.nombre,
           rol: profile.rol,
         });
-        console.log("[UserContext] Perfil cargado exitosamente:", profile);
+        
       } else {
         // Usuario autenticado pero sin perfil en la tabla 'usuarios'
         setUser({
@@ -90,9 +86,7 @@ export function UserProvider({
           nombre: null,
           rol: null,
         });
-        console.warn(
-          "[UserContext] Usuario autenticado sin perfil en la tabla 'usuarios'."
-        );
+       
       }
       setLoading(false); // Desactiva el estado de carga
     },
@@ -101,7 +95,7 @@ export function UserProvider({
 
   // Función para forzar la recarga del usuario (expuesta a través del contexto)
   const refreshUser = useCallback(async () => {
-    console.log("[UserContext] Forzando recarga de usuario...");
+    
     const {
       data: { user: sessionUser },
     } = await supabase.auth.getUser();
@@ -127,15 +121,13 @@ export function UserProvider({
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log(`[UserContext] Evento de Auth: ${event}, Sesión:`, session);
+      
       fetchUserProfile(session?.user || null);
     });
 
     // Limpiar la suscripción al desmontar el componente
     return () => {
-      console.log(
-        "🧹 [UserContext] Limpiando suscripción de onAuthStateChange."
-      );
+      
       subscription.unsubscribe();
     };
   }, [supabase, fetchUserProfile, initialUser]); // Dependencias: supabase, fetchUserProfile, initialUser

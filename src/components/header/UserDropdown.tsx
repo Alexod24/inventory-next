@@ -20,7 +20,7 @@ export default function UserDropdown() {
     const supabase = getBrowserSupabaseClient();
 
     async function fetchUserProfile() {
-      console.log("🚀 [UserDropdown] Iniciando fetchUserProfile...");
+      
       try {
         const {
           data: { user },
@@ -28,18 +28,11 @@ export default function UserDropdown() {
         } = await supabase.auth.getUser();
 
         if (userError) {
-          console.log(
-            "❌ [UserDropdown] Error/Info al obtener el usuario autenticado (probablemente no hay sesión):",
-            userError.message
-          );
+          
           setUserName(null);
           setUserEmail(null);
         } else if (user) {
-          console.log(
-            "✅ [UserDropdown] Usuario autenticado encontrado:",
-            user.id,
-            user.email
-          );
+          
           // Corrección clave aquí: usa el operador ?? para convertir undefined a null
           setUserEmail(user.email ?? null);
 
@@ -50,57 +43,40 @@ export default function UserDropdown() {
             .single();
 
           if (profileError) {
-            console.error(
-              "❌ [UserDropdown] Error al obtener el perfil de usuario de la tabla 'usuarios':",
-              profileError.message
-            );
+            
             setUserName("Usuario Desconocido");
             setUserRole(null);
           } else if (profile) {
-            console.log(
-              "✅ [UserDropdown] Datos de perfil encontrados:",
-              profile
-            );
+            
             setUserName(profile.nombre);
             setUserRole(profile.rol);
           } else {
-            console.warn(
-              "⚠️ [UserDropdown] No se encontró perfil en la tabla 'usuarios' para el ID:",
-              user.id
-            );
+            
             setUserName("Usuario sin perfil");
             setUserRole(null);
           }
         } else {
-          console.log("🚫 [UserDropdown] No hay usuario autenticado.");
+  
           setUserName(null);
           setUserEmail(null);
           setUserRole(null);
         }
       } catch (runtimeError) {
-        console.error(
-          "🛑 [UserDropdown] Error inesperado en fetchUserProfile:",
-          runtimeError
-        );
+       
         setUserName("Error de Carga");
         setUserEmail("error@ejemplo.com");
         setUserRole(null);
       } finally {
         setLoadingProfile(false);
         setIsAuthChecked(true);
-        console.log(
-          "✅ [UserDropdown] fetchUserProfile finalizado. loadingProfile=false, isAuthChecked=true."
-        );
+       
       }
     }
 
     // El listener de onAuthStateChange seguirá funcionando y reaccionará a cambios
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log(
-          `🔑 [UserDropdown] Evento de autenticación: ${event}. Sesión:`,
-          session
-        );
+      
         if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
           fetchUserProfile();
         }
@@ -111,9 +87,7 @@ export default function UserDropdown() {
     fetchUserProfile();
 
     return () => {
-      console.log(
-        "🧹 [UserDropdown] Limpiando useEffect del componente. Desuscribiendo."
-      );
+      
       if (authListener && authListener.subscription) {
         authListener.subscription.unsubscribe();
       }

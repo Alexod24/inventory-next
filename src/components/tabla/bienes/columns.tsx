@@ -51,7 +51,7 @@ export const columns: ColumnDef<Bienes>[] = [
     ),
     cell: ({ row }) => {
       // Acceso directo a la propiedad 'categoria' como string
-      const categoriaNombre = row.original.categoria || "Sin categoría";
+      const categoriaNombre = row.original.categoria?.nombre || "Sin categoría";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
@@ -69,7 +69,7 @@ export const columns: ColumnDef<Bienes>[] = [
     cell: ({ row }) => {
       // Acceso directo a la propiedad 'subcategoriaNombre' como string
       const subcategoriaNombre =
-        row.original.subcategoriaNombre || "Sin subcategoría";
+        row.original.subcategoriaNombre?.nombre || "Sin subcategoría";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
@@ -86,7 +86,7 @@ export const columns: ColumnDef<Bienes>[] = [
     ),
     cell: ({ row }) => {
       // Acceso directo a la propiedad 'proveedorNombre' como string
-      const proveedorNombre = row.original.proveedorNombre || "Sin proveedor";
+      const proveedorNombre = row.original.proveedorNombre?.nombre || "Sin proveedor";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
@@ -104,7 +104,7 @@ export const columns: ColumnDef<Bienes>[] = [
     ),
     cell: ({ row }) => {
       // Acceso directo a la propiedad 'espacioNombre' como string
-      const espacioNombre = row.original.espacioNombre || "Sin espacio";
+      const espacioNombre = row.original.espacioNombre?.nombre || "Sin espacio";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
@@ -299,7 +299,7 @@ export const columns: ColumnDef<Bienes>[] = [
     ),
     cell: ({ row }) => {
       // Acceso directo a la propiedad 'usuario' como string
-      const usuarioNombre = row.original.usuario || "Sin usuario";
+      const usuarioNombre = row.original.usuario?.nombre || "Sin usuario";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">

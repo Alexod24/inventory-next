@@ -10,6 +10,7 @@ import {
 
 import { supabase } from "@/app/utils/supabase/supabase";
 
+import React from "react";
 import Input from "../../form/input/Input";
 import Label from "../../form/Label";
 import Select from "../../form/Seleccionar";
@@ -111,11 +112,13 @@ export function DataTableViewOptions<TData>({
   const [newValue, setNewValue] = useState("");
   const [currentType, setCurrentType] = useState<string | null>(null);
   const [miniModalError, setMiniModalError] = useState<string | null>(null);
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
-  const [subcategoriaSeleccionada, setSubcategoriaSeleccionada] = useState("");
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = React.useState(null);
+  const [subcategoriaSeleccionada, setSubcategoriaSeleccionada] = React.useState(null);
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = React.useState(null);
   const [fechaPredeterminada, setFechaPredeterminada] = useState(
     new Date().toISOString().split("T")[0]
   );
+  
 
   // Estados para el nuevo bien (formulario del modal)
   const [newBien, setNewBien] = useState<Partial<Bienes>>({
@@ -230,12 +233,7 @@ export function DataTableViewOptions<TData>({
         .from("usuarios")
         .select("id, nombre");
 
-      if (catError) console.error("Error cargando categorías:", catError);
-      if (subCatError)
-        console.error("Error cargando subcategorías:", subCatError);
-      if (provError) console.error("Error cargando proveedores:", provError);
-      if (espError) console.error("Error cargando espacios:", espError);
-      if (userError) console.error("Error cargando usuarios:", userError);
+  
 
       setOptions({
         categorias:
@@ -348,11 +346,11 @@ export function DataTableViewOptions<TData>({
       [name]: selectedLabel !== undefined ? selectedLabel : selectedValue,
     }));
   };
-
   const handleAddBien = async (e: FormEvent) => {
     e.preventDefault();
-
-    // Find the IDs based on the labels stored in newBien for insertion into DB
+    console.log("🚀 handleAddBien llamado", newBien);
+  
+    // Find the IDs
     const categoriaId = options.categorias.find(
       (opt) => opt.label === newBien.categoria
     )?.value;
@@ -369,8 +367,17 @@ export function DataTableViewOptions<TData>({
     const usuarioId = options.usuarios.find(
       (opt) => opt.label === newBien.usuario
     )?.value;
+  
+    console.log({
+      categoriaId,
+      subcategoriaId,
+      proveedorId,
+      espacioId,
+      usuarioId,
+    });
+    console.log("Datos del formulario antes de añadir:", newBien);
 
-    // Basic form validation
+    // Validación básica
     if (
       !newBien.nombre ||
       !newBien.categoria ||
@@ -382,11 +389,10 @@ export function DataTableViewOptions<TData>({
       !newBien.estado ||
       newBien.disponibilidad === undefined
     ) {
-      // Implement a user-friendly error message here (e.g., a custom alert modal)
-      console.error("Faltan campos obligatorios para añadir el bien.");
+      console.error("❌ Faltan campos obligatorios para añadir el bien.");
       return;
     }
-
+  
     // Generate code
     const baseCode = generateCode(
       newBien.categoria,
@@ -402,8 +408,9 @@ export function DataTableViewOptions<TData>({
       newBien.nombre,
       nextSuffix
     );
-
-    // Prepare data for Supabase insertion (using IDs for FKs and DB column names for dates)
+  
+    console.log("🔑 Código generado:", finalCode);
+  
     const dataToInsert = {
       codigo: finalCode,
       nombre: newBien.nombre,
@@ -421,11 +428,14 @@ export function DataTableViewOptions<TData>({
       creado_en: new Date().toISOString(),
       actualizado_en: new Date().toISOString(),
     };
-
+  
+    console.log("📤 Data a insertar:", dataToInsert);
+  
     try {
       const { data, error } = await supabase
         .from("bienes")
-        .insert([dataToInsert]).select(`
+        .insert([dataToInsert])
+        .select(`
           id,
           codigo,
           nombre,
@@ -443,10 +453,10 @@ export function DataTableViewOptions<TData>({
           espacios(nombre),
           usuarios(nombre)
         `);
-
+  
       if (error) throw error;
-
-      // Map inserted data back to Bienes interface for state update
+      console.log("✅ Bien insertado:", data);
+  
       const insertedBienMapped: Bienes[] = data.map((b: any) => ({
         id: b.id,
         codigo: b.codigo,
@@ -465,11 +475,11 @@ export function DataTableViewOptions<TData>({
         espacioNombre: b.espacios?.nombre || "Sin espacio",
         usuario: b.usuarios?.nombre || "Sin usuario",
       }));
-
+  
       setItems((prev) => [...prev, ...insertedBienMapped]);
       closeModal();
-      fetchData(); // Recarga los datos de la tabla principal
-      // Reiniciar formulario
+      fetchData();
+  
       setNewBien({
         codigo: "",
         nombre: "",
@@ -486,12 +496,14 @@ export function DataTableViewOptions<TData>({
         usuario: "",
       });
     } catch (err: any) {
-      console.error("Error al añadir bien:", err);
-      // Implement a custom alert modal here for user feedback
+      console.error("❌ Error al añadir bien:", err);
     }
+    
   };
 
   // -----------------------------------------------------------------------------------------------
+
+  
   // Handle adding new options (e.g., new category, new supplier)
   const handleCreateOption = async (e: FormEvent) => {
     e.preventDefault();
@@ -587,7 +599,7 @@ export function DataTableViewOptions<TData>({
               Completa los campos para registrar un nuevo bien interno.
             </p>
           </div>
-          <form className="flex flex-col" onSubmit={handleCreateOption}>
+          <form className="flex flex-col" onSubmit={handleAddBien}>
             {/* Contenedor para las columnas */}
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
@@ -600,6 +612,7 @@ export function DataTableViewOptions<TData>({
                     name="codigo"
                     placeholder="Código generado automáticamente"
                     className="!bg-gray-200 cursor-not-allowed"
+                    readOnly
                   />
                 </div>
 
@@ -627,7 +640,8 @@ export function DataTableViewOptions<TData>({
                       options={options.categorias}
                       placeholder="Selecciona una categoría"
                       className="dark:bg-dark-900"
-                      onChange={(value) => setCategoriaSeleccionada(value)}
+                      onChange={(value) => handleSelectChange("categoria", value)}
+                      value={newBien.categoria}
                     />
                     <Button
                       size="sm"
@@ -650,8 +664,8 @@ export function DataTableViewOptions<TData>({
                       options={options.subcategorias}
                       placeholder="Selecciona una subcategoría"
                       className="dark:bg-dark-900"
-                      value={subcategoriaSeleccionada} // Ahora es un componente controlado
-                      onChange={(value) => setSubcategoriaSeleccionada(value)}
+                      onChange={(value) => handleSelectChange("subcategoria", value)}
+                      value={newBien.subcategoriaNombre}
                       // disabled={!categoriaSeleccionada} // Deshabilita si no hay categoría seleccionada
                     />
                     <Button
@@ -675,6 +689,8 @@ export function DataTableViewOptions<TData>({
                       name="usuario_id"
                       options={options.usuarios}
                       placeholder="Ej. Juan Pérez"
+                      
+                      onChange={(value) => setUsuarioSeleccionado(value)} // actualiza el estado
                     />
                   </div>
                 </div>
@@ -708,7 +724,7 @@ export function DataTableViewOptions<TData>({
                     name="cantidad"
                     min="1"
                     placeholder="Ej. 10"
-                    required
+                    
                   />
                 </div>
 
@@ -719,7 +735,7 @@ export function DataTableViewOptions<TData>({
                     type="date"
                     name="fecha"
                     onChange={(e) => setFechaPredeterminada(e.target.value)}
-                    required
+                    
                   />
                 </div>
 
@@ -731,7 +747,7 @@ export function DataTableViewOptions<TData>({
                     name="valor"
                     step="0.01"
                     placeholder="Ej. 250.00"
-                    required
+                    
                   />
                 </div>
 
