@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 interface Option {
-  value: string;
+  value: string | number;
   label: string;
 }
 
@@ -49,11 +49,10 @@ const opcionesEstado = [
   { value: "roto", label: "Roto" },
 ];
 
-const opcionesMovimiento = [
-  { value: true, label: "Ingreso" },
-  { value: false, label: "Salida" },
+const opcionesMovimiento: Option[] = [
+  { value: "true", label: "Disponible" },
+  { value: "false", label: "No disponible" },
 ];
-
 // -----------------------------------------------------------------------------------------
 
 export function DataTableRowActions<TData>({
@@ -64,8 +63,11 @@ export function DataTableRowActions<TData>({
   const { isOpen, openModal, closeModal } = useModal();
 
   const [options, setOptions] = useState<OptionsState>({
-    bienes: [] as { value: number; label: string }[],
-    usuarios: [] as { value: number; label: string }[],
+    bienes: [] as Option[],
+    subcategorias: [] as Option[],
+    usuarios: [] as Option[],
+    espacios: [] as Option[],
+    proveedores: [] as Option[],
   });
 
   const [isMiniModalOpen, setMiniModalOpen] = useState(false);
@@ -95,11 +97,11 @@ export function DataTableRowActions<TData>({
   // Manejadores onChange
 
   const handleBienChange = (selectedOption: Option | null) => {
-    setSelectedBien(selectedOption?.value || undefined);
+    setSelectedBien(selectedOption?.value?.toString() || undefined);
   };
 
   const handleUsuarioChange = (selectedOption: Option | null) => {
-    setSelectedUsuario(selectedOption?.value || undefined);
+    setSelectedUsuario(selectedOption?.value?.toString() || undefined);
   };
 
   // -----------------------------------------------------------------------------------------

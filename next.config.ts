@@ -1,3 +1,4 @@
+// next.config.ts
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -10,7 +11,8 @@ const nextConfig: NextConfig = {
     // Desactiva React Refresh Overlay si estás en desarrollo
     if (dev) {
       config.plugins = config.plugins.filter(
-        (plugin) => plugin.constructor.name !== "ReactRefreshWebpackPlugin"
+        // Aquí se añade el tipo 'any' explícitamente al parámetro 'plugin'
+        (plugin: any) => plugin.constructor.name !== "ReactRefreshWebpackPlugin"
       );
     }
 

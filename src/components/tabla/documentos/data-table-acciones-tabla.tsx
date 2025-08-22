@@ -499,7 +499,6 @@ export function DataTableRowActions<TData>({
                       placeholder="Selecciona un responsable"
                       value={selectedUsuario}
                       onChange={(value) => setSelectedUsuario(value)}
-                      required
                     />
                     <Button
                       size="sm"
@@ -534,7 +533,6 @@ export function DataTableRowActions<TData>({
                     className="dark:bg-dark-900"
                     value={selectedEstadoDocumento}
                     onChange={(value) => setSelectedEstadoDocumento(value)}
-                    required
                   />
                 </div>
 

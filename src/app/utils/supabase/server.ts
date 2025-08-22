@@ -1,29 +1,37 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+// src/app/utils/supabase/server.ts
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
+import { cookies } from "next/headers"; // Importa 'cookies' de next/headers
 
-export async function createSupabaseClient() {
-  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
-    throw new Error(
-      "Faltan las variables de entorno necesarias para Supabase."
-    );
-  }
-
-  const cookiesStore = cookies();
-
+export const createServerSupabaseClient = () => {
   return createServerClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return cookiesStore.getAll();
+        get(name: string) {
+          // Llama a cookies() y haz un casting explícito a 'any' para resolver el error de tipo.
+          return (cookies() as any).get(name)?.value;
         },
-        // Mejor no usar setAll aquí, porque no tiene efecto en SSR sin Response
-        setAll() {
-          // No hagas nada o lanza error para evitar confusiones
-          console.warn("setAll no implementado en createSupabaseClient SSR");
+        set(name: string, value: string, options: CookieOptions) {
+          try {
+            // Llama a cookies() y haz un casting explícito a 'any'.
+            (cookies() as any).set(name, value, options);
+          } catch (error) {
+            console.error(
+              "Error al establecer la cookie en el servidor:",
+              error
+            );
+          }
+        },
+        remove(name: string, options: CookieOptions) {
+          try {
+            // Llama a cookies() y haz un casting explícito a 'any'.
+            (cookies() as any).set(name, "", options); // O (cookies() as any).delete(name)
+          } catch (error) {
+            console.error("Error al eliminar la cookie en el servidor:", error);
+          }
         },
       },
     }
   );
-}
+};

@@ -8,9 +8,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-import { supabase } from "@/app/utils/supabase/supabase"; // Asegúrate de que esta importación sea correcta para el cliente de navegador
-// Si estás usando createClientComponentClient, deberías importarlo así:
-// import { createClientComponentClient } from "@/app/utils/supabase/browser";
+import { supabase } from "@/app/utils/supabase/supabase";
 
 import Input from "../../form/input/Input";
 import Label from "../../form/Label";
@@ -18,65 +16,31 @@ import Select from "../../form/Seleccionar";
 import { Button } from "@/components/ui/button";
 import { exportarToPDF } from "./exportar";
 import { useState, useEffect, FormEvent } from "react";
-import { Modal } from "../../ui/modal";
-import { useModal } from "../../../hooks/useModal";
+import { Modal } from "../../ui/modal"; // Corrected import
+import { useModal } from "../../../hooks/useModal"; // Corrected import
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { MixerHorizontalIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Table } from "@tanstack/react-table";
-import ReactDOM from "react-dom"; // Importar ReactDOM para createPortal
+import ReactDOM from "react-dom";
 
-type Bienes = {
-  codigo: string;
-  nombre: string;
-  categorias?: { nombre: string };
-  subcategoria_id: number;
-  proveedor_id?: number;
-  espacio_id: number;
-  cantidad: number;
-  fecha_adquisicion?: string;
-  valor: number;
-  estado: string;
-  disponibilidad: boolean;
-  observaciones?: string;
-  usuario_id: string;
-
-  subcategorias?: { id: number; nombre: string };
-  proveedores?: { id: number; nombre: string };
-  espacios?: { id: number; nombre: string };
-};
-
-interface Option {
-  value: string | number; // Asegúrate de que 'value' pueda ser string o number
-  label: string;
-}
-
-const opcionesEstado: Option[] = [
-  { value: "bueno", label: "Bueno" },
-  { value: "dañado", label: "Dañado" },
-  { value: "roto", label: "Roto" },
-];
-
-const opcionesDisponibilidad: Option[] = [
-  { value: true, label: "Ok" },
-  { value: false, label: "Faltante" },
-];
+import { Option, opcionesEstado, opcionesDisponibilidad } from "@/lib/options";
+import { Bienes } from "./schema";
 
 // -----------------------------------------------------------------------------------------------
 const generateCode = (
   categoriaNombre: string,
   subcategoriaNombre: string,
   nombre: string,
-  suffix: string = "001" // Valor predeterminado
+  suffix: string = "001"
 ) => {
-  const categoriaCode = categoriaNombre.slice(0, 3).toUpperCase(); // Primeras 3 letras
-  const subcategoriaCode = subcategoriaNombre.slice(0, 3).toUpperCase(); // Primeras 3 letras
-  // Asegúrate de que 'nombre' no sea undefined o null antes de usar split y map
+  const categoriaCode = categoriaNombre.slice(0, 3).toUpperCase();
+  const subcategoriaCode = subcategoriaNombre.slice(0, 3).toUpperCase();
   const nombreCode = nombre
     ? nombre
         .split(" ")
         .map((word) => word.slice(0, 3).toUpperCase())
         .join("-")
-    : ""; // Une las iniciales con guiones
+    : "";
 
   return `${categoriaCode}-${subcategoriaCode}-${nombreCode}-${suffix}`;
 };
@@ -85,7 +49,7 @@ const fetchSimilarCodes = async (baseCode: string) => {
   const { data, error } = await supabase
     .from("bienes")
     .select("codigo")
-    .like("codigo", `${baseCode}%`); // Busca códigos similares
+    .like("codigo", `${baseCode}%`);
 
   if (error) {
     console.error("Error al buscar códigos similares:", error);
@@ -98,241 +62,443 @@ const fetchSimilarCodes = async (baseCode: string) => {
 const calculateNextSuffix = (existingCodes: string[], baseCode: string) => {
   const suffixes = existingCodes
     .map((code) => {
-      const match = code.match(/-(\d{3})$/); // Extrae el sufijo numérico
+      const match = code.match(/-(\d{3})$/);
       return match ? parseInt(match[1], 10) : null;
     })
-    .filter((num) => num !== null); // Filtra valores no válidos
+    .filter((num) => num !== null);
 
-  const nextSuffix = Math.max(0, ...suffixes) + 1; // Incrementa el mayor valor
-  return nextSuffix.toString().padStart(3, "0"); // Formatea con ceros a la izquierda
+  const nextSuffix = Math.max(0, ...suffixes) + 1;
+  return nextSuffix.toString().padStart(3, "0");
 };
 
 // ---------------------------------------------------------------------------------------------
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
   fetchData: () => Promise<void>;
+  viewOptions: { showHiddenColumns: boolean; customView: string };
+  setViewOptions: React.Dispatch<
+    React.SetStateAction<{ showHiddenColumns: boolean; customView: string }>
+  >;
 }
 // ---------------------------------------------------------------------------------------------
 export function DataTableViewOptions<TData>({
   table,
   fetchData,
+  viewOptions, // Added to destructuring
+  setViewOptions, // Added to destructuring
 }: DataTableViewOptionsProps<TData>) {
   const { isOpen, openModal, closeModal } = useModal();
   const [items, setItems] = useState<Bienes[]>([]);
-  const [options, setOptions] = useState({
-    categorias: [] as Option[],
-    // IMPORTANTE: 'subcategorias' ha sido eliminado de aquí, ya que se maneja con 'filteredSubcategories'
-    proveedores: [] as Option[],
-    espacios: [] as Option[],
-    usuarios: [] as Option[],
+  const [options, setOptions] = useState<{
+    categorias: Option[];
+    subcategorias: Option[];
+    proveedores: Option[];
+    espacios: Option[];
+    usuarios: Option[];
+  }>({
+    categorias: [],
+    subcategorias: [],
+    proveedores: [],
+    espacios: [],
+    usuarios: [],
   });
 
-  // Nuevo estado para las subcategorías filtradas
   const [filteredSubcategories, setFilteredSubcategories] = useState<Option[]>(
     []
   );
 
   const [isMiniModalOpen, setMiniModalOpen] = useState(false);
   const [newValue, setNewValue] = useState("");
-  const [currentType, setCurrentType] = useState<string | null>(null); // Asegúrate de que sea string | null
-  const [codigo, setCodigo] = useState("");
-  // Cambiado a 'undefined' para consistencia con el warning de React Select
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<
-    string | undefined
-  >(undefined);
-  // Cambiado a 'undefined' para consistencia con el warning de React Select
-  const [subcategoriaSeleccionada, setSubcategoriaSeleccionada] = useState<
-    string | undefined
-  >(undefined);
-  const [nombreBien, setNombreBien] = useState("");
-  const [fechaPredeterminada, setFechaPredeterminada] = useState(
-    new Date().toISOString().split("T")[0] // Fecha actual en formato "YYYY-MM-DD"
-  );
-  // Nuevo estado para manejar mensajes de error en el mini-modal
+  const [currentType, setCurrentType] = useState<string | null>(null);
   const [miniModalError, setMiniModalError] = useState<string | null>(null);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState("");
+  const [subcategoriaSeleccionada, setSubcategoriaSeleccionada] = useState("");
+  const [fechaPredeterminada, setFechaPredeterminada] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+
+  // Estados para el nuevo bien (formulario del modal)
+  const [newBien, setNewBien] = useState<Partial<Bienes>>({
+    codigo: "",
+    nombre: "",
+    categoria: "", // Will store the label (name)
+    subcategoriaNombre: "", // Will store the label (name)
+    proveedorNombre: "", // Will store the label (name)
+    espacioNombre: "", // Will store the label (name)
+    cantidad: 0,
+    adquisicion: new Date().toISOString().split("T")[0],
+    valor: 0,
+    estado: opcionesEstado[0]?.value as string,
+    disponibilidad: Boolean(opcionesDisponibilidad[0]?.value),
+    observaciones: "",
+    usuario: "", // Will store the label (name)
+  });
 
   // -----------------------------------------------------------------------------------------------
+  // Effect to generate code based on selected names
   useEffect(() => {
-    if (categoriaSeleccionada && subcategoriaSeleccionada && nombreBien) {
-      const categoriaNombre = options.categorias.find(
-        (cat) => cat.value.toString() === categoriaSeleccionada
-      )?.label;
-      const subcategoriaNombre = filteredSubcategories.find(
-        // Usar filteredSubcategories
-        (subcat) => subcat.value.toString() === subcategoriaSeleccionada
-      )?.label;
+    const categoriaLabel = options.categorias.find(
+      (opt) => opt.label === newBien.categoria
+    )?.label;
+    const subcategoriaLabel = options.subcategorias.find(
+      (opt) => opt.label === newBien.subcategoriaNombre
+    )?.label;
 
-      if (categoriaNombre && subcategoriaNombre) {
-        const codigoGenerado = generateCode(
-          categoriaNombre,
-          subcategoriaNombre,
-          nombreBien
-        );
-        setCodigo(codigoGenerado);
-      }
+    if (categoriaLabel && subcategoriaLabel && newBien.nombre) {
+      const codigoGenerado = generateCode(
+        categoriaLabel,
+        subcategoriaLabel,
+        newBien.nombre
+      );
+      setNewBien((prev) => ({ ...prev, codigo: codigoGenerado }));
+    } else {
+      setNewBien((prev) => ({ ...prev, codigo: "" }));
     }
   }, [
-    categoriaSeleccionada,
-    subcategoriaSeleccionada,
-    nombreBien,
+    newBien.categoria,
+    newBien.subcategoriaNombre,
+    newBien.nombre,
     options.categorias,
-    filteredSubcategories,
+    options.subcategorias,
   ]);
   // -----------------------------------------------------------------------------------------------
-  const loadData = async () => {
-    const { data, error } = await supabase.from("bienes").select(`
-    id,
-    codigo,
-    nombre,
-    cantidad,
-    estado,
-    disponibilidad,
-    categorias (
-          nombre
-        ),
-    subcategorias:subcategoria_id (id, nombre),
-    proveedores:proveedor_id (id, nombre),
-    espacios:espacio_id (id, nombre)
 
-    `);
+  // Function to load main table data and options for Selects
+  const loadDataAndOptions = async () => {
+    try {
+      // Cargar bienes con select específico y alias para coincidir con el schema Zod
+      const { data: bienesRawData, error: bienesError } = await supabase.from(
+        "bienes"
+      ).select(`
+          id,
+          codigo,
+          nombre,
+          cantidad,
+          valor,
+          estado,
+          disponibilidad,
+          observaciones,
+          fecha_adquisicion,
+          creado_en,
+          actualizado_en,
+          categorias(nombre),
+          subcategorias(nombre, categoria_id),
+          proveedores(nombre),
+          espacios(nombre),
+          usuarios(nombre)
+        `);
 
-    if (error) {
-      console.error("Error cargando datos:", error);
-    } else {
-      setItems(data); // Guarda los datos en el estado para usarlos luego
+      if (bienesError) {
+        console.error("Error cargando bienes:", bienesError);
+      } else {
+        // Mapear los datos crudos de Supabase a la interfaz Bienes
+        const mappedBienes: Bienes[] = bienesRawData.map((b: any) => ({
+          id: b.id,
+          codigo: b.codigo,
+          nombre: b.nombre,
+          cantidad: b.cantidad,
+          valor: b.valor,
+          estado: b.estado,
+          disponibilidad: b.disponibilidad,
+          observaciones: b.observaciones,
+          adquisicion: b.fecha_adquisicion,
+          creado: b.creado_en,
+          actualizado: b.actualizado_en,
+          categoria: b.categorias?.nombre || "Sin categoría",
+          subcategoriaNombre: b.subcategorias?.nombre || "Sin subcategoría",
+          proveedorNombre: b.proveedores?.nombre || "Sin proveedor",
+          espacioNombre: b.espacios?.nombre || "Sin espacio",
+          usuario: b.usuarios?.nombre || "Sin usuario",
+        }));
+        setItems(mappedBienes);
+      }
+
+      // Cargar opciones para Selects
+      const { data: categoriasData, error: catError } = await supabase
+        .from("categorias")
+        .select("id, nombre");
+      const { data: subcategoriasData, error: subCatError } = await supabase
+        .from("subcategorias")
+        .select("id, nombre, categoria_id");
+      const { data: proveedoresData, error: provError } = await supabase
+        .from("proveedores")
+        .select("id, nombre");
+      const { data: espaciosData, error: espError } = await supabase
+        .from("espacios")
+        .select("id, nombre");
+      const { data: usuariosData, error: userError } = await supabase
+        .from("usuarios")
+        .select("id, nombre");
+
+      if (catError) console.error("Error cargando categorías:", catError);
+      if (subCatError)
+        console.error("Error cargando subcategorías:", subCatError);
+      if (provError) console.error("Error cargando proveedores:", provError);
+      if (espError) console.error("Error cargando espacios:", espError);
+      if (userError) console.error("Error cargando usuarios:", userError);
+
+      setOptions({
+        categorias:
+          categoriasData?.map((c) => ({ value: c.id, label: c.nombre })) || [],
+        subcategorias:
+          subcategoriasData?.map((s) => ({
+            value: s.id,
+            label: s.nombre,
+            categoria_id: s.categoria_id,
+          })) || [],
+        proveedores:
+          proveedoresData?.map((p) => ({ value: p.id, label: p.nombre })) || [],
+        espacios:
+          espaciosData?.map((e) => ({ value: e.id, label: e.nombre })) || [],
+        usuarios:
+          usuariosData?.map((u) => ({ value: u.id, label: u.nombre })) || [],
+      });
+    } catch (error) {
+      console.error("Error en loadDataAndOptions:", error);
     }
   };
 
+  // Initial data and options load
   useEffect(() => {
-    loadData();
+    loadDataAndOptions();
   }, []);
 
-  useEffect(() => {}, [items]);
+  // Effect to filter subcategories when category selection changes
+  useEffect(() => {
+    if (newBien.categoria) {
+      const selectedCatOption = options.categorias.find(
+        (opt) => opt.label === newBien.categoria
+      );
 
-  // -----------------------------------------------------------------------------------------------
-
-  const fetchOptions = async () => {
-    const tables = [
-      "categorias",
-      "subcategorias",
-      "proveedores",
-      "espacios",
-      "usuarios",
-    ];
-    const promises = tables.map(async (table) => {
-      const { data, error } = await supabase.from(table).select("id, nombre");
-      if (error) {
-        console.error(`Error al cargar ${table}:`, error);
-        return { [table]: [] };
+      if (selectedCatOption) {
+        const filtered = options.subcategorias.filter(
+          (subcat: any) => subcat.categoria_id === selectedCatOption.value
+        );
+        setFilteredSubcategories(filtered);
+      } else {
+        setFilteredSubcategories([]);
       }
-      return {
-        [table]: data.map((item) => ({
-          value: item.id,
-          label: item.nombre,
-        })),
-      };
-    });
+    } else {
+      setFilteredSubcategories([]);
+    }
+  }, [newBien.categoria, options.categorias, options.subcategorias]);
 
-    const results = await Promise.all(promises);
-    setOptions(Object.assign({}, ...results));
+  // Handle input changes for text and number fields
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value, type } = e.target;
+    setNewBien((prev) => ({
+      ...prev,
+      [name]: type === "number" ? parseFloat(value) || 0 : value,
+    }));
   };
 
-  // Llama a la función en el useEffect
-  useEffect(() => {
-    fetchOptions();
-  }, []);
+  // Handle select changes for dropdowns
+  const handleSelectChange = (
+    name: string,
+    selectedValue: string | number | boolean
+  ) => {
+    let selectedLabel: string | boolean | undefined;
 
-  // -----------------------------------------------------------------------------------------------
+    // Determine the label based on the selected value and the options list
+    switch (name) {
+      case "categoria":
+        selectedLabel = options.categorias.find(
+          (opt) => opt.value === selectedValue
+        )?.label;
+        break;
+      case "subcategoriaNombre":
+        selectedLabel = options.subcategorias.find(
+          (opt) => opt.value === selectedValue
+        )?.label;
+        break;
+      case "proveedorNombre":
+        selectedLabel = options.proveedores.find(
+          (opt) => opt.value === selectedValue
+        )?.label;
+        break;
+      case "espacioNombre":
+        selectedLabel = options.espacios.find(
+          (opt) => opt.value === selectedValue
+        )?.label;
+        break;
+      case "usuario":
+        selectedLabel = options.usuarios.find(
+          (opt) => opt.value === selectedValue
+        )?.label;
+        break;
+      case "estado":
+        selectedLabel = opcionesEstado.find(
+          (opt) => opt.value === selectedValue
+        )?.label;
+        break;
+      case "disponibilidad":
+        selectedLabel = opcionesDisponibilidad.find(
+          (opt) => opt.value === selectedValue
+        )?.label;
+        break;
+      default:
+        selectedLabel = String(selectedValue); // Fallback
+    }
 
-  const handleCreate = async (e: FormEvent) => {
+    // Update newBien with the LABEL (name) for consistency with schema.ts
+    setNewBien((prev) => ({
+      ...prev,
+      [name]: selectedLabel !== undefined ? selectedLabel : selectedValue,
+    }));
+  };
+
+  const handleAddBien = async (e: FormEvent) => {
     e.preventDefault();
 
-    // Captura y transforma los datos del formulario
-    const formData = new FormData(e.target as HTMLFormElement);
-    const productData = Object.fromEntries(formData);
+    // Find the IDs based on the labels stored in newBien for insertion into DB
+    const categoriaId = options.categorias.find(
+      (opt) => opt.label === newBien.categoria
+    )?.value;
+    const subcategoriaId = options.subcategorias.find(
+      (opt) => opt.label === newBien.subcategoriaNombre
+    )?.value;
+    const proveedorId = newBien.proveedorNombre
+      ? options.proveedores.find((opt) => opt.label === newBien.proveedorNombre)
+          ?.value
+      : null;
+    const espacioId = options.espacios.find(
+      (opt) => opt.label === newBien.espacioNombre
+    )?.value;
+    const usuarioId = options.usuarios.find(
+      (opt) => opt.label === newBien.usuario
+    )?.value;
 
-    // Obtén los nombres de la categoría y subcategoría desde las opciones
-    const categoriaNombre = options.categorias.find(
-      (cat) => cat.value === parseInt(productData.categoria as string)
-    )?.label;
-
-    const subcategoriaNombre = options.subcategorias.find(
-      (subcat) => subcat.value === parseInt(productData.subCategoria as string)
-    )?.label;
-
-    if (!categoriaNombre || !subcategoriaNombre || !nombreBien) {
-      // Usar nombreBien del estado
-      console.error("Faltan datos para generar el código o para la inserción.");
-      // Aquí podrías mostrar una alerta al usuario
-      return; // Detén la ejecución si no hay datos válidos
+    // Basic form validation
+    if (
+      !newBien.nombre ||
+      !newBien.categoria ||
+      !newBien.subcategoriaNombre ||
+      !newBien.espacioNombre ||
+      !newBien.usuario ||
+      newBien.cantidad === undefined ||
+      newBien.valor === undefined ||
+      !newBien.estado ||
+      newBien.disponibilidad === undefined
+    ) {
+      // Implement a user-friendly error message here (e.g., a custom alert modal)
+      console.error("Faltan campos obligatorios para añadir el bien.");
+      return;
     }
 
+    // Generate code
     const baseCode = generateCode(
-      categoriaNombre,
-      subcategoriaNombre,
-      productData.nombre,
-      "" // Sin sufijo inicial
+      newBien.categoria,
+      newBien.subcategoriaNombre,
+      newBien.nombre,
+      ""
     );
-
-    // Buscar códigos similares
-    const existingCodes = await fetchSimilarCodes(baseCode);
-
-    // Calcular el siguiente sufijo
-    const nextSuffix = calculateNextSuffix(existingCodes, baseCode);
-    // Generar el código automáticamente
-
-    const codigoGenerado = generateCode(
-      categoriaNombre,
-      subcategoriaNombre,
-      productData.nombre,
+    const similarCodes = await fetchSimilarCodes(baseCode);
+    const nextSuffix = calculateNextSuffix(similarCodes, baseCode);
+    const finalCode = generateCode(
+      newBien.categoria,
+      newBien.subcategoriaNombre,
+      newBien.nombre,
       nextSuffix
     );
 
-    const isValidDate = (date: string) => !isNaN(new Date(date).getTime());
-    // Ajustar nombres para coincidir con las columnas en la tabla
-    const mappedData = {
-      codigo: codigoGenerado,
-      nombre: productData.nombre,
-      categoria_id: parseInt(productData.categoria as string), // Mapeo correcto
-      subcategoria_id: parseInt(productData.subCategoria as string), // Mapeo correcto
-      usuario_id: productData.usuario_id, // Mapeo correcto
-      espacio_id: parseInt(productData.espacio as string), // Mapeo correcto
-      cantidad: parseInt(productData.cantidad as string), // Convertir a número
-      fecha_adquisicion:
-        productData.fecha && productData.fecha !== "Invalid Date"
-          ? new Date(productData.fecha as string).toISOString()
-          : new Date().toISOString(), // Asigna una fecha válida
-      valor: parseFloat(productData.valor as string), // Convertir a número flotante
-      proveedor_id: parseInt(productData.proveedor as string), // Mapeo correcto
-      disponibilidad: productData.disponibilidad === "true", // Convertir a booleano
-      estado: productData.estadoFisico, // Ya está correcto
-      observaciones: productData.observaciones, // Ya está correcto
+    // Prepare data for Supabase insertion (using IDs for FKs and DB column names for dates)
+    const dataToInsert = {
+      codigo: finalCode,
+      nombre: newBien.nombre,
+      categoria_id: categoriaId,
+      subcategoria_id: subcategoriaId,
+      proveedor_id: proveedorId,
+      espacio_id: espacioId,
+      cantidad: newBien.cantidad,
+      fecha_adquisicion: newBien.adquisicion,
+      valor: newBien.valor,
+      estado: newBien.estado,
+      disponibilidad: newBien.disponibilidad,
+      observaciones: newBien.observaciones,
+      usuario_id: usuarioId,
+      creado_en: new Date().toISOString(),
+      actualizado_en: new Date().toISOString(),
     };
-    console.log("Datos mapeados para la base de datos:", mappedData);
 
     try {
-      // Inserta los datos en la base de datos
       const { data, error } = await supabase
         .from("bienes")
-        .insert([mappedData])
-        .select("*");
+        .insert([dataToInsert]).select(`
+          id,
+          codigo,
+          nombre,
+          cantidad,
+          valor,
+          estado,
+          disponibilidad,
+          observaciones,
+          fecha_adquisicion,
+          creado_en,
+          actualizado_en,
+          categorias(nombre),
+          subcategorias(nombre, categoria_id),
+          proveedores(nombre),
+          espacios(nombre),
+          usuarios(nombre)
+        `);
 
       if (error) throw error;
 
-      // Actualiza la lista de elementos y cierra el modal
-      setItems((prev) => [...prev, ...data]);
+      // Map inserted data back to Bienes interface for state update
+      const insertedBienMapped: Bienes[] = data.map((b: any) => ({
+        id: b.id,
+        codigo: b.codigo,
+        nombre: b.nombre,
+        cantidad: b.cantidad,
+        valor: b.valor,
+        estado: b.estado,
+        disponibilidad: b.disponibilidad,
+        observaciones: b.observaciones,
+        adquisicion: b.fecha_adquisicion,
+        creado: b.creado_en,
+        actualizado: b.actualizado_en,
+        categoria: b.categorias?.nombre || "Sin categoría",
+        subcategoriaNombre: b.subcategorias?.nombre || "Sin subcategoría",
+        proveedorNombre: b.proveedores?.nombre || "Sin proveedor",
+        espacioNombre: b.espacios?.nombre || "Sin espacio",
+        usuario: b.usuarios?.nombre || "Sin usuario",
+      }));
+
+      setItems((prev) => [...prev, ...insertedBienMapped]);
       closeModal();
-      await fetchData();
-    } catch (err) {
-      console.error("Error al crear bien:", err);
-      // Aquí podrías mostrar una alerta de error
+      fetchData(); // Recarga los datos de la tabla principal
+      // Reiniciar formulario
+      setNewBien({
+        codigo: "",
+        nombre: "",
+        categoria: "",
+        subcategoriaNombre: "",
+        proveedorNombre: "",
+        espacioNombre: "",
+        cantidad: 0,
+        adquisicion: new Date().toISOString().split("T")[0],
+        valor: 0,
+        estado: opcionesEstado[0]?.value as string,
+        disponibilidad: opcionesDisponibilidad[0]?.value === "true",
+        observaciones: "",
+        usuario: "",
+      });
+    } catch (err: any) {
+      console.error("Error al añadir bien:", err);
+      // Implement a custom alert modal here for user feedback
     }
   };
 
   // -----------------------------------------------------------------------------------------------
+  // Handle adding new options (e.g., new category, new supplier)
   const handleCreateOption = async (e: FormEvent) => {
     e.preventDefault();
-    if (!newValue.trim() || !currentType) return;
+    if (!newValue.trim() || !currentType) {
+      setMiniModalError("El valor y el tipo no pueden estar vacíos.");
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -340,11 +506,12 @@ export function DataTableViewOptions<TData>({
         .insert([{ nombre: newValue }]);
       if (error) throw error;
 
-      await fetchOptions();
+      await loadDataAndOptions(); // Reload all data and options after adding a new one
       setMiniModalOpen(false);
       setNewValue("");
       setCurrentType(null);
-    } catch (err) {
+      setMiniModalError(null);
+    } catch (err: any) {
       console.error(`Error al crear ${currentType}:`, err);
       setMiniModalError(
         `Error al crear ${currentType}: ${err.message || "Error desconocido"}`
@@ -420,7 +587,7 @@ export function DataTableViewOptions<TData>({
               Completa los campos para registrar un nuevo bien interno.
             </p>
           </div>
-          <form className="flex flex-col" onSubmit={handleCreate}>
+          <form className="flex flex-col" onSubmit={handleCreateOption}>
             {/* Contenedor para las columnas */}
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
@@ -429,7 +596,7 @@ export function DataTableViewOptions<TData>({
                   <Label>Código</Label>
                   <Input
                     type="text"
-                    value={codigo}
+                    value={newBien.codigo}
                     name="codigo"
                     placeholder="Código generado automáticamente"
                     className="!bg-gray-200 cursor-not-allowed"
@@ -443,9 +610,12 @@ export function DataTableViewOptions<TData>({
                     type="text"
                     name="nombre"
                     placeholder="Ej. Mesa plegable"
-                    onChange={(e) => setNombreBien(e.target.value)}
-                    placeholder="Nombre del bien"
-                    required
+                    onChange={(e) =>
+                      setNewBien((prev) => ({
+                        ...prev,
+                        nombre: e.target.value,
+                      }))
+                    }
                   />
                 </div>
                 {/* Categoría */}
@@ -457,11 +627,7 @@ export function DataTableViewOptions<TData>({
                       options={options.categorias}
                       placeholder="Selecciona una categoría"
                       className="dark:bg-dark-900"
-                      onChange={(selectedOption) =>
-                        setCategoriaSeleccionada(
-                          selectedOption?.value.toString() || ""
-                        )
-                      }
+                      onChange={(value) => setCategoriaSeleccionada(value)}
                     />
                     <Button
                       size="sm"
@@ -485,14 +651,8 @@ export function DataTableViewOptions<TData>({
                       placeholder="Selecciona una subcategoría"
                       className="dark:bg-dark-900"
                       value={subcategoriaSeleccionada} // Ahora es un componente controlado
-                      onChange={(selectedOption) =>
-                        // Asegura que el valor sea string o undefined
-                        setSubcategoriaSeleccionada(
-                          selectedOption?.value.toString() || ""
-                        )
-                      }
-                      disabled={!categoriaSeleccionada} // Deshabilita si no hay categoría seleccionada
-                      required
+                      onChange={(value) => setSubcategoriaSeleccionada(value)}
+                      // disabled={!categoriaSeleccionada} // Deshabilita si no hay categoría seleccionada
                     />
                     <Button
                       size="sm"
@@ -515,7 +675,6 @@ export function DataTableViewOptions<TData>({
                       name="usuario_id"
                       options={options.usuarios}
                       placeholder="Ej. Juan Pérez"
-                      required
                     />
                   </div>
                 </div>
@@ -528,7 +687,6 @@ export function DataTableViewOptions<TData>({
                       name="espacio"
                       options={options.espacios}
                       placeholder="Selecciona un espacio"
-                      required
                     />
                     <Button
                       size="sm"
@@ -560,7 +718,6 @@ export function DataTableViewOptions<TData>({
                   <Input
                     type="date"
                     name="fecha"
-                    value={fechaPredeterminada}
                     onChange={(e) => setFechaPredeterminada(e.target.value)}
                     required
                   />
@@ -608,7 +765,6 @@ export function DataTableViewOptions<TData>({
                     options={opcionesDisponibilidad}
                     placeholder="Selecciona la disponibilidad"
                     className="dark:bg-dark-900"
-                    required
                   />
                 </div>
 
@@ -620,7 +776,6 @@ export function DataTableViewOptions<TData>({
                     options={opcionesEstado}
                     placeholder="Selecciona el estado físico"
                     className="dark:bg-dark-900"
-                    required
                   />
                 </div>
 
@@ -629,7 +784,6 @@ export function DataTableViewOptions<TData>({
                   <Label>Observaciones</Label>
                   <textarea
                     name="observaciones"
-                    rows="3"
                     className="w-full p-2 border rounded-lg dark:bg-dark-900 dark:text-white"
                     placeholder="Notas adicionales..."
                   ></textarea>

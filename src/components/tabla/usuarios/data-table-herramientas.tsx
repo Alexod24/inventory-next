@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import { Cross2Icon } from "@radix-ui/react-icons";
 import {
+  Row,
   Table,
   useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
+  ColumnFiltersState, // Importa ColumnFiltersState para tipar el estado
 } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
@@ -27,7 +29,11 @@ const opcionesRoles = [
 ];
 
 // Filtro personalizado rango fecha
-const filterDateRange = (row, columnId, value) => {
+const filterDateRange = (
+  row: Row<any>,
+  columnId: string,
+  value: [Date, Date] | undefined
+) => {
   const [from, to] = value || [];
   const rowDate = new Date(row.getValue(columnId));
 
@@ -54,9 +60,10 @@ export function DataTableToolbar<TData>({
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(
-    null
-  );
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({ from: undefined, to: undefined });
   // ------------------------------------------------------------------------------------------------------
   const handleDateSelect = ({ from, to }: { from: Date; to: Date }) => {
     setDateRange({ from, to });
@@ -90,7 +97,7 @@ export function DataTableToolbar<TData>({
             variant="ghost"
             onClick={() => {
               table.resetColumnFilters();
-              setDateRange(null);
+              setDateRange({ from: undefined, to: undefined }); // Reinicia a un objeto con propiedades definidas como undefined
             }}
             className="h-8 px-2 lg:px-3"
           >
@@ -107,12 +114,7 @@ export function DataTableToolbar<TData>({
         />
       </div>
 
-      <DataTableViewOptions
-        table={table}
-        fetchData={fetchData}
-        viewOptions={viewOptions}
-        setViewOptions={setViewOptions}
-      />
+      <DataTableViewOptions table={table} fetchData={fetchData} />
     </div>
   );
 }
@@ -155,7 +157,7 @@ export default function App() {
   ]);
 
   // Este es el secreto para que los filtros funcionen y la tabla se actualice
-  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
     data,
@@ -199,7 +201,7 @@ export default function App() {
             <tr key={row.id} className="border border-gray-200">
               {row.getVisibleCells().map((cell) => (
                 <td key={cell.id} className="border border-gray-300 px-2 py-1">
-                  {cell.getValue()}
+                  {cell.getValue() as React.ReactNode}{" "}
                 </td>
               ))}
             </tr>

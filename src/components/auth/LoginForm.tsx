@@ -1,8 +1,7 @@
-// src/components/auth/LoginForm.tsx
 "use client";
 
-import React, { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, FormEvent, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation"; // Importa useSearchParams
 import { logIn } from "@/app/actions/auth"; // Tu Server Action
 
 // Simulación de un componente CAPTCHA simple para la demo
@@ -36,6 +35,9 @@ const CaptchaInput: React.FC<{ onCaptchaChange: (token: string) => void }> = ({
 
 export default function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams(); // Hook para leer parámetros de la URL
+  const urlError = searchParams.get("error"); // Obtiene el parámetro 'error' de la URL
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -44,6 +46,28 @@ export default function LoginForm() {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA = 2; // Número de intentos fallidos antes de mostrar CAPTCHA
+
+  // Efecto para manejar errores de la URL
+  useEffect(() => {
+    if (urlError) {
+      const decodedError = decodeURIComponent(urlError);
+      setErrorMessage(decodedError);
+
+      // Lógica para ajustar intentos fallidos/CAPTCHA basada en el mensaje de error
+      if (decodedError.includes("Credenciales inválidas")) {
+        setFailedAttempts((prev) => prev + 1);
+      } else if (decodedError.includes("CAPTCHA")) {
+        setFailedAttempts(MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA); // Asegura que el CAPTCHA siga visible
+      } else {
+        setFailedAttempts((prev) => prev + 1); // Para otros errores, también incrementa intentos
+      }
+
+      // Limpia el error de la URL después de mostrarlo
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete("error");
+      router.replace(`?${newSearchParams.toString()}`, { scroll: false });
+    }
+  }, [urlError, searchParams, router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -63,29 +87,30 @@ export default function LoginForm() {
       formData.append("captchaRequired", "false"); // Indica que no fue requerido
     }
 
-    const result = await logIn(formData);
+    try {
+      // Directamente llama a la Server Action.
+      // La redirección (éxito o error) ocurrirá dentro de logIn.
+      await logIn(formData);
 
-    if (result.success) {
-      console.log("Login exitoso. Redirigiendo...");
-      setFailedAttempts(0); // Reinicia los intentos fallidos
-      router.push(result.redirectPath || "/base");
-    } else {
-      console.error("Error de login:", result.error);
-      setErrorMessage(result.error || "Ocurrió un error desconocido.");
-
-      // Incrementar intentos fallidos solo si no es un error de CAPTCHA o si es un error de credenciales
-      if (result.error && result.error.includes("Credenciales inválidas")) {
-        setFailedAttempts((prev) => prev + 1);
-      } else if (result.error && result.error.includes("CAPTCHA")) {
-        // Si el CAPTCHA falló, no incrementamos intentos de credenciales,
-        // pero aseguramos que el CAPTCHA siga visible.
-        setFailedAttempts(MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA);
-      } else {
-        // Para otros errores inesperados, también incrementamos para forzar CAPTCHA
-        setFailedAttempts((prev) => prev + 1);
-      }
+      // Si la ejecución llega aquí, significa que la Server Action no redirigió.
+      // Esto es un escenario inesperado para un flujo de login con Server Actions
+      // que siempre debería redirigir.
+      console.log(
+        "Server Action 'logIn' completada sin redirección explícita."
+      );
+      // Forzamos una redirección por defecto si la acción no lo hizo
+      router.push("/base");
+    } catch (e: any) {
+      // Este catch atrapará errores de red o errores lanzados por la Server Action
+      // que NO sean redirecciones de Next.js (las redirecciones son manejadas por el router).
+      console.error("Error en el envío del formulario (cliente):", e);
+      setErrorMessage(
+        "Ocurrió un error inesperado al intentar iniciar sesión."
+      );
+    } finally {
+      setLoading(false);
+      setCaptchaToken(null); // Limpia el token del CAPTCHA después del intento
     }
-    setLoading(false);
   };
 
   return (

@@ -43,6 +43,7 @@ export default function AuthLayout({
                 objectFit: "cover",
                 opacity: 10, // Asegura que la imagen sea completamente visible
                 zIndex: 0, // Asegura que esté en la capa de fondo
+                filter: "brightness(0.7)", // Oscurece la imagen para mejorar la legibilidad del texto
               }}
               // No hay 'quality' ni 'sizes' para una etiqueta <img> estándar
               // No hay 'onError' para este tipo de depuración, pero puedes añadirlo si necesitas logs específicos
@@ -67,7 +68,7 @@ export default function AuthLayout({
                 />
               </Link>
               <p className="text-center text-white/80 text-lg">
-                Bienvenido al sistema de inventario de Bienes de La Base Cowork.
+                Bienvenido al sistema de inventario.
               </p>
             </div>
           </div>

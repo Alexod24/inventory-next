@@ -266,7 +266,6 @@ export function DataTableRowActions<TData>({
                     placeholder="Selecciona el rol"
                     className="dark:bg-dark-900"
                     defaultValue={data.rol}
-                    required
                   />
                 </div>
                 {/* <--- FIN CAMPOS DE USUARIO --- */}

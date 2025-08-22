@@ -1,5 +1,5 @@
-import BotonEditar from "@/components/ui/boton/BotonEditar"
-import BotonBorrar from "@/components/ui/boton/BotonBorrar"
+import BotonEditar from "@/components/ui/boton/BotonEditar";
+import BotonBorrar from "@/components/ui/boton/BotonBorrar";
 import React from "react";
 
 import {
@@ -26,8 +26,6 @@ interface Order {
   };
   status: string;
   budget: string;
-
-  
 }
 
 // Define the table data using the interface
@@ -49,7 +47,6 @@ const tableData: Order[] = [
     },
     budget: "3.9K",
     status: "Active",
-    
   },
   // {
   //   id: 2,
@@ -121,8 +118,6 @@ const tableData: Order[] = [
 
 export default function BasicTableOne() {
   return (
-    
-
     <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white px-4 pb-3 pt-4 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6">
       <div className="flex flex-col gap-2 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -178,8 +173,6 @@ export default function BasicTableOne() {
           </button>
         </div>
       </div>
-      
-      
 
       <div className="max-w-full overflow-x-auto">
         <div className="min-w-[1102px]">
@@ -187,37 +180,21 @@ export default function BasicTableOne() {
             {/* Table Header */}
             <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
               <TableRow>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   User
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Project Name
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Team
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Status
                 </TableCell>
-                <TableCell
-                  isHeader
-                  className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400"
-                >
+                <TableCell className="px-5 py-3 font-medium text-gray-500 text-start text-theme-xs dark:text-gray-400">
                   Budget
                 </TableCell>
-                
               </TableRow>
             </TableHeader>
 
@@ -283,12 +260,12 @@ export default function BasicTableOne() {
                   <TableCell className="px-4 py-3 text-gray-500 text-theme-sm dark:text-gray-400">
                     {order.budget}
                   </TableCell>
-                 
+
                   <td className="relative py-5 pr-4 pl-3 text-left text-sm font-medium whitespace-nowrap sm:pr-0">
-                      <BotonEditar/>
+                    <BotonEditar />
                   </td>
                   <td className="relative py-5 pr-4 pl-3 text-left text-sm font-medium whitespace-nowrap sm:pr-0">
-                      <BotonBorrar/>
+                    <BotonBorrar />
                   </td>
                 </TableRow>
               ))}
@@ -297,9 +274,5 @@ export default function BasicTableOne() {
         </div>
       </div>
     </div>
-    
-    
-    
-
   );
 }

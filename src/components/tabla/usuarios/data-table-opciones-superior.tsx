@@ -87,50 +87,30 @@ export function DataTableViewOptions<TData>({
 
     try {
       console.log("DataTableViewOptions: Llamando a signUp con formData...");
-      const result = await signUp(formData); // Usa la función `signUp` del archivo `auth`.
+      await signUp(formData); // no guardes resultado
 
-      if (result.success) {
-        console.log(
-          "DataTableViewOptions: Usuario registrado exitosamente. Cerrando modal y actualizando tabla."
-        );
-        closeModal(); // Cierra el modal si se usa uno.
-        await fetchData(); // Actualiza la tabla.
-        setCurrentAlert({
-          visible: true,
-          variant: "success",
-          title: "¡Usuario Creado!",
-          message: "El nuevo usuario ha sido registrado exitosamente.",
-        });
-        // Opcional: Ocultar la alerta después de un tiempo
-        setTimeout(() => setCurrentAlert(null), 3000);
-      } else {
-        // Muestra el error específico que viene de la Server Action
-        console.error(
-          "DataTableViewOptions: Tienes que colocar un correo válido"
-        );
-        setCurrentAlert({
-          visible: true,
-          variant: "error", // O "warning" si tu componente Alert no tiene el tipo 'error'
-          title: "Error al Registrar",
-          message:
-            result.error ||
-            "Ocurrió un error desconocido al registrar el usuario.",
-        });
-        // Opcional: Ocultar la alerta después de un tiempo
-        setTimeout(() => setCurrentAlert(null), 5000);
-      }
+      console.log(
+        "Usuario registrado exitosamente. Cerrando modal y actualizando tabla."
+      );
+      closeModal();
+      await fetchData();
+      setCurrentAlert({
+        visible: true,
+        variant: "success",
+        title: "¡Usuario Creado!",
+        message: "El nuevo usuario ha sido registrado exitosamente.",
+      });
+      setTimeout(() => setCurrentAlert(null), 3000);
     } catch (err: any) {
       console.error(
         "DataTableViewOptions: Error CRÍTICO en handleCreate:",
         err
       );
-      // Aquí podrías mostrar un mensaje de error genérico al usuario
       setCurrentAlert({
         visible: true,
         variant: "error",
-        title: "Error Inesperado",
-        message:
-          "Ocurrió un error inesperado al intentar registrar el usuario.",
+        title: "Error al Registrar",
+        message: err.message || "Ocurrió un error al registrar el usuario.",
       });
       setTimeout(() => setCurrentAlert(null), 5000);
     }
@@ -254,7 +234,6 @@ export function DataTableViewOptions<TData>({
                     options={opcionesRol}
                     placeholder="Selecciona el rol"
                     className="dark:bg-dark-900"
-                    required
                   />
                 </div>
               </div>

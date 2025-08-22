@@ -1,21 +1,34 @@
 "use client";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
-// Crear el contexto
-const NotificationContext = createContext();
+// Definir la forma del contexto
+interface NotificationContextType {
+  notifications: string[];
+  addNotification: (message: string) => void;
+  removeNotification: (message: string) => void;
+  clearNotifications: () => void;
+}
+
+// Valor inicial opcional: null (hasta que el provider envuelva la app)
+const NotificationContext = createContext<NotificationContextType | null>(null);
+
+interface NotificationProviderProps {
+  children: ReactNode;
+}
 
 // Proveedor del contexto
-export const NotificationProvider = ({ children }) => {
-  const [notifications, setNotifications] = useState([]);
+export const NotificationProvider = ({
+  children,
+}: NotificationProviderProps) => {
+  const [notifications, setNotifications] = useState<string[]>([]);
 
-  const addNotification = (message) => {
-    // Evitar duplicados
+  const addNotification = (message: string) => {
     setNotifications((prev) =>
       prev.includes(message) ? prev : [...prev, message]
     );
   };
 
-  const removeNotification = (message) => {
+  const removeNotification = (message: string) => {
     setNotifications((prev) => prev.filter((msg) => msg !== message));
   };
 
@@ -25,7 +38,12 @@ export const NotificationProvider = ({ children }) => {
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, addNotification, removeNotification, clearNotifications }}
+      value={{
+        notifications,
+        addNotification,
+        removeNotification,
+        clearNotifications,
+      }}
     >
       {children}
     </NotificationContext.Provider>
@@ -33,4 +51,12 @@ export const NotificationProvider = ({ children }) => {
 };
 
 // Hook personalizado para usar el contexto
-export const useNotifications = () => useContext(NotificationContext);
+export const useNotifications = () => {
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error(
+      "useNotifications debe usarse dentro de un NotificationProvider"
+    );
+  }
+  return context;
+};

@@ -55,10 +55,11 @@ export function DataTableViewOptions<TData>({
   });
   const [isMiniModalOpen, setMiniModalOpen] = useState(false);
   const [newValue, setNewValue] = useState("");
-  const [currentType, setCurrentType] = useState("");
+  const [currentType, setCurrentType] = useState<string | null>(null);
   const [codigo, setCodigo] = useState("");
   const [bienSeleccionada, setBienSeleccionada] = useState<string | null>(null);
   const [usuarioSeleccionada, setUsuarioSeleccionada] = useState("");
+  const [TipoMovimiento, setTipoMovimiento] = useState("");
   const [nombreBien, setNombreBien] = useState("");
   const [fechaPredeterminada, setFechaPredeterminada] = useState(
     new Date().toISOString().split("T")[0] // Fecha actual en formato "YYYY-MM-DD"
@@ -82,10 +83,10 @@ export function DataTableViewOptions<TData>({
         ),
   `);
 
-    if (error) {
+    if (error || !Array.isArray(data)) {
       console.error("Error cargando datos:", error);
-    } else {
-      setItems(data); // Guarda los datos en el estado para usarlos luego
+      setItems([]);
+      return;
     }
   };
 
@@ -183,6 +184,7 @@ export function DataTableViewOptions<TData>({
         tipo_movimiento,
         fecha,
         motivo,
+        usuario_id,
         bienes ( nombre ),
         usuarios ( nombre )
       `);
@@ -222,7 +224,7 @@ export function DataTableViewOptions<TData>({
       await fetchOptions();
       setMiniModalOpen(false);
       setNewValue("");
-      setCurrentType(null);
+      setCurrentType("");
     } catch (err) {
       console.error(`Error al crear ${currentType}:`, err);
     }
@@ -310,10 +312,8 @@ export function DataTableViewOptions<TData>({
                       options={options.bienes}
                       placeholder="Selecciona el bien"
                       className="dark:bg-dark-900"
-                      onChange={(selectedOption) =>
-                        setBienSeleccionada(
-                          selectedOption?.value.toString() || ""
-                        )
+                      onChange={(selectedValue) =>
+                        setBienSeleccionada(selectedValue || "")
                       }
                     />
                     <Button
@@ -349,10 +349,8 @@ export function DataTableViewOptions<TData>({
                       options={options.usuarios}
                       placeholder="Selecciona una subcategoría"
                       className="dark:bg-dark-900"
-                      onChange={(selectedOption) =>
-                        setUsuarioSeleccionada(
-                          selectedOption?.value.toString() || ""
-                        )
+                      onChange={(selectedValue) =>
+                        setUsuarioSeleccionada(selectedValue || "")
                       }
                     />
                     <Button
@@ -375,10 +373,9 @@ export function DataTableViewOptions<TData>({
                     options={opcionesMovimiento}
                     placeholder="Selecciona la disponibilidad"
                     className="dark:bg-dark-900"
-                    onChange={(selectedOption) =>
-                      setTipoMovimiento(selectedOption?.value)
+                    onChange={(selectedValue) =>
+                      setTipoMovimiento(selectedValue || "")
                     }
-                    required
                   />
                 </div>
 
@@ -387,7 +384,6 @@ export function DataTableViewOptions<TData>({
                   <Label>Motivos</Label>
                   <textarea
                     name="motivo"
-                    rows="3"
                     className="w-full p-2 border rounded-lg dark:bg-dark-900 dark:text-white"
                     placeholder="Notas adicionales..."
                   ></textarea>

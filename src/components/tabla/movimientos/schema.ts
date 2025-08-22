@@ -2,13 +2,22 @@ import { z } from "zod";
 
 // Definimos el esquema para Movimientos
 export const movimientosSchema = z.object({
-  id: z.string(), // Identificador único del movimiento
-  bien_id: z.string(), // Referencia al bien afectado
-  usuario_id: z.string(), // Usuario responsable del movimiento
-  tipo: z.enum(["Ingreso", "Salida", "Traslado"]), // Tipo de movimiento
-  cantidad: z.number(), // Cantidad afectada
-  fecha: z.number(),
+  id: z.string(),
+  codigo: z.string(),
+  nombre: z.string(),
+  categoria: z.string(), // Propiedad directa para el nombre de la categoría
+  subcategoriaNombre: z.string(), // Propiedad directa para el nombre de la subcategoría
+  proveedorNombre: z.string().optional(), // Propiedad directa para el proveedor, opcional
+  espacioNombre: z.string(), // Propiedad directa para el nombre del espacio
+  cantidad: z.number(),
+  adquisicion: z.string().optional(), // Fecha como ISO string, opcional
+  valor: z.number(),
+  estado: z.string(),
+  disponibilidad: z.boolean(), // Solo booleano para consistencia
   observaciones: z.string().optional(), // Observaciones opcionales
+  usuario: z.string(),
+  creado: z.string(),
+  actualizado: z.string(),
 });
 
 // Inferimos el tipo automáticamente a partir del esquema

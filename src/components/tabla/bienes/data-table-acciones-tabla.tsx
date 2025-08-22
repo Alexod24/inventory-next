@@ -16,6 +16,8 @@ import Alert from "@/components/ui/alerta/AlertaExito"; // <--- IMPORTACIÓN DE 
 import ReactDOM from "react-dom"; // <--- IMPORTACIÓN NECESARIA PARA REACT PORTALS
 import { useUser } from "@/context/UserContext"; // <--- IMPORTACIÓN DEL CONTEXTO DE USUARIO
 
+import { Option, opcionesEstado, opcionesDisponibilidad } from "@/lib/options";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,11 +26,6 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-interface Option {
-  value: string;
-  label: string;
-}
 
 interface OptionsState {
   categorias: Option[];
@@ -42,17 +39,6 @@ interface DataTableRowActionsProps<TData> {
   row: Row<TData>;
   refreshData: (triggeredBy?: string) => Promise<void>;
 }
-
-const opcionesEstado = [
-  { value: "bueno", label: "Bueno" },
-  { value: "dañado", label: "Dañado" },
-  { value: "roto", label: "Roto" },
-];
-
-const opcionesDisponibilidad = [
-  { value: true, label: "Ok" },
-  { value: false, label: "Faltantes" },
-];
 
 // -----------------------------------------------------------------------------------------
 
@@ -469,7 +455,6 @@ export function DataTableRowActions<TData>({
                       className="dark:bg-dark-900"
                       value={selectedCategoria}
                       onChange={(value) => setSelectedCategoria(value)}
-                      required
                     />
                     <Button
                       size="sm"
@@ -517,7 +502,6 @@ export function DataTableRowActions<TData>({
                       placeholder="Ej. Juan Pérez"
                       value={selectedUsuario}
                       onChange={(value) => setSelectedUsuario(value)}
-                      required
                     />
                   </div>
                 </div>
@@ -532,7 +516,6 @@ export function DataTableRowActions<TData>({
                       placeholder="Ej. Oficina 3"
                       value={selectedEspacio}
                       onChange={(value) => setSelectedEspacio(value)}
-                      required
                     />
                     <Button
                       size="sm"
@@ -594,7 +577,6 @@ export function DataTableRowActions<TData>({
                       className="dark:bg-dark-900"
                       value={selectedProveedor}
                       onChange={(value) => setSelectedProveedor(value)}
-                      required
                     />
                     <Button
                       size="sm"

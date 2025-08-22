@@ -1,4 +1,4 @@
-import { PencilIcon } from '@heroicons/react/20/solid'
+import { PencilIcon } from "@heroicons/react/20/solid";
 
 export default function Example() {
   return (
@@ -15,12 +15,12 @@ export default function Example() {
       >
         <PlusIcon aria-hidden="true" className="size-5" />
       </button> */}
-      <span
+      <button
         type="button"
         className="rounded-full bg-amber-600 p-2 text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
       >
         <PencilIcon aria-hidden="true" className="size-5" />
-      </span>
+      </button>
     </>
-  )
+  );
 }

@@ -5,15 +5,21 @@ import { Cross2Icon } from "@radix-ui/react-icons";
 import {
   Table,
   useReactTable,
+  ColumnFiltersState,
   getCoreRowModel,
   getFilteredRowModel,
+  flexRender,
 } from "@tanstack/react-table";
+
+import { Row } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DataTableFacetedFilter } from "./data-table-filtros";
 import { CalendarDatePicker } from "@/components/calendar-date-picker";
 import { DataTableViewOptions } from "./data-table-opciones-superior";
+
+type DateRangeValue = [Date | null, Date | null] | undefined;
 
 const opcionesEstado = [
   { value: "bueno", label: "Bueno" },
@@ -30,7 +36,11 @@ const opcionesDisponibilidad = [
 ];
 
 // Filtro personalizado rango fecha
-const filterDateRange = (row, columnId, value) => {
+const filterDateRange = <TData,>(
+  row: Row<TData>,
+  columnId: string,
+  value: DateRangeValue
+) => {
   const [from, to] = value || [];
   const rowDate = new Date(row.getValue(columnId));
 
@@ -113,19 +123,14 @@ export function DataTableToolbar<TData>({
         )}
 
         <CalendarDatePicker
-          date={dateRange}
+          date={dateRange ?? { from: undefined, to: undefined }}
           onDateSelect={handleDateSelect}
           className="w-[250px] h-8"
           variant="outline"
         />
       </div>
 
-      <DataTableViewOptions
-        table={table}
-        fetchData={fetchData}
-        viewOptions={viewOptions}
-        setViewOptions={setViewOptions}
-      />
+      <DataTableViewOptions table={table} fetchData={fetchData} />
     </div>
   );
 }
@@ -168,7 +173,7 @@ export default function App() {
   ]);
 
   // Este es el secreto para que los filtros funcionen y la tabla se actualice
-  const [columnFilters, setColumnFilters] = useState([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
     data,
@@ -212,7 +217,7 @@ export default function App() {
             <tr key={row.id} className="border border-gray-200">
               {row.getVisibleCells().map((cell) => (
                 <td key={cell.id} className="border border-gray-300 px-2 py-1">
-                  {cell.getValue()}
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
               ))}
             </tr>

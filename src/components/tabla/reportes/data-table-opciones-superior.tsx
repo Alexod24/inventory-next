@@ -55,7 +55,7 @@ export function DataTableViewOptions<TData>({
   });
   const [isMiniModalOpen, setMiniModalOpen] = useState(false);
   const [newValue, setNewValue] = useState("");
-  const [currentType, setCurrentType] = useState("");
+  const [currentType, setCurrentType] = useState<string | null>(null);
   const [codigo, setCodigo] = useState("");
   const [bienSeleccionada, setBienSeleccionada] = useState<string | null>(null);
   const [usuarioSeleccionada, setUsuarioSeleccionada] = useState("");
@@ -82,10 +82,10 @@ export function DataTableViewOptions<TData>({
         )
   `);
 
-    if (error) {
+    if (error || !Array.isArray(data)) {
       console.error("Error cargando datos:", error);
-    } else {
-      setItems(data); // Guarda los datos en el estado para usarlos luego
+      setItems([]);
+      return;
     }
   };
 
@@ -179,7 +179,7 @@ export function DataTableViewOptions<TData>({
       await fetchOptions();
       setMiniModalOpen(false);
       setNewValue("");
-      setCurrentType(null);
+      setCurrentType("");
     } catch (err) {
       console.error(`Error al crear ${currentType}:`, err);
     }
@@ -267,10 +267,8 @@ export function DataTableViewOptions<TData>({
                       options={options.bienes}
                       placeholder="Selecciona el bien"
                       className="dark:bg-dark-900"
-                      onChange={(selectedOption) =>
-                        setBienSeleccionada(
-                          selectedOption?.value.toString() || ""
-                        )
+                      onChange={(selectedValue) =>
+                        setBienSeleccionada(selectedValue || "")
                       }
                     />
                     <Button
@@ -293,9 +291,9 @@ export function DataTableViewOptions<TData>({
                       options={options.usuarios}
                       placeholder="Selecciona una subcategoría"
                       className="dark:bg-dark-900"
-                      onChange={(selectedOption) => {
-                        setUsuarioSeleccionada(selectedOption?.value || ""); // Asegúrate de que el valor esté definido
-                      }}
+                      onChange={(selectedValue) =>
+                        setUsuarioSeleccionada(selectedValue || "")
+                      }
                     />
                     <Button
                       size="sm"

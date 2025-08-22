@@ -8,38 +8,38 @@ import { DataTableColumnHeader } from "./data-table-column-header";
 import { cn } from "@/lib/utils";
 
 export const columns: ColumnDef<Reportes>[] = [
-  {
-    accessorKey: "bien_id", // Ruta completa al nombre de la categoría
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Nombre del bien" />
-    ),
-    cell: ({ row }) => {
-      const bienNombre = row.original.bien?.nombre || "Sin usuario";
-      return (
-        <div className="flex space-x-2">
-          <span className="max-w-[500px] truncate capitalize font-medium">
-            {bienNombre}
-          </span>
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "usuario_id", // Ruta completa al nombre de la categoría
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Responsable" />
-    ),
-    cell: ({ row }) => {
-      const usuarioNombre = row.original.usuario?.nombre || "Sin usuario";
-      return (
-        <div className="flex space-x-2">
-          <span className="max-w-[500px] truncate capitalize font-medium">
-            {usuarioNombre}
-          </span>
-        </div>
-      );
-    },
-  },
+  // {
+  //   accessorKey: "bien_id", // Ruta completa al nombre de la categoría
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Nombre del bien" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const bienNombre = row.original.bien?.nombre || "Sin usuario";
+  //     return (
+  //       <div className="flex space-x-2">
+  //         <span className="max-w-[500px] truncate capitalize font-medium">
+  //           {bienNombre}
+  //         </span>
+  //       </div>
+  //     );
+  //   },
+  // },
+  // {
+  //   accessorKey: "usuario_id", // Ruta completa al nombre de la categoría
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Responsable" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const usuarioNombre = row.original.usuario?.nombre || "Sin usuario";
+  //     return (
+  //       <div className="flex space-x-2">
+  //         <span className="max-w-[500px] truncate capitalize font-medium">
+  //           {usuarioNombre}
+  //         </span>
+  //       </div>
+  //     );
+  //   },
+  // },
   {
     accessorKey: "descripcion",
     header: ({ column }) => (

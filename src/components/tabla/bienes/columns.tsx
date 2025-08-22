@@ -1,10 +1,8 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Bienes } from "./schema";
+import { Bienes } from "./schema"; // Asegúrate de que tu interfaz Bienes está correctamente definida aquí
 import { DataTableColumnHeader } from "./data-table-column-header";
-// import { DataTableRowActions } from "./data-table-acciones-tabla";
-// import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export const columns: ColumnDef<Bienes>[] = [
@@ -20,7 +18,6 @@ export const columns: ColumnDef<Bienes>[] = [
         </span>
       </div>
     ),
-    // Agregamos filtro de texto simple para que funcione con input tipo string
     filterFn: (row, id, filterValue) => {
       const value = row.getValue(id) as string;
       return value
@@ -40,7 +37,6 @@ export const columns: ColumnDef<Bienes>[] = [
         </span>
       </div>
     ),
-    // Agregamos filtro de texto simple para que funcione con input tipo string
     filterFn: (row, id, filterValue) => {
       const value = row.getValue(id) as string;
       return value
@@ -49,12 +45,13 @@ export const columns: ColumnDef<Bienes>[] = [
     },
   },
   {
-    accessorKey: "categoria", // Ruta completa al nombre de la categoría
+    accessorKey: "categoria", // AccesorKey coincide con schema.ts
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Categoría" />
     ),
     cell: ({ row }) => {
-      const categoriaNombre = row.original.categoria?.nombre || "Sin categoría";
+      // Acceso directo a la propiedad 'categoria' como string
+      const categoriaNombre = row.original.categoria || "Sin categoría";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
@@ -65,13 +62,14 @@ export const columns: ColumnDef<Bienes>[] = [
     },
   },
   {
-    accessorKey: "subcategoria", // Ruta completa al nombre de la categoría
+    accessorKey: "subcategoriaNombre", // AccesorKey coincide con schema.ts
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Sub Categoría" />
     ),
     cell: ({ row }) => {
+      // Acceso directo a la propiedad 'subcategoriaNombre' como string
       const subcategoriaNombre =
-        row.original.subcategoria?.nombre || "Sin subcategoría";
+        row.original.subcategoriaNombre || "Sin subcategoría";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
@@ -82,12 +80,13 @@ export const columns: ColumnDef<Bienes>[] = [
     },
   },
   {
-    accessorKey: "proveedor", // Ruta completa al nombre de la categoría
+    accessorKey: "proveedorNombre", // AccesorKey coincide con schema.ts
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Proveedor" />
     ),
     cell: ({ row }) => {
-      const proveedorNombre = row.original.proveedor?.nombre || "Sin proveedor";
+      // Acceso directo a la propiedad 'proveedorNombre' como string
+      const proveedorNombre = row.original.proveedorNombre || "Sin proveedor";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
@@ -99,12 +98,13 @@ export const columns: ColumnDef<Bienes>[] = [
   },
 
   {
-    accessorKey: "espacios", // Ruta completa al nombre de la categoría
+    accessorKey: "espacioNombre", // AccesorKey coincide con schema.ts
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Espacio" />
     ),
     cell: ({ row }) => {
-      const espacioNombre = row.original.espacio?.nombre || "Sin espacio";
+      // Acceso directo a la propiedad 'espacioNombre' como string
+      const espacioNombre = row.original.espacioNombre || "Sin espacio";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
@@ -140,12 +140,20 @@ export const columns: ColumnDef<Bienes>[] = [
     },
   },
   {
-    accessorKey: "fecha_adquisicion",
+    accessorKey: "adquisicion", // AccesorKey coincide con schema.ts
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Fecha Adquisicion" />
     ),
     cell: ({ row }) => {
-      const date = new Date(row.getValue("fecha_adquisicion"));
+      const dateString = row.getValue("adquisicion") as string;
+      if (!dateString)
+        return (
+          <div className="flex w-[100px] items-center">
+            <span className="capitalize">N/A</span>
+          </div>
+        );
+
+      const date = new Date(dateString);
       const offsetDate = new Date(
         date.getTime() + date.getTimezoneOffset() * 60 * 1000
       );
@@ -233,14 +241,14 @@ export const columns: ColumnDef<Bienes>[] = [
     cell: ({ row }) => {
       let disponibilidadRaw = row.getValue("disponibilidad");
 
-      // Si no es string, conviértelo a string con mapeo personalizado
+      // Ajuste para manejar booleanos como en el esquema Zod
       let disponibilidad =
-        typeof disponibilidadRaw === "string"
+        typeof disponibilidadRaw === "boolean"
+          ? disponibilidadRaw === true
+            ? "ok"
+            : "faltante"
+          : typeof disponibilidadRaw === "string"
           ? disponibilidadRaw
-          : disponibilidadRaw === true
-          ? "ok"
-          : disponibilidadRaw === false
-          ? "faltante"
           : "pendiente"; // o valor por defecto si es null/undefined
 
       disponibilidad = disponibilidad.toLowerCase();
@@ -276,7 +284,6 @@ export const columns: ColumnDef<Bienes>[] = [
         </span>
       </div>
     ),
-    // Agregamos filtro de texto simple para que funcione con input tipo string
     filterFn: (row, id, filterValue) => {
       const value = row.getValue(id) as string;
       return value
@@ -286,12 +293,13 @@ export const columns: ColumnDef<Bienes>[] = [
   },
 
   {
-    accessorKey: "usuario", // Ruta completa al nombre de la categoría
+    accessorKey: "usuario", // AccesorKey coincide con schema.ts
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Responsable" />
     ),
     cell: ({ row }) => {
-      const usuarioNombre = row.original.usuario?.nombre || "Sin usuario";
+      // Acceso directo a la propiedad 'usuario' como string
+      const usuarioNombre = row.original.usuario || "Sin usuario";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
@@ -304,12 +312,12 @@ export const columns: ColumnDef<Bienes>[] = [
 
   // ---------------------------------------------------------------------------------
   {
-    accessorKey: "creado_en",
+    accessorKey: "creado", // AccesorKey coincide con schema.ts
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Fecha creacion" />
     ),
     cell: ({ row }) => {
-      const date = new Date(row.getValue("creado_en"));
+      const date = new Date(row.getValue("creado"));
       const formattedDate = date.toLocaleDateString("es-ES", {
         day: "2-digit",
         month: "short",
@@ -329,12 +337,12 @@ export const columns: ColumnDef<Bienes>[] = [
     },
   },
   {
-    accessorKey: "actualizado_en",
+    accessorKey: "actualizado", // AccesorKey coincide con schema.ts
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Fecha actualización" />
     ),
     cell: ({ row }) => {
-      const date = new Date(row.getValue("actualizado_en"));
+      const date = new Date(row.getValue("actualizado"));
       const formattedDate = date.toLocaleDateString("es-ES", {
         day: "2-digit",
         month: "short",

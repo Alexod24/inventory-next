@@ -82,6 +82,10 @@ export function DataTableRowActions<TData>({
   const [currentType, setCurrentType] = useState<string | null>(null);
   const [newValue, setNewValue] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [setSelectedCategoria] = useState<string | null>(null);
+  const [setSelectedSubCategoria] = useState<string | null>(null);
+  const [setSelectedEspacio] = useState<string | null>(null);
+  const [setSelectedProveedor] = useState<string | null>(null);
 
   // Estados para los valores seleccionados en los Selects
   const [selectedBien, setSelectedBien] = useState<string | undefined>(
@@ -355,14 +359,14 @@ export function DataTableRowActions<TData>({
       if (currentType === "bienes") setSelectedBien(newEntry.id);
       if (currentType === "usuarios") setSelectedUsuario(newEntry.id);
       // Añade aquí las asignaciones para otras tablas si las usas en el mini-modal
-      if (currentType === "categorias" && "categorias" in options)
-        setSelectedCategoria(newEntry.id);
-      if (currentType === "subcategorias" && "subcategorias" in options)
-        setSelectedSubCategoria(newEntry.id);
-      if (currentType === "espacios" && "espacios" in options)
-        setSelectedEspacio(newEntry.id);
-      if (currentType === "proveedores" && "proveedores" in options)
-        setSelectedProveedor(newEntry.id);
+      // if (currentType === "categorias" && "categorias" in options)
+      //   setSelectedCategoria(newEntry.id);
+      // if (currentType === "subcategorias" && "subcategorias" in options)
+      //   setSelectedSubCategoria(newEntry.id);
+      // if (currentType === "espacios" && "espacios" in options)
+      //   setSelectedEspacio(newEntry.id);
+      // if (currentType === "proveedores" && "proveedores" in options)
+      //   setSelectedProveedor(newEntry.id);
 
       setMiniModalOpen(false);
       setNewValue("");
@@ -473,7 +477,6 @@ export function DataTableRowActions<TData>({
                       className="dark:bg-dark-900"
                       value={selectedBien}
                       onChange={(value) => setSelectedBien(value)}
-                      required
                     />
                     <Button
                       size="sm"
@@ -510,7 +513,6 @@ export function DataTableRowActions<TData>({
                     className="dark:bg-dark-900"
                     value={selectedTipoMovimiento} // Usar estado controlado
                     onChange={(value) => setSelectedTipoMovimiento(value)} // Actualizar estado
-                    required
                   />
                 </div>
 
@@ -535,7 +537,6 @@ export function DataTableRowActions<TData>({
                       placeholder="Ej. Juan Pérez"
                       value={selectedUsuario}
                       onChange={(value) => setSelectedUsuario(value)}
-                      required
                     />
                     <Button
                       size="sm"

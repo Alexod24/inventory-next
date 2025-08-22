@@ -1,39 +1,31 @@
-import React, { FC } from "react";
+import React, { FC, InputHTMLAttributes } from "react";
 
-interface InputProps {
-  type?: "text" | "number" | "email" | "password" | "date" | "time" | string;
-  id?: string;
-  name?: string;
-  placeholder?: string;
-  value?: string | number; // Prop para componentes controlados
-  defaultValue?: string | number; // Prop para componentes no controlados
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  className?: string;
-  min?: string;
-  max?: string;
-  step?: number;
-  disabled?: boolean;
+// Extendemos InputHTMLAttributes<HTMLInputElement> para heredar todas las propiedades HTML estándar de un input.
+// Usamos Omit para excluir 'className' y 'type' de la extensión, ya que las definimos
+// explícitamente en InputProps con un valor por defecto o un tipo más específico.
+interface InputProps
+  extends Omit<InputHTMLAttributes<HTMLInputElement>, "className" | "type"> {
+  // Propiedades personalizadas o redefinidas
+  className?: string; // Redefinimos className para darle un valor por defecto
+  type?: "text" | "number" | "email" | "password" | "date" | "time" | string; // Redefinimos type para darle un valor por defecto y tipos específicos
   success?: boolean;
   error?: boolean;
-  hint?: string; // Optional hint text
+  hint?: string; // Texto de pista opcional
 }
 
 const Input: FC<InputProps> = ({
+  // Desestructuramos las propiedades personalizadas y las propiedades HTML comunes
+  // que tienen valores por defecto o un manejo específico en este componente.
   type = "text",
-  id,
-  name,
-  placeholder,
-  value, // Prop para el valor controlado
-  defaultValue, // Prop para el valor inicial no controlado
-  onChange,
   className = "",
-  min,
-  max,
-  step,
   disabled = false,
   success = false,
   error = false,
   hint,
+  // Capturamos todas las demás propiedades HTML estándar del input usando el operador rest.
+  // Esto incluirá 'id', 'name', 'placeholder', 'value', 'defaultValue', 'onChange',
+  // 'min', 'max', 'step', 'required', etc.
+  ...rest
 }) => {
   // Determina los estilos del input según el estado (disabled, success, error)
   let inputClasses = `h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 ${className}`;
@@ -49,31 +41,16 @@ const Input: FC<InputProps> = ({
     inputClasses += ` bg-transparent text-gray-800 border-gray-300 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800`;
   }
 
-  // --- CAMBIO CLAVE AQUÍ ---
-  // Decide si usar 'value' (para componentes controlados) o 'defaultValue' (para no controlados).
-  // Si 'value' es undefined, significa que el componente no está siendo controlado por una prop 'value' externa,
-  // por lo que podemos usar 'defaultValue' para su valor inicial.
-  // Esto evita pasar ambas props al <input> nativo.
-  const inputProps = value !== undefined ? { value } : { defaultValue };
-
   return (
     <div className="relative">
       <input
         type={type}
-        id={id}
-        name={name}
-        placeholder={placeholder}
-        // Pasa las props de valor (value o defaultValue) y onChange
-        {...inputProps} // Esto inserta 'value={value}' o 'defaultValue={defaultValue}'
-        onChange={onChange} // onChange siempre se pasa si está definido
-        min={min}
-        max={max}
-        step={step}
         disabled={disabled}
         className={inputClasses}
+        {...rest} // Pasa todas las demás propiedades HTML estándar al input nativo
       />
 
-      {/* Optional Hint Text */}
+      {/* Texto de pista opcional */}
       {hint && (
         <p
           className={`mt-1.5 text-xs ${

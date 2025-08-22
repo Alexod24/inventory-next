@@ -1,6 +1,7 @@
-"use client"; // Solo para Next.js
+"use client";
 import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import autoTable, { CellInput, RowInput } from "jspdf-autotable";
+import { Table } from "@tanstack/react-table";
 
 export async function exportarToPDF<TData>(table: Table<TData>) {
   const doc = new jsPDF({ orientation: "landscape" });
@@ -24,12 +25,12 @@ export async function exportarToPDF<TData>(table: Table<TData>) {
       console.warn("Logo no cargado, el PDF seguirá sin él.");
     }
 
-    // Título del PDF
+    // Título
     doc.setFontSize(18);
     doc.setTextColor("#e9a20c");
-    doc.text("lISTA DE BIENES", 50, 20);
+    doc.text("LISTA DE BIENES", 50, 20);
 
-    // Obtener columnas visibles, excluyendo las no deseadas
+    // Columnas visibles
     const visibleColumns = table
       .getAllColumns()
       .filter(
@@ -38,31 +39,39 @@ export async function exportarToPDF<TData>(table: Table<TData>) {
           col.id !== "fecha_adquisicion" &&
           col.id !== "actualizado_en"
       );
-    if (visibleColumns.length === 0)
+
+    if (visibleColumns.length === 0) {
       throw new Error("No hay columnas visibles.");
+    }
 
-    const headers = visibleColumns.map((col) => col.id.toUpperCase());
+    const headers: CellInput[] = visibleColumns.map((col) =>
+      String(col.id).toUpperCase()
+    );
 
-    // Obtener filas visibles
+    // Filas visibles
     const rows = table.getRowModel().rows;
-    if (rows.length === 0) throw new Error("No hay filas visibles.");
+    if (rows.length === 0) {
+      throw new Error("No hay filas visibles.");
+    }
 
-    // Transformar datos para el PDF
-    const data = rows.map((row) =>
+    // Transformar datos con tipado estricto
+    const data: CellInput[][] = rows.map((row) =>
       visibleColumns.map((col) => {
         const val = row.getValue(col.id);
 
-        // Transformaciones específicas por columna
         if (col.id === "disponibilidad") {
-          return val ? "OK" : "Faltante"; // Cambiar true/false
+          return val ? "OK" : "Faltante";
         }
+
         if (col.id === "espacios") {
-          return val?.nombre || "Sin espacio"; // Extraer nombre o texto predeterminado
+          const espacio = val as { nombre?: string } | null;
+          return espacio?.nombre || "Sin espacio";
         }
+
         if (col.id === "creado_en") {
-          const date = new Date(val);
+          const date = new Date(String(val));
           return isNaN(date.getTime())
-            ? val
+            ? String(val ?? "")
             : date.toLocaleDateString("es-ES", {
                 year: "numeric",
                 month: "2-digit",
@@ -70,30 +79,39 @@ export async function exportarToPDF<TData>(table: Table<TData>) {
               });
         }
 
-        // Manejo general para arrays y objetos
+        // Manejo de arrays
         if (Array.isArray(val)) {
           return val
-            .map((item) => (item.nombre ? item.nombre : item))
+            .map((item) =>
+              typeof item === "object" && item !== null && "nombre" in item
+                ? (item as { nombre?: string }).nombre ?? ""
+                : String(item)
+            )
             .join(", ");
-        } else if (typeof val === "object" && val !== null) {
-          return val.nombre || JSON.stringify(val);
         }
 
-        return val; // Devolver el valor original si no requiere transformación
+        // Manejo de objetos
+        if (typeof val === "object" && val !== null) {
+          return "nombre" in val
+            ? (val as { nombre?: string }).nombre ?? ""
+            : JSON.stringify(val);
+        }
+
+        // Siempre devolver un tipo permitido por CellInput
+        return String(val ?? "");
       })
     );
 
-    // Generar tabla en el PDF
+    // Generar tabla
     autoTable(doc, {
       startY: 30,
       head: [headers],
-      body: data,
+      body: data as RowInput[],
       styles: { fontSize: 8 },
       headStyles: { fillColor: [233, 162, 12] },
       margin: { left: 10, right: 10 },
     });
 
-    // Guardar el PDF
     doc.save("Lista_de_Bienes.pdf");
   } catch (error) {
     console.error("Error generando PDF:", error);

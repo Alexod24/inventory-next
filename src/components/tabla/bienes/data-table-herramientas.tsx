@@ -7,6 +7,9 @@ import {
   useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
+  Row, // Importa Row para tipar el parámetro 'row'
+  ColumnFiltersState, // Importa ColumnFiltersState para tipar el estado
+  ColumnFilter,
 } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
@@ -14,20 +17,15 @@ import { Input } from "@/components/ui/input";
 import { DataTableFacetedFilter } from "./data-table-filtros";
 import { CalendarDatePicker } from "@/components/calendar-date-picker";
 import { DataTableViewOptions } from "./data-table-opciones-superior";
-
-const opcionesEstado = [
-  { value: "bueno", label: "Bueno" },
-  { value: "dañado", label: "Dañado" },
-  { value: "roto", label: "Roto" },
-];
-
-const opcionesDisponibilidad = [
-  { value: true, label: "Ok" },
-  { value: false, label: "Faltante" },
-];
+import { Option, opcionesEstado, opcionesDisponibilidad } from "@/lib/options";
 
 // Filtro personalizado rango fecha
-const filterDateRange = (row, columnId, value) => {
+// Se añaden tipos explícitos a los parámetros para resolver el error 'implicitly has an any type'.
+const filterDateRange = (
+  row: Row<any>,
+  columnId: string,
+  value: [Date, Date] | undefined
+) => {
   const [from, to] = value || [];
   const rowDate = new Date(row.getValue(columnId));
 
@@ -54,16 +52,25 @@ export function DataTableToolbar<TData>({
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
-  const [dateRange, setDateRange] = useState<{ from: Date; to: Date } | null>(
-    null
-  );
+  // Corrección clave aquí: dateRange siempre será un objeto con 'from' y 'to' definidos,
+  // pero sus valores pueden ser 'Date | undefined'.
+  const [dateRange, setDateRange] = useState<{
+    from: Date | undefined;
+    to: Date | undefined;
+  }>({ from: undefined, to: undefined });
   // ------------------------------------------------------------------------------------------------------
-  const handleDateSelect = ({ from, to }: { from: Date; to: Date }) => {
-    setDateRange({ from, to });
+  const handleDateSelect = ({ from, to }: { from?: Date; to?: Date }) => {
+    // Cuando se selecciona una fecha, actualizamos el estado dateRange
+    // Aseguramos que 'from' y 'to' siempre estén presentes en el objeto, incluso si son undefined
+    setDateRange({ from: from, to: to });
+    // Asegúrate de que la columna 'creado_en' existe en tu tabla real
+    // El filtro espera un array de dos elementos, donde cada uno puede ser Date o undefined
     table.getColumn("creado_en")?.setFilterValue([from, to]);
   };
 
-  useEffect(() => {}, [table]);
+  useEffect(() => {
+    // Este useEffect está vacío, considera si necesitas alguna lógica aquí
+  }, [table]);
 
   return (
     <div className="flex flex-wrap items-center justify-between">
@@ -98,7 +105,7 @@ export function DataTableToolbar<TData>({
             variant="ghost"
             onClick={() => {
               table.resetColumnFilters();
-              setDateRange(null);
+              setDateRange({ from: undefined, to: undefined }); // Reinicia a un objeto con propiedades definidas como undefined
             }}
             className="h-8 px-2 lg:px-3"
           >
@@ -108,7 +115,7 @@ export function DataTableToolbar<TData>({
         )}
 
         <CalendarDatePicker
-          date={dateRange}
+          date={dateRange} // Ahora dateRange es siempre un objeto con 'from' y 'to' definidos
           onDateSelect={handleDateSelect}
           className="w-[250px] h-8"
           variant="outline"
@@ -125,7 +132,9 @@ export function DataTableToolbar<TData>({
   );
 }
 
-// Definición columnas
+// Definición columnas (asegúrate de que estas columnas coincidan con tus datos reales)
+// Si este archivo es solo para la barra de herramientas, esta definición de columnas podría no ser necesaria aquí.
+// Sin embargo, si es parte de un ejemplo o test, la mantendremos.
 const columns = [
   {
     accessorKey: "descripcion",
@@ -140,7 +149,7 @@ const columns = [
     header: "Estado",
   },
   {
-    accessorKey: "fechaCreacion",
+    accessorKey: "fechaCreacion", // Asegúrate de que esta accessorKey coincide con tu columna de fecha en los datos
     header: "Fecha",
     filterFn: filterDateRange,
   },
@@ -152,18 +161,19 @@ export default function App() {
       descripcion: "Producto 1",
       disponibilidad: "Disponible",
       estado: "bueno",
-      date: "2023-05-01",
+      fechaCreacion: "2023-05-01", // Asegúrate de que el nombre de la propiedad aquí coincide con accessorKey
     },
     {
       descripcion: "Producto 2",
       disponibilidad: "No disponible",
       estado: "bueno",
-      fecha: "2023-05-02",
+      fechaCreacion: "2023-05-02", // Asegúrate de que el nombre de la propiedad aquí coincide con accessorKey
     },
+    // ... más datos
   ]);
 
-  // Este es el secreto para que los filtros funcionen y la tabla se actualice
-  const [columnFilters, setColumnFilters] = useState([]);
+  // Corrección clave aquí: tipa explícitamente el estado columnFilters
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
     data,
@@ -171,7 +181,7 @@ export default function App() {
     state: {
       columnFilters,
     },
-    onColumnFiltersChange: setColumnFilters,
+    onColumnFiltersChange: setColumnFilters, // Ahora los tipos son compatibles
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
@@ -192,14 +202,18 @@ export default function App() {
       <table className="w-full mt-4 border-collapse border border-gray-300">
         <thead>
           <tr>
-            {columns.map((col) => (
-              <th
-                key={col.accessorKey}
-                className="border border-gray-300 px-2 py-1 text-left"
-              >
-                {col.header}
-              </th>
-            ))}
+            {columns.map(
+              (
+                col: any // Casting a any para col si ColumnDef no es suficiente aquí
+              ) => (
+                <th
+                  key={col.accessorKey}
+                  className="border border-gray-300 px-2 py-1 text-left"
+                >
+                  {col.header}
+                </th>
+              )
+            )}
           </tr>
         </thead>
         <tbody>
@@ -207,7 +221,8 @@ export default function App() {
             <tr key={row.id} className="border border-gray-200">
               {row.getVisibleCells().map((cell) => (
                 <td key={cell.id} className="border border-gray-300 px-2 py-1">
-                  {cell.getValue()}
+                  {cell.getValue() as React.ReactNode}{" "}
+                  {/* Casting a React.ReactNode */}
                 </td>
               ))}
             </tr>

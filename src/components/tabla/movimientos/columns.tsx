@@ -1,29 +1,29 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { Bienes } from "./schema";
+import { Movimientos } from "./schema";
 import { DataTableColumnHeader } from "./data-table-column-header";
 // import { DataTableRowActions } from "./data-table-acciones-tabla";
 // import { TrendingUp, TrendingDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export const columns: ColumnDef<Bienes>[] = [
-  {
-    accessorKey: "bien_id", // Ruta completa al nombre de la categoría
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Nombre del bien" />
-    ),
-    cell: ({ row }) => {
-      const bienNombre = row.original.bien?.nombre || "Sin usuario";
-      return (
-        <div className="flex space-x-2">
-          <span className="max-w-[500px] truncate capitalize font-medium">
-            {bienNombre}
-          </span>
-        </div>
-      );
-    },
-  },
+export const columns: ColumnDef<Movimientos>[] = [
+  // {
+  //   accessorKey: "bien_id", // Ruta completa al nombre de la categoría
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Nombre del bien" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const bienNombre = row.original.bien?.nombre || "Sin usuario";
+  //     return (
+  //       <div className="flex space-x-2">
+  //         <span className="max-w-[500px] truncate capitalize font-medium">
+  //           {bienNombre}
+  //         </span>
+  //       </div>
+  //     );
+  //   },
+  // },
   {
     accessorKey: "cantidad",
     header: ({ column }) => (
@@ -129,20 +129,20 @@ export const columns: ColumnDef<Bienes>[] = [
     },
   },
 
-  {
-    accessorKey: "usuario_id", // Ruta completa al nombre de la categoría
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Responsable" />
-    ),
-    cell: ({ row }) => {
-      const usuarioNombre = row.original.usuario?.nombre || "Sin usuario";
-      return (
-        <div className="flex space-x-2">
-          <span className="max-w-[500px] truncate capitalize font-medium">
-            {usuarioNombre}
-          </span>
-        </div>
-      );
-    },
-  },
+  // {
+  //   accessorKey: "usuario_id", // Ruta completa al nombre de la categoría
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Responsable" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const usuarioNombre = row.original.usuario?.nombre || "Sin usuario";
+  //     return (
+  //       <div className="flex space-x-2">
+  //         <span className="max-w-[500px] truncate capitalize font-medium">
+  //           {usuarioNombre}
+  //         </span>
+  //       </div>
+  //     );
+  //   },
+  // },
 ];

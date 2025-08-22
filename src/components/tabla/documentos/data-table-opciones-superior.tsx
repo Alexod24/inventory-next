@@ -110,12 +110,7 @@ export function DataTableViewOptions<TData>({
       // Obtener la URL pública del archivo (opcional, si quieres mostrar después)
       const {
         data: { publicUrl },
-        error: urlError,
       } = supabase.storage.from("documentos").getPublicUrl(filePath);
-
-      if (urlError) {
-        console.warn("No se pudo obtener URL pública:", urlError);
-      }
 
       // Insertar datos en tabla documentos con la ruta o URL del archivo
       const { data, error } = await supabase

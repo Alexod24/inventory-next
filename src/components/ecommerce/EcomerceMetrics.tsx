@@ -8,9 +8,9 @@ type Props = {
   className?: string;
 };
 
-// Interfaz para definir el tipo de producto
-interface Product {
-  stock: number;
+// Interfaz para definir el tipo de datos que realmente obtienes de la consulta de stock
+interface StockQuantity {
+  cantidad: number; // La columna en tu tabla de Supabase que representa el stock
 }
 
 export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
@@ -22,7 +22,7 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
       try {
         // Obtener el total de productos
         const { data: products, error: productsError } = await supabase
-          .from("base_operativa") // Cambia "productos" por el nombre real de tu tabla
+          .from("bienes") // Cambia "bienes" por el nombre real de tu tabla si es diferente
           .select("*", { count: "exact" });
 
         if (productsError) throw productsError;
@@ -30,21 +30,24 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
         setTotalProducts(products?.length || 0);
 
         // Obtener el total del stock
+        // Se selecciona la columna 'cantidad' para que coincida con la interfaz StockQuantity
         const { data: stockData, error: stockError } = await supabase
-          .from("productos") // Cambia "productos" por el nombre real de tu tabla
-          .select("stock");
+          .from("bienes") // Cambia "bienes" por el nombre real de tu tabla si es diferente
+          .select("cantidad"); // <-- CAMBIO CLAVE AQUÍ: Selecciona 'cantidad'
 
         if (stockError) throw stockError;
 
-        // Calcular el stock total asegurándonos de que los datos sean del tipo correcto
-        const totalStockValue = (stockData as Product[])?.reduce(
-          (total, product) => total + (product.stock || 0),
+        // Calcular el stock total sumando la propiedad 'cantidad'
+        // Se realiza un casting a `StockQuantity[]` para asegurar el tipo correcto para TypeScript
+        const totalStockValue = (stockData as StockQuantity[])?.reduce(
+          (total, item) => total + (item.cantidad || 0), // Suma 'item.cantidad'
           0
         );
 
         setTotalStock(totalStockValue || 0);
       } catch (error) {
         console.error("Error fetching metrics:", error);
+        // Aquí podrías añadir un estado de error visible en la UI si lo necesitas
       }
     };
 
@@ -55,7 +58,7 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
     <div
       className={`grid grid-cols-1 gap-4 sm:grid-cols-3 md:gap-6 ${className}`}
     >
-      {/* Metric Item: Total Products */}
+      {/* Metric Item: Nº de Bienes */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
           <BoxIconLine className="text-gray-800 dark:text-white/90" />
@@ -63,21 +66,21 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
         <div className="flex items-end justify-between mt-5">
           <div>
             <span className="text-sm text-gray-500 dark:text-gray-400">
-              Nº Productos
+              Nº de Bienes
             </span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
               {totalProducts}
             </h4>
           </div>
+          <Badge color="success">
+            <ArrowUpIcon />
+            {/* Este porcentaje puede ser dinámico si tienes un historial */}
+            +5.00%
+          </Badge>
         </div>
       </div>
 
-      {/* <Badge color="success">
-        <ArrowUpIcon />
-        +5.00%
-      </Badge> */}
-
-      {/* Metric Item: Total Stock */}
+      {/* Metric Item: Leyenda del Estado Fisico */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
           <GroupIcon className="text-gray-800 dark:text-white/90" />
@@ -103,7 +106,7 @@ export const EcommerceMetrics: React.FC<Props> = ({ className = "" }) => {
         </div>
       </div>
 
-      {/* Metric Item: Total Stock */}
+      {/* Metric Item: Leyenda de la disponibilidad */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-xl dark:bg-gray-800">
           <GroupIcon className="text-gray-800 dark:text-white/90" />
