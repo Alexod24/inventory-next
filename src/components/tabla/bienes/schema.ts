@@ -7,6 +7,7 @@ export const bienesSchema = z.object({
   nombre: z.string(),
   categoria: z.string(), // Propiedad directa para el nombre de la categoría
   subcategoriaNombre: z.string(), // Propiedad directa para el nombre de la subcategoría
+  subcategorias: z.string(), // Propiedad directa para el nombre de la subcategoría
   proveedorNombre: z.string().optional(), // Propiedad directa para el proveedor, opcional
   espacioNombre: z.string(), // Propiedad directa para el nombre del espacio
   cantidad: z.number(),

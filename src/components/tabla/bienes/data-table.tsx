@@ -90,8 +90,8 @@ export function DataTable<TData, TValue>({
     categoria:categorias(nombre),
     subcategoria:subcategorias(nombre),
     proveedor:proveedores(nombre),
-    espacio:espacios(nombre),
-    usuario:usuarios(nombre)
+    espacio:espacios(nombre, id),
+    usuario:usuarios(nombre, id)
   `);
 
     if (error) {

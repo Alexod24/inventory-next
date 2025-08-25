@@ -62,18 +62,17 @@ export const columns: ColumnDef<Bienes>[] = [
     },
   },
   {
-    accessorKey: "subcategoriaNombre", // AccesorKey coincide con schema.ts
+    accessorKey: "subcategorias", // AccesorKey coincide con schema.ts
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Sub Categoría" />
     ),
     cell: ({ row }) => {
       // Acceso directo a la propiedad 'subcategoriaNombre' como string
-      const subcategoriaNombre =
-        row.original.subcategoriaNombre?.nombre || "Sin subcategoría";
+      const subcategoria = row.original.subcategorias || "Sin subcategoría";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
-            {subcategoriaNombre}
+            {subcategoria}
           </span>
         </div>
       );
@@ -86,7 +85,8 @@ export const columns: ColumnDef<Bienes>[] = [
     ),
     cell: ({ row }) => {
       // Acceso directo a la propiedad 'proveedorNombre' como string
-      const proveedorNombre = row.original.proveedorNombre?.nombre || "Sin proveedor";
+      const proveedorNombre =
+        row.original.proveedorNombre?.nombre || "Sin proveedor";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">

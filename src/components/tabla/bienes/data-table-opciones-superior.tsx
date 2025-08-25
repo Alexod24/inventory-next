@@ -112,13 +112,14 @@ export function DataTableViewOptions<TData>({
   const [newValue, setNewValue] = useState("");
   const [currentType, setCurrentType] = useState<string | null>(null);
   const [miniModalError, setMiniModalError] = useState<string | null>(null);
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = React.useState(null);
-  const [subcategoriaSeleccionada, setSubcategoriaSeleccionada] = React.useState(null);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] =
+    React.useState(null);
+  const [subcategoriaSeleccionada, setSubcategoriaSeleccionada] =
+    React.useState(null);
   const [usuarioSeleccionado, setUsuarioSeleccionado] = React.useState(null);
   const [fechaPredeterminada, setFechaPredeterminada] = useState(
     new Date().toISOString().split("T")[0]
   );
-  
 
   // Estados para el nuevo bien (formulario del modal)
   const [newBien, setNewBien] = useState<Partial<Bienes>>({
@@ -233,8 +234,6 @@ export function DataTableViewOptions<TData>({
         .from("usuarios")
         .select("id, nombre");
 
-  
-
       setOptions({
         categorias:
           categoriasData?.map((c) => ({ value: c.id, label: c.nombre })) || [],
@@ -292,82 +291,38 @@ export function DataTableViewOptions<TData>({
     }));
   };
 
-  // Handle select changes for dropdowns
   const handleSelectChange = (
     name: string,
-    selectedValue: string | number | boolean
+    value: string | number | boolean
   ) => {
-    let selectedLabel: string | boolean | undefined;
+    const mapping: Record<string, string> = {
+      categoria: "categoria_id",
+      subcategoriaNombre: "subcategoria_id",
+      proveedorNombre: "proveedor_id",
+      espacioNombre: "espacio_id",
+      usuario: "usuario_id",
+    };
 
-    // Determine the label based on the selected value and the options list
-    switch (name) {
-      case "categoria":
-        selectedLabel = options.categorias.find(
-          (opt) => opt.value === selectedValue
-        )?.label;
-        break;
-      case "subcategoriaNombre":
-        selectedLabel = options.subcategorias.find(
-          (opt) => opt.value === selectedValue
-        )?.label;
-        break;
-      case "proveedorNombre":
-        selectedLabel = options.proveedores.find(
-          (opt) => opt.value === selectedValue
-        )?.label;
-        break;
-      case "espacioNombre":
-        selectedLabel = options.espacios.find(
-          (opt) => opt.value === selectedValue
-        )?.label;
-        break;
-      case "usuario":
-        selectedLabel = options.usuarios.find(
-          (opt) => opt.value === selectedValue
-        )?.label;
-        break;
-      case "estado":
-        selectedLabel = opcionesEstado.find(
-          (opt) => opt.value === selectedValue
-        )?.label;
-        break;
-      case "disponibilidad":
-        selectedLabel = opcionesDisponibilidad.find(
-          (opt) => opt.value === selectedValue
-        )?.label;
-        break;
-      default:
-        selectedLabel = String(selectedValue); // Fallback
-    }
+    const idField = mapping[name];
 
-    // Update newBien with the LABEL (name) for consistency with schema.ts
     setNewBien((prev) => ({
       ...prev,
-      [name]: selectedLabel !== undefined ? selectedLabel : selectedValue,
+      [name]: value, // nombre
+      ...(idField ? { [idField]: value } : {}), // id real
     }));
   };
+  // ----------------------------------------------------------------
   const handleAddBien = async (e: FormEvent) => {
     e.preventDefault();
     console.log("🚀 handleAddBien llamado", newBien);
-  
-    // Find the IDs
-    const categoriaId = options.categorias.find(
-      (opt) => opt.label === newBien.categoria
-    )?.value;
-    const subcategoriaId = options.subcategorias.find(
-      (opt) => opt.label === newBien.subcategoriaNombre
-    )?.value;
-    const proveedorId = newBien.proveedorNombre
-      ? options.proveedores.find((opt) => opt.label === newBien.proveedorNombre)
-          ?.value
-      : null;
-    const espacioId = options.espacios.find(
-      (opt) => opt.label === newBien.espacioNombre
-    )?.value;
-    const usuarioId = options.usuarios.find(
-      (opt) => opt.label === newBien.usuario
-    )?.value;
-  
+
+    // Tomar IDs directamente desde newBien
+    const categoriaId = newBien.categoria_id;
+    const subcategoriaId = newBien.subcategoria_id;
+    const proveedorId = newBien.proveedor_id || null;
+    const espacioId = newBien.espacio_id;
+    const usuarioId = newBien.usuario_id;
+
     console.log({
       categoriaId,
       subcategoriaId,
@@ -379,84 +334,83 @@ export function DataTableViewOptions<TData>({
 
     // Validación básica
     if (
-      !newBien.nombre ||
-      !newBien.categoria ||
-      !newBien.subcategoriaNombre ||
-      !newBien.espacioNombre ||
-      !newBien.usuario ||
+      !newBien.nombre?.trim() ||
+      !categoriaId ||
+      !subcategoriaId ||
+      !espacioId ||
+      !usuarioId ||
       newBien.cantidad === undefined ||
+      isNaN(newBien.cantidad) ||
       newBien.valor === undefined ||
-      !newBien.estado ||
-      newBien.disponibilidad === undefined
+      isNaN(newBien.valor) ||
+      !newBien.estado?.trim()
     ) {
-      console.error("❌ Faltan campos obligatorios para añadir el bien.");
+      console.error(
+        "❌ Faltan campos obligatorios para añadir el bien o IDs no encontrados."
+      );
       return;
     }
-  
-    // Generate code
+
+    // Generar código único
     const baseCode = generateCode(
-      newBien.categoria,
-      newBien.subcategoriaNombre,
+      newBien.categoria || "",
+      newBien.subcategoriaNombre || "",
       newBien.nombre,
       ""
     );
     const similarCodes = await fetchSimilarCodes(baseCode);
     const nextSuffix = calculateNextSuffix(similarCodes, baseCode);
     const finalCode = generateCode(
-      newBien.categoria,
-      newBien.subcategoriaNombre,
+      newBien.categoria || "",
+      newBien.subcategoriaNombre || "",
       newBien.nombre,
       nextSuffix
     );
-  
     console.log("🔑 Código generado:", finalCode);
-  
+
+    // Construir objeto a insertar
     const dataToInsert = {
       codigo: finalCode,
       nombre: newBien.nombre,
-      categoria_id: categoriaId,
-      subcategoria_id: subcategoriaId,
-      proveedor_id: proveedorId,
-      espacio_id: espacioId,
       cantidad: newBien.cantidad,
-      fecha_adquisicion: newBien.adquisicion,
       valor: newBien.valor,
       estado: newBien.estado,
       disponibilidad: newBien.disponibilidad,
       observaciones: newBien.observaciones,
+      fecha_adquisicion: newBien.adquisicion,
+      categoria_id: categoriaId,
+      subcategoria_id: subcategoriaId,
+      proveedor_id: proveedorId,
+      espacio_id: espacioId,
       usuario_id: usuarioId,
-      creado_en: new Date().toISOString(),
-      actualizado_en: new Date().toISOString(),
     };
-  
-    console.log("📤 Data a insertar:", dataToInsert);
-  
+
     try {
       const { data, error } = await supabase
         .from("bienes")
-        .insert([dataToInsert])
-        .select(`
-          id,
-          codigo,
-          nombre,
-          cantidad,
-          valor,
-          estado,
-          disponibilidad,
-          observaciones,
-          fecha_adquisicion,
-          creado_en,
-          actualizado_en,
-          categorias(nombre),
-          subcategorias(nombre, categoria_id),
-          proveedores(nombre),
-          espacios(nombre),
-          usuarios(nombre)
-        `);
-  
+        .insert([dataToInsert]).select(`
+        id,
+        codigo,
+        nombre,
+        cantidad,
+        valor,
+        estado,
+        disponibilidad,
+        observaciones,
+        fecha_adquisicion,
+        creado_en,
+        actualizado_en,
+        categorias(nombre),
+        subcategorias(nombre, categoria_id),
+        proveedores(nombre),
+        espacios(nombre),
+        usuarios(nombre)
+      `);
+
       if (error) throw error;
       console.log("✅ Bien insertado:", data);
-  
+
+      // Mapear datos y agregarlos a la tabla
       const insertedBienMapped: Bienes[] = data.map((b: any) => ({
         id: b.id,
         codigo: b.codigo,
@@ -475,18 +429,23 @@ export function DataTableViewOptions<TData>({
         espacioNombre: b.espacios?.nombre || "Sin espacio",
         usuario: b.usuarios?.nombre || "Sin usuario",
       }));
-  
+
       setItems((prev) => [...prev, ...insertedBienMapped]);
       closeModal();
       fetchData();
-  
+
+      // Resetear formulario
       setNewBien({
         codigo: "",
         nombre: "",
         categoria: "",
+        categoria_id: "",
         subcategoriaNombre: "",
+        subcategoria_id: "",
         proveedorNombre: "",
+        proveedor_id: "",
         espacioNombre: "",
+        espacio_id: "",
         cantidad: 0,
         adquisicion: new Date().toISOString().split("T")[0],
         valor: 0,
@@ -494,16 +453,15 @@ export function DataTableViewOptions<TData>({
         disponibilidad: opcionesDisponibilidad[0]?.value === "true",
         observaciones: "",
         usuario: "",
+        usuario_id: "",
       });
     } catch (err: any) {
       console.error("❌ Error al añadir bien:", err);
     }
-    
   };
 
   // -----------------------------------------------------------------------------------------------
 
-  
   // Handle adding new options (e.g., new category, new supplier)
   const handleCreateOption = async (e: FormEvent) => {
     e.preventDefault();
@@ -640,7 +598,13 @@ export function DataTableViewOptions<TData>({
                       options={options.categorias}
                       placeholder="Selecciona una categoría"
                       className="dark:bg-dark-900"
-                      onChange={(value) => handleSelectChange("categoria", value)}
+                      onChange={(value) =>
+                        setNewBien((prev) => ({
+                          ...prev,
+                          categoria_id: value, // <-- EL QUE VA AL BACKEND
+                          categoria: value, // <-- si quieres seguir mostrando el valor
+                        }))
+                      }
                       value={newBien.categoria}
                     />
                     <Button
@@ -664,7 +628,9 @@ export function DataTableViewOptions<TData>({
                       options={options.subcategorias}
                       placeholder="Selecciona una subcategoría"
                       className="dark:bg-dark-900"
-                      onChange={(value) => handleSelectChange("subcategoria", value)}
+                      onChange={(value) =>
+                        handleSelectChange("subcategoriaNombre", value)
+                      }
                       value={newBien.subcategoriaNombre}
                       // disabled={!categoriaSeleccionada} // Deshabilita si no hay categoría seleccionada
                     />
@@ -689,8 +655,13 @@ export function DataTableViewOptions<TData>({
                       name="usuario_id"
                       options={options.usuarios}
                       placeholder="Ej. Juan Pérez"
-                      
-                      onChange={(value) => setUsuarioSeleccionado(value)} // actualiza el estado
+                      onChange={(value) =>
+                        setNewBien((prev) => ({
+                          ...prev,
+                          usuario_id: value, // <-- EL QUE VA AL BACKEND
+                          usuario: value, // <-- si quieres seguir mostrando el valor
+                        }))
+                      }
                     />
                   </div>
                 </div>
@@ -700,14 +671,18 @@ export function DataTableViewOptions<TData>({
                   <Label>Espacio</Label>
                   <div className="flex items-center space-x-2">
                     <Select
-                      name="espacio"
+                      name="espacioNombre"
                       options={options.espacios}
                       placeholder="Selecciona un espacio"
+                      value={newBien.espacioNombre}
+                      onChange={(value) =>
+                        handleSelectChange("espacioNombre", value)
+                      }
                     />
                     <Button
                       size="sm"
                       onClick={() => {
-                        setCurrentType("espacios"); // Corregido a 'espacios'
+                        setCurrentType("espacios");
                         setMiniModalOpen(true);
                       }}
                     >
@@ -724,7 +699,13 @@ export function DataTableViewOptions<TData>({
                     name="cantidad"
                     min="1"
                     placeholder="Ej. 10"
-                    
+                    value={newBien.cantidad}
+                    onChange={(e) =>
+                      setNewBien((prev) => ({
+                        ...prev,
+                        cantidad: parseInt(e.target.value, 10) || 0,
+                      }))
+                    }
                   />
                 </div>
 
@@ -735,7 +716,6 @@ export function DataTableViewOptions<TData>({
                     type="date"
                     name="fecha"
                     onChange={(e) => setFechaPredeterminada(e.target.value)}
-                    
                   />
                 </div>
 
@@ -747,7 +727,13 @@ export function DataTableViewOptions<TData>({
                     name="valor"
                     step="0.01"
                     placeholder="Ej. 250.00"
-                    
+                    value={newBien.valor || ""}
+                    onChange={(e) =>
+                      setNewBien((prev) => ({
+                        ...prev,
+                        valor: parseFloat(e.target.value) || 0,
+                      }))
+                    }
                   />
                 </div>
 
@@ -756,15 +742,19 @@ export function DataTableViewOptions<TData>({
                   <Label>Proveedor</Label>
                   <div className="flex items-center space-x-2">
                     <Select
-                      name="proveedor"
+                      name="proveedorNombre"
                       options={options.proveedores}
                       placeholder="Selecciona un proveedor"
                       className="dark:bg-dark-900"
+                      value={newBien.proveedorNombre}
+                      onChange={(value) =>
+                        handleSelectChange("proveedorNombre", value)
+                      }
                     />
                     <Button
                       size="sm"
                       onClick={() => {
-                        setCurrentType("proveedores"); // Corregido a 'proveedores'
+                        setCurrentType("proveedores");
                         setMiniModalOpen(true);
                       }}
                     >
@@ -802,6 +792,13 @@ export function DataTableViewOptions<TData>({
                     name="observaciones"
                     className="w-full p-2 border rounded-lg dark:bg-dark-900 dark:text-white"
                     placeholder="Notas adicionales..."
+                    value={newBien.observaciones || ""}
+                    onChange={(e) =>
+                      setNewBien((prev) => ({
+                        ...prev,
+                        observaciones: e.target.value,
+                      }))
+                    }
                   ></textarea>
                 </div>
 
