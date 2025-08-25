@@ -186,7 +186,7 @@ export function DataTableViewOptions<TData>({
           creado_en,
           actualizado_en,
           categorias(nombre),
-          subcategorias(nombre, categoria_id),
+          subcategorias(nombre),
           proveedores(nombre),
           espacios(nombre),
           usuarios(nombre)

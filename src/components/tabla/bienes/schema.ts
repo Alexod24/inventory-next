@@ -1,22 +1,47 @@
 import { z } from "zod";
 
-// Definimos el esquema para Bienes
+// Definimos el esquema para Bienes alineado con la base de datos
 export const bienesSchema = z.object({
   id: z.string(),
   codigo: z.string(),
   nombre: z.string(),
-  categoria: z.string(), // Propiedad directa para el nombre de la categoría
-  subcategoriaNombre: z.string(), // Propiedad directa para el nombre de la subcategoría
-  subcategorias: z.string(), // Propiedad directa para el nombre de la subcategoría
-  proveedorNombre: z.string().optional(), // Propiedad directa para el proveedor, opcional
-  espacioNombre: z.string(), // Propiedad directa para el nombre del espacio
+  categoria: z
+    .object({
+      id: z.string(),
+      nombre: z.string(),
+    })
+    .optional(),
+  subcategoria: z // Cambiado a singular
+    .object({
+      id: z.string(),
+      nombre: z.string(),
+    })
+    .optional(),
+  proveedor: z // Cambiado a proveedor en lugar de proveedorNombre
+    .object({
+      id: z.string(),
+      nombre: z.string(),
+    })
+    .optional(),
+  espacio: z // Cambiado a espacio en lugar de espacioNombre
+    .object({
+      id: z.string(),
+      nombre: z.string(),
+    })
+    .optional(),
   cantidad: z.number(),
-  adquisicion: z.string().optional(), // Fecha como ISO string, opcional
+  fecha_adquisicion: z.string().optional(),
+
   valor: z.number(),
   estado: z.string(),
-  disponibilidad: z.boolean(), // Solo booleano para consistencia
-  observaciones: z.string().optional(), // Observaciones opcionales
-  usuario: z.string(),
+  disponibilidad: z.boolean(),
+  observaciones: z.string().optional(),
+  usuario: z
+    .object({
+      id: z.string(),
+      nombre: z.string(),
+    })
+    .optional(),
   creado: z.string(),
   actualizado: z.string(),
 });

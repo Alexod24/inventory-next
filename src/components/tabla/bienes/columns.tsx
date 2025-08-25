@@ -62,31 +62,32 @@ export const columns: ColumnDef<Bienes>[] = [
     },
   },
   {
-    accessorKey: "subcategorias", // AccesorKey coincide con schema.ts
+    accessorKey: "subcategoria",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Sub Categoría" />
     ),
     cell: ({ row }) => {
-      // Acceso directo a la propiedad 'subcategoriaNombre' como string
-      const subcategoria = row.original.subcategorias || "Sin subcategoría";
+      const subcategoriaNombre =
+        row.original.subcategoria?.nombre || "Sin subcategoría";
+
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
-            {subcategoria}
+            {subcategoriaNombre}
           </span>
         </div>
       );
     },
   },
+
   {
-    accessorKey: "proveedorNombre", // AccesorKey coincide con schema.ts
+    accessorKey: "proveedor", // AccesorKey coincide con schema.ts
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Proveedor" />
     ),
     cell: ({ row }) => {
       // Acceso directo a la propiedad 'proveedorNombre' como string
-      const proveedorNombre =
-        row.original.proveedorNombre?.nombre || "Sin proveedor";
+      const proveedorNombre = row.original.proveedor?.nombre || "Sin proveedor";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
@@ -98,13 +99,13 @@ export const columns: ColumnDef<Bienes>[] = [
   },
 
   {
-    accessorKey: "espacioNombre", // AccesorKey coincide con schema.ts
+    accessorKey: "espacio", // AccesorKey coincide con schema.ts
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Espacio" />
     ),
     cell: ({ row }) => {
       // Acceso directo a la propiedad 'espacioNombre' como string
-      const espacioNombre = row.original.espacioNombre?.nombre || "Sin espacio";
+      const espacioNombre = row.original.espacio?.nombre || "Sin espacio";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
@@ -140,28 +141,39 @@ export const columns: ColumnDef<Bienes>[] = [
     },
   },
   {
-    accessorKey: "adquisicion", // AccesorKey coincide con schema.ts
+    accessorKey: "fecha_adquisicion",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Fecha Adquisicion" />
     ),
     cell: ({ row }) => {
-      const dateString = row.getValue("adquisicion") as string;
-      if (!dateString)
+      const rawValue = row.original.fecha_adquisicion;
+
+      if (!rawValue) {
+        console.log(
+          "❌ Fecha de adquisición indefinida para fila:",
+          row.original
+        );
         return (
           <div className="flex w-[100px] items-center">
             <span className="capitalize">N/A</span>
           </div>
         );
+      }
 
-      const date = new Date(dateString);
-      const offsetDate = new Date(
-        date.getTime() + date.getTimezoneOffset() * 60 * 1000
-      );
-      const formattedDate = offsetDate.toLocaleDateString("es-ES", {
+      const cleaned = rawValue.split(".")[0] + "Z";
+      const date = new Date(cleaned);
+
+      if (isNaN(date.getTime())) {
+        console.log("❌ Fecha de adquisición inválida:", rawValue);
+        return <span>Invalid Date</span>;
+      }
+
+      const formattedDate = date.toLocaleDateString("es-ES", {
         day: "2-digit",
         month: "short",
         year: "numeric",
       });
+
       return (
         <div className="flex w-[100px] items-center">
           <span className="capitalize">{formattedDate}</span>
@@ -169,12 +181,15 @@ export const columns: ColumnDef<Bienes>[] = [
       );
     },
     filterFn: (row, id, filterValue) => {
-      const rowDate = new Date(row.getValue(id));
-      if (!filterValue || filterValue.length !== 2) return true;
+      const rawValue = row.original.fecha_adquisicion;
+      if (!rawValue || !filterValue || filterValue.length !== 2) return true;
+
+      const date = new Date(rawValue.split(".")[0] + "Z");
       const [startDate, endDate] = filterValue as [Date, Date];
-      return rowDate >= startDate && rowDate <= endDate;
+      return date >= startDate && date <= endDate;
     },
   },
+
   // ---------------------------------------------------------------------------------
   {
     accessorKey: "valor",
@@ -312,37 +327,38 @@ export const columns: ColumnDef<Bienes>[] = [
 
   // ---------------------------------------------------------------------------------
   {
-    accessorKey: "creado", // AccesorKey coincide con schema.ts
+    accessorKey: "creado_en",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Fecha creacion" />
+      <DataTableColumnHeader column={column} title="Fecha creación" />
     ),
     cell: ({ row }) => {
-      const date = new Date(row.getValue("creado"));
+      const rawValue = row.original.creado_en;
+      if (!rawValue) return <span>N/A</span>;
+
+      const date = new Date(rawValue.split(".")[0] + "Z");
+      if (isNaN(date.getTime())) return <span>Invalid Date</span>;
+
       const formattedDate = date.toLocaleDateString("es-ES", {
         day: "2-digit",
         month: "short",
         year: "numeric",
       });
-      return (
-        <div className="flex w-[100px] items-center">
-          <span className="capitalize">{formattedDate}</span>
-        </div>
-      );
-    },
-    filterFn: (row, id, filterValue) => {
-      const rowDate = new Date(row.getValue(id));
-      if (!filterValue || filterValue.length !== 2) return true;
-      const [startDate, endDate] = filterValue as [Date, Date];
-      return rowDate >= startDate && rowDate <= endDate;
+
+      return <span className="capitalize">{formattedDate}</span>;
     },
   },
   {
-    accessorKey: "actualizado", // AccesorKey coincide con schema.ts
+    accessorKey: "actualizado_en",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Fecha actualización" />
     ),
     cell: ({ row }) => {
-      const date = new Date(row.getValue("actualizado"));
+      const rawValue = row.original.actualizado_en;
+      if (!rawValue) return <span>N/A</span>;
+
+      const date = new Date(rawValue.split(".")[0] + "Z");
+      if (isNaN(date.getTime())) return <span>Invalid Date</span>;
+
       const formattedDate = date.toLocaleDateString("es-ES", {
         day: "2-digit",
         month: "short",
@@ -353,19 +369,12 @@ export const columns: ColumnDef<Bienes>[] = [
         minute: "2-digit",
         second: "2-digit",
       });
+
       return (
-        <div className="flex w-[150px] items-center">
-          <span className="capitalize">
-            {formattedDate} {formattedTime}
-          </span>
-        </div>
+        <span className="capitalize">
+          {formattedDate} {formattedTime}
+        </span>
       );
-    },
-    filterFn: (row, id, filterValue) => {
-      const rowDate = new Date(row.getValue(id));
-      if (!filterValue || filterValue.length !== 2) return true;
-      const [startDate, endDate] = filterValue as [Date, Date];
-      return rowDate >= startDate && rowDate <= endDate;
     },
   },
 ];
