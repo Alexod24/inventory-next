@@ -125,17 +125,17 @@ export function DataTableViewOptions<TData>({
   const [newBien, setNewBien] = useState<Partial<Bienes>>({
     codigo: "",
     nombre: "",
-    categoria: "", // Will store the label (name)
-    subcategoriaNombre: "", // Will store the label (name)
-    proveedorNombre: "", // Will store the label (name)
-    espacioNombre: "", // Will store the label (name)
+    categoria: undefined, // Will store the label (name)
+    subcategoria: undefined, // Will store the label (name)
+    proveedor: undefined, // Will store the label (name)
+    espacio: undefined, // Will store the label (name)
     cantidad: 0,
-    adquisicion: new Date().toISOString().split("T")[0],
+    fecha_adquisicion: new Date().toISOString().split("T")[0],
     valor: 0,
     estado: opcionesEstado[0]?.value as string,
     disponibilidad: Boolean(opcionesDisponibilidad[0]?.value),
     observaciones: "",
-    usuario: "", // Will store the label (name)
+    usuario: undefined, // Will store the label (name)
   });
 
   // -----------------------------------------------------------------------------------------------

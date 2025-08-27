@@ -42,8 +42,9 @@ export const bienesSchema = z.object({
       nombre: z.string(),
     })
     .optional(),
-  creado: z.string(),
-  actualizado: z.string(),
+
+  creado_en: z.string(),
+  actualizado_en: z.string(),
 });
 
 // Inferimos el tipo automáticamente a partir del esquema
