@@ -125,7 +125,7 @@ const othersItems: NavItem[] = [
   {
     icon: <CalenderIcon />,
     name: "Calendario",
-    path: "/calendario",
+    path: "/base",
     roles: ["admin", "empleado"], // Todos los roles autenticados
   },
   {

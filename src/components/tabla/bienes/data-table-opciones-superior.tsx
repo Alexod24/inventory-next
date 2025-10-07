@@ -45,6 +45,14 @@ const generateCode = (
 
   return `${categoriaCode}-${subcategoriaCode}-${nombreCode}-${suffix}`;
 };
+
+const getNombre = (item: any, fallback = "") => {
+  if (!item) return fallback;
+  if (typeof item === "object" && item.nombre) return item.nombre;
+  if (typeof item === "string") return item;
+  return fallback;
+};
+
 // -----------------------------------------------------------------------------------------------
 const fetchSimilarCodes = async (baseCode: string) => {
   const { data, error } = await supabase
@@ -142,10 +150,10 @@ export function DataTableViewOptions<TData>({
   // Effect to generate code based on selected names
   useEffect(() => {
     const categoriaLabel = options.categorias.find(
-      (opt) => opt.label === newBien.categoria
+      (opt) => opt.label === newBien.categoria?.nombre
     )?.label;
     const subcategoriaLabel = options.subcategorias.find(
-      (opt) => opt.label === newBien.subcategoriaNombre
+      (opt) => opt.label === newBien.subcategoria?.nombre
     )?.label;
 
     if (categoriaLabel && subcategoriaLabel && newBien.nombre) {
@@ -160,7 +168,7 @@ export function DataTableViewOptions<TData>({
     }
   }, [
     newBien.categoria,
-    newBien.subcategoriaNombre,
+    newBien.subcategoria,
     newBien.nombre,
     options.categorias,
     options.subcategorias,
@@ -206,8 +214,9 @@ export function DataTableViewOptions<TData>({
           disponibilidad: b.disponibilidad,
           observaciones: b.observaciones,
           adquisicion: b.fecha_adquisicion,
-          creado: b.creado_en,
-          actualizado: b.actualizado_en,
+          creado_en: b.creado_en,
+          actualizado_en: b.actualizado_en,
+          categoriaNombre: b.categorias?.nombre || "Sin categoría",
           categoria: b.categorias?.nombre || "Sin categoría",
           subcategoriaNombre: b.subcategorias?.nombre || "Sin subcategoría",
           proveedorNombre: b.proveedores?.nombre || "Sin proveedor",
@@ -264,7 +273,7 @@ export function DataTableViewOptions<TData>({
   useEffect(() => {
     if (newBien.categoria) {
       const selectedCatOption = options.categorias.find(
-        (opt) => opt.label === newBien.categoria
+        (opt) => opt.label === newBien.categoria?.nombre
       );
 
       if (selectedCatOption) {
@@ -316,12 +325,37 @@ export function DataTableViewOptions<TData>({
     e.preventDefault();
     console.log("🚀 handleAddBien llamado", newBien);
 
-    // Tomar IDs directamente desde newBien
-    const categoriaId = newBien.categoria_id;
-    const subcategoriaId = newBien.subcategoria_id;
-    const proveedorId = newBien.proveedor_id || null;
-    const espacioId = newBien.espacio_id;
-    const usuarioId = newBien.usuario_id;
+    const categoriaId =
+      newBien.categoria_id ||
+      (typeof newBien.categoria === "string"
+        ? newBien.categoria
+        : newBien.categoria?.id);
+
+    const subcategoriaId =
+      newBien.subcategoria_id ||
+      (typeof newBien.subcategoria === "string"
+        ? newBien.subcategoria
+        : newBien.subcategoria?.id);
+
+    const proveedorId =
+      newBien.proveedor_id ||
+      (!newBien.proveedor
+        ? null
+        : typeof newBien.proveedor === "string"
+        ? newBien.proveedor
+        : newBien.proveedor?.id);
+
+    const espacioId =
+      newBien.espacio_id ||
+      (typeof newBien.espacio === "string"
+        ? newBien.espacio
+        : newBien.espacio?.id);
+
+    const usuarioId =
+      newBien.usuario_id ||
+      (typeof newBien.usuario === "string"
+        ? newBien.usuario
+        : newBien.usuario?.id);
 
     console.log({
       categoriaId,
@@ -332,7 +366,6 @@ export function DataTableViewOptions<TData>({
     });
     console.log("Datos del formulario antes de añadir:", newBien);
 
-    // Validación básica
     if (
       !newBien.nombre?.trim() ||
       !categoriaId ||
@@ -351,21 +384,33 @@ export function DataTableViewOptions<TData>({
       return;
     }
 
-    // Generar código único
+    // Forzar que siempre uses el nombre
+    const categoriaNombre = getNombre(
+      newBien.categoria,
+      newBien.categoriaNombre
+    );
+    const subcategoriaNombre = getNombre(
+      newBien.subcategoria,
+      newBien.subcategoriaNombre
+    );
+    const nombreBien = newBien.nombre || "";
+
+    // Generar código
     const baseCode = generateCode(
-      newBien.categoria || "",
-      newBien.subcategoriaNombre || "",
-      newBien.nombre,
+      categoriaNombre,
+      subcategoriaNombre,
+      nombreBien,
       ""
     );
     const similarCodes = await fetchSimilarCodes(baseCode);
     const nextSuffix = calculateNextSuffix(similarCodes, baseCode);
     const finalCode = generateCode(
-      newBien.categoria || "",
-      newBien.subcategoriaNombre || "",
-      newBien.nombre,
+      categoriaNombre,
+      subcategoriaNombre,
+      nombreBien,
       nextSuffix
     );
+
     console.log("🔑 Código generado:", finalCode);
 
     // Construir objeto a insertar
@@ -377,7 +422,7 @@ export function DataTableViewOptions<TData>({
       estado: newBien.estado,
       disponibilidad: newBien.disponibilidad,
       observaciones: newBien.observaciones,
-      fecha_adquisicion: newBien.adquisicion,
+      fecha_adquisicion: newBien.fecha_adquisicion,
       categoria_id: categoriaId,
       subcategoria_id: subcategoriaId,
       proveedor_id: proveedorId,
@@ -421,8 +466,9 @@ export function DataTableViewOptions<TData>({
         disponibilidad: b.disponibilidad,
         observaciones: b.observaciones,
         adquisicion: b.fecha_adquisicion,
-        creado: b.creado_en,
-        actualizado: b.actualizado_en,
+        creado_en: b.creado_en,
+        actualizado_en: b.actualizado_en,
+        categoriaNombre: b.categorias?.nombre || "Sin categoría", // 👈 cambia esto
         categoria: b.categorias?.nombre || "Sin categoría",
         subcategoriaNombre: b.subcategorias?.nombre || "Sin subcategoría",
         proveedorNombre: b.proveedores?.nombre || "Sin proveedor",
@@ -438,22 +484,19 @@ export function DataTableViewOptions<TData>({
       setNewBien({
         codigo: "",
         nombre: "",
-        categoria: "",
-        categoria_id: "",
-        subcategoriaNombre: "",
-        subcategoria_id: "",
-        proveedorNombre: "",
-        proveedor_id: "",
-        espacioNombre: "",
-        espacio_id: "",
+        categoria: { nombre: "", id: "" },
+        subcategoria: { nombre: "", id: "" },
+        proveedor: { nombre: "", id: "" },
+
+        espacio: { nombre: "", id: "" },
+
         cantidad: 0,
-        adquisicion: new Date().toISOString().split("T")[0],
+        fecha_adquisicion: new Date().toISOString().split("T")[0],
         valor: 0,
         estado: opcionesEstado[0]?.value as string,
         disponibilidad: opcionesDisponibilidad[0]?.value === "true",
         observaciones: "",
-        usuario: "",
-        usuario_id: "",
+        usuario: { nombre: "", id: "" },
       });
     } catch (err: any) {
       console.error("❌ Error al añadir bien:", err);
@@ -602,10 +645,10 @@ export function DataTableViewOptions<TData>({
                         setNewBien((prev) => ({
                           ...prev,
                           categoria_id: value, // <-- EL QUE VA AL BACKEND
-                          categoria: value, // <-- si quieres seguir mostrando el valor
+                          categoria: { nombre: "", id: value },
                         }))
                       }
-                      value={newBien.categoria}
+                      value={newBien.categoria?.id}
                     />
                     <Button
                       size="sm"
@@ -631,7 +674,7 @@ export function DataTableViewOptions<TData>({
                       onChange={(value) =>
                         handleSelectChange("subcategoriaNombre", value)
                       }
-                      value={newBien.subcategoriaNombre}
+                      value={newBien.subcategoria?.id}
                       // disabled={!categoriaSeleccionada} // Deshabilita si no hay categoría seleccionada
                     />
                     <Button
@@ -658,8 +701,8 @@ export function DataTableViewOptions<TData>({
                       onChange={(value) =>
                         setNewBien((prev) => ({
                           ...prev,
-                          usuario_id: value, // <-- EL QUE VA AL BACKEND
-                          usuario: value, // <-- si quieres seguir mostrando el valor
+                          usuario_id: value,
+                          usuario: { nombre: "", id: value }, // <-- si quieres seguir mostrando el valor
                         }))
                       }
                     />
@@ -674,7 +717,7 @@ export function DataTableViewOptions<TData>({
                       name="espacioNombre"
                       options={options.espacios}
                       placeholder="Selecciona un espacio"
-                      value={newBien.espacioNombre}
+                      value={newBien.espacio?.id}
                       onChange={(value) =>
                         handleSelectChange("espacioNombre", value)
                       }
@@ -746,7 +789,7 @@ export function DataTableViewOptions<TData>({
                       options={options.proveedores}
                       placeholder="Selecciona un proveedor"
                       className="dark:bg-dark-900"
-                      value={newBien.proveedorNombre}
+                      value={newBien.proveedor?.id}
                       onChange={(value) =>
                         handleSelectChange("proveedorNombre", value)
                       }
