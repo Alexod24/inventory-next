@@ -50,8 +50,14 @@ export const columns: ColumnDef<Bienes>[] = [
       <DataTableColumnHeader column={column} title="Categoría" />
     ),
     cell: ({ row }) => {
-      // Acceso directo a la propiedad 'categoria' como string
-      const categoriaNombre = row.original.categoria?.nombre || "Sin categoría";
+      const categoriaRaw = row.original.categoria;
+      const categoriaNombre =
+        typeof categoriaRaw === "object"
+          ? categoriaRaw?.nombre ?? "Sin categoría"
+          : typeof categoriaRaw === "string"
+          ? categoriaRaw
+          : "Sin categoría";
+
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
@@ -314,7 +320,13 @@ export const columns: ColumnDef<Bienes>[] = [
     ),
     cell: ({ row }) => {
       // Acceso directo a la propiedad 'usuario' como string
-      const usuarioNombre = row.original.usuario?.nombre || "Sin usuario";
+      const usuarioRaw = row.original.usuario;
+      const usuarioNombre =
+        typeof usuarioRaw === "object"
+          ? usuarioRaw?.nombre ?? "Sin usuario"
+          : typeof usuarioRaw === "string"
+          ? usuarioRaw
+          : "Sin usuario";
       return (
         <div className="flex space-x-2">
           <span className="max-w-[500px] truncate capitalize font-medium">
