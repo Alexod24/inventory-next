@@ -3,16 +3,16 @@
 import React, { useState, FormEvent, useRef, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation"; // Importa useSearchParams
 import { logIn } from "@/app/actions/auth"; // Tu Server Action de login
-import ReCAPTCHA from "react-google-recaptcha";
+import Image from "next/image"; // Asegúrate de que este import esté aquí para el logo, si lo usas
 
 // Importa tus componentes de UI
 import Caja from "@/components/form/input/Caja";
-import Input from "@/components/form/input/Input"; // Asegúrate de que este es el componente correcto si usas Input y Caja
+import Input from "@/components/form/input/Input";
 import Label from "@/components/form/Label";
-import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons"; // Asegúrate de que estas rutas de iconos son correctas
+import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
-import Alert from "@/components/ui/alerta/AlertaExito"; // <--- IMPORTACIÓN DE TU COMPONENTE ALERT
-import { useUser } from "@/context/UserContext"; // <--- NUEVA IMPORTACIÓN: useUser
+import Alert from "@/components/ui/alerta/AlertaExito";
+import { useUser } from "@/context/UserContext"; // <--- IMPORTACIÓN CLAVE
 
 interface AlertState {
   visible: boolean;
@@ -25,153 +25,93 @@ export default function IniciarSesion() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Estados para controlar las alertas
   const [currentAlert, setCurrentAlert] = useState<AlertState | null>(null);
-
-  const [loading, setLoading] = useState(false); // Estado para el indicador de carga
-
-  const [failedAttempts, setFailedAttempts] = useState(0);
-  const [recaptchaValue, setRecaptchaValue] = useState<string | null>(null);
-
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
-
-  const MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA = 2;
+  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
-  const searchParams = useSearchParams(); // Hook para leer parámetros de la URL
-  const urlError = searchParams.get("error"); // Obtiene el parámetro 'error' de la URL
+  const searchParams = useSearchParams();
+  const urlError = searchParams.get("error");
 
-  const { refreshUser } = useUser(); // <--- Obtén la función refreshUser del contexto
+  const { user, refreshUser } = useUser();
 
-  const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-
-  // Efecto para mostrar alertas basadas en el parámetro 'error' de la URL
-  // y para ajustar el estado de intentos fallidos/CAPTCHA
   useEffect(() => {
     if (urlError) {
+      if (user && user.id) {
+        console.warn(
+          "Se detectó un 'urlError' pero la sesión del usuario está activa. Ignorando error y redirigiendo al dashboard."
+        );
+        router.push("/base");
+        return;
+      }
+
       const decodedError = decodeURIComponent(urlError);
       setCurrentAlert({
-        variant: "error", // <-- CAMBIO CLAVE AQUÍ: 'type' cambiado a 'variant'
+        variant: "error",
         message: decodedError,
         title: "Error de Inicio de Sesión",
         visible: true,
       });
 
-      if (decodedError.includes("Credenciales inválidas")) {
-        setFailedAttempts((prev) => {
-          const newAttempts = prev + 1;
-          if (newAttempts >= MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA) {
-            // Asegúrate de que setCaptchaRequired está definido si lo usas
-            // Si no, esta línea puede ser removida o el estado añadido
-            // setCaptchaRequired(true);
-          }
-          return newAttempts;
-        });
-      } else if (decodedError.includes("CAPTCHA")) {
-        // Asegúrate de que setCaptchaRequired está definido si lo usas
-        // setCaptchaRequired(true);
-      } else {
-        // Para otros errores no relacionados con credenciales/captcha, también podemos incrementar intentos
-        setFailedAttempts((prev) => prev + 1);
-      }
-
-      // Limpia el error de la URL después de mostrarlo para evitar que persista
       const newSearchParams = new URLSearchParams(searchParams.toString());
       newSearchParams.delete("error");
       router.replace(`?${newSearchParams.toString()}`, { scroll: false });
     }
-  }, [urlError, searchParams, router]);
-
-  // Determina si el CAPTCHA debe ser visible basado en los intentos fallidos
-  const captchaIsVisible = failedAttempts >= MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA;
-
-  const onRecaptchaChange = (token: string | null) => {
-    setRecaptchaValue(token);
-    // Limpiar alerta si el CAPTCHA se resuelve
-    if (token) {
-      setCurrentAlert(null);
-    }
-  };
+  }, [urlError, searchParams, router, user]);
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault(); // Previene el envío por defecto del formulario HTML
-    setCurrentAlert(null); // Limpia cualquier alerta anterior
-    setLoading(true); // Activa el indicador de carga
+    e.preventDefault();
+    setCurrentAlert(null);
+    setLoading(true); // <--- Inicia la carga
 
     const formData = new FormData();
     formData.append("email", email);
     formData.append("password", password);
 
-    // Añade el token de reCAPTCHA y el estado de captchaRequired al FormData
-    // Se envía 'true' si el CAPTCHA es visible en el cliente, de lo contrario 'false'
-    formData.append("captchaRequired", captchaIsVisible.toString());
-    if (captchaIsVisible) {
-      if (!recaptchaSiteKey) {
+    try {
+      // 1. Llama a la Server Action
+      await logIn(formData);
+
+      // --- ¡ÉXITO! ---
+      // Si llegamos aquí, logIn tuvo éxito y NO redirigió.
+
+      // 2. Detiene la carga y actualiza el contexto de usuario
+      setLoading(false); // <--- Detiene la carga
+      await refreshUser();
+
+      // 3. Muestra la alerta de éxito
+      setCurrentAlert({
+        visible: true,
+        variant: "success",
+        title: "¡Inicio de Sesión Exitoso!",
+        message: "Serás redirigido al dashboard...",
+      });
+
+      // 4. Espera 1.5 segundos para que leas la alerta
+      setTimeout(() => {
+        router.push("/base"); // 5. Redirige al dashboard
+      }, 1500); // 1.5 segundos
+    } catch (e: any) {
+      // --- ¡ERROR! ---
+      console.error("Error en el envío del formulario (cliente):", e);
+      setLoading(false); // <--- Detiene la carga en caso de error
+
+      if (e && e.digest && e.digest.startsWith("NEXT_REDIRECT")) {
+        // Esto es una redirección por ERROR (ej. credenciales inválidas)
+        // Dejamos que el `useEffect` maneje la alerta de error
+        console.log("Redirección de Server Action (error) capturada.");
+      } else {
+        // Esto es un error de red o inesperado
         setCurrentAlert({
           visible: true,
           variant: "error",
-          title: "Error de Configuración",
-          message: "reCAPTCHA Site Key no está definida.",
+          title: "Error de Conexión",
+          message:
+            "Ocurrió un error de red o inesperado. Por favor, inténtalo de nuevo.",
         });
-        setLoading(false);
-        return;
       }
-      if (!recaptchaValue) {
-        setCurrentAlert({
-          visible: true,
-          variant: "warning",
-          title: "Verificación Requerida",
-          message: "Por favor, completa la verificación reCAPTCHA.",
-        });
-        setLoading(false);
-        return;
-      }
-      formData.append("recaptchaToken", recaptchaValue);
     }
-
-    try {
-      // Directamente llama a la Server Action.
-      // La redirección (éxito o error) ocurrirá dentro de logIn.
-      await logIn(formData);
-
-      // Si la ejecución llega aquí, significa que la Server Action no redirigió.
-      // Esto podría ser un caso de éxito que no redirige inmediatamente (poco común con logIn)
-      // o un error no manejado que no lanzó una redirección.
-      // En un flujo normal de Server Actions con `redirect`, este código no se ejecuta.
-      // Si la Server Action logIn es exitosa, se espera que redirija a /base.
-      // Si hay un error, se espera que redirija a /login?error=...
-      // Por lo tanto, si llegamos aquí, es un escenario inesperado o un éxito sin redirección.
-      // Para un login, siempre debe haber una redirección.
-
-      // Si por alguna razón la acción no redirige (ej. en desarrollo o un caso muy específico),
-      // podríamos forzar una redirección aquí o mostrar un mensaje de éxito.
-      // Sin embargo, con el diseño actual de Server Actions, esto es redundante.
-      console.log(
-        "Server Action 'logIn' completada sin redirección explícita."
-      );
-      // Forzar recarga de usuario y redirección si no hubo error y no se redirigió
-      await refreshUser();
-      router.push("/base"); // Redirección por defecto si la acción no lo hizo
-    } catch (e: any) {
-      // Este catch atrapará errores de red o errores lanzados por la Server Action
-      // que NO sean redirecciones de Next.js (las redirecciones son manejadas por el router).
-      console.error("Error en el envío del formulario (cliente):", e);
-      setCurrentAlert({
-        visible: true,
-        variant: "error",
-        title: "Error de Conexión",
-        message:
-          "Ocurrió un error de red o inesperado. Por favor, inténtalo de nuevo.",
-      });
-    } finally {
-      setLoading(false);
-      // Reiniciar el reCAPTCHA después de cada intento de envío
-      if (recaptchaRef.current) {
-        recaptchaRef.current.reset();
-      }
-      setRecaptchaValue(null); // También limpia el estado interno del token
-    }
+    // No usamos 'finally' para 'setLoading' porque necesitamos
+    // controlarlo antes del 'setTimeout' en caso de éxito.
   };
 
   return (
@@ -185,7 +125,16 @@ export default function IniciarSesion() {
           Regresar al Menu
         </Link>
       </div>
+
       <div className="flex flex-col justify-center flex-1 w-full max-w-md mx-auto">
+        <Link href="/" className="block mb-4">
+          <Image
+            width={120}
+            height={48}
+            src="/images/logo/labase.png" // Ajusta esta ruta si es necesario para tu logo
+            alt="Logo de tu Empresa"
+          />
+        </Link>
         <div>
           <div className="mb-5 sm:mb-8">
             <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
@@ -196,7 +145,6 @@ export default function IniciarSesion() {
             </p>
           </div>
           <div>
-            {/* El formulario ahora usa onSubmit para manejar la lógica del cliente */}
             <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 <div>
@@ -247,35 +195,6 @@ export default function IniciarSesion() {
                   </div>
                 </div>
 
-                {/* Aquí se muestra el Google reCAPTCHA condicionalmente */}
-                {captchaIsVisible && (
-                  <div className="mt-4">
-                    {recaptchaSiteKey ? (
-                      <ReCAPTCHA
-                        sitekey={recaptchaSiteKey}
-                        onChange={onRecaptchaChange}
-                        onExpired={() => setRecaptchaValue(null)}
-                        onErrored={() => setRecaptchaValue(null)}
-                        ref={recaptchaRef}
-                      />
-                    ) : (
-                      <p className="text-red-500 text-sm">
-                        Error: reCAPTCHA Site Key no configurada.
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Mensaje de intentos restantes */}
-                {failedAttempts > 0 &&
-                  failedAttempts < MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA && (
-                    <p className="text-sm text-yellow-600 mb-4 text-center">
-                      Credenciales inválidas. Te quedan{" "}
-                      {MAX_FAILED_ATTEMPTS_BEFORE_CAPTCHA - failedAttempts}{" "}
-                      intentos antes del CAPTCHA.
-                    </p>
-                  )}
-
                 <div className="flex items-center justify-between">
                   <Link
                     href="/reset-password"
@@ -287,13 +206,12 @@ export default function IniciarSesion() {
                 <div>
                   <button
                     type="submit"
-                    disabled={loading || (captchaIsVisible && !recaptchaValue)}
+                    disabled={loading} // Lógica de 'disabled' simplificada
                     className="p-2 bg-amber-500 h-10 pointer hover:bg-yellow-500 transition-all rounded-sm flex items-center justify-center text-white font-bold w-full"
                   >
                     {loading ? "Iniciando..." : "Iniciar Sesion"}
                   </button>
                 </div>
-                {/* Aquí se renderiza la alerta */}
                 {currentAlert && currentAlert.visible && (
                   <div className="mt-4">
                     <Alert

@@ -1,4 +1,3 @@
-// src/app/actions/auth.ts
 "use server";
 
 import { createServerSupabaseClient } from "@/lib/supabaseServerClient";
@@ -164,74 +163,29 @@ export async function signUp(formData: FormData) {
 }
 
 // -------------------------------------------------------------------------
-// INICIAR SESIÓN (MODIFICADO para Google reCAPTCHA y para formAction)
+// INICIAR SESIÓN (MODIFICADO para SIN reCAPTCHA y SIN redirect en éxito)
 export async function logIn(formData: FormData) {
-  // Eliminamos el tipo de retorno explícito aquí
   console.log("--- INICIANDO LOGIN SERVER ACTION ---");
   try {
     const supabase = await createServerSupabaseClient();
 
     const email = (formData.get("email") as string).trim();
     const password = (formData.get("password") as string).trim();
-    const recaptchaToken = formData.get("recaptchaToken") as string | null;
-    const captchaRequired = formData.get("captchaRequired") === "true";
 
     console.log("LogIn: Intentando iniciar sesión con email:", email);
-    console.log("LogIn: CAPTCHA requerido por cliente:", captchaRequired);
-    console.log("LogIn: reCAPTCHA Token recibido:", recaptchaToken);
 
-    // Lógica de verificación de Google reCAPTCHA
-    if (captchaRequired) {
-      if (!recaptchaToken) {
-        // Redirige con mensaje de error
-        redirect(
-          `/login?error=${encodeURIComponent(
-            "Verificación reCAPTCHA requerida y no proporcionada."
-          )}`
-        );
-      }
-
-      const secretKey = process.env.RECAPTCHA_SECRET_KEY;
-      if (!secretKey) {
-        console.error(
-          "RECAPTCHA_SECRET_KEY no configurada en el entorno del servidor."
-        );
-        // Redirige con mensaje de error
-        redirect(
-          `/login?error=${encodeURIComponent(
-            "Error de configuración del CAPTCHA en el servidor."
-          )}`
-        );
-      }
-
-      const verificationUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`;
-      const recaptchaResponse = await fetch(verificationUrl, {
-        method: "POST",
-      });
-      const recaptchaData = await recaptchaResponse.json();
-
-      console.log("reCAPTCHA Verification Response:", recaptchaData);
-
-      if (!recaptchaData.success) {
-        console.error(
-          "reCAPTCHA verification failed:",
-          recaptchaData["error-codes"]
-        );
-        // Redirige con mensaje de error
-        redirect(
-          `/login?error=${encodeURIComponent(
-            "Verificación reCAPTCHA fallida. Por favor, inténtalo de nuevo."
-          )}`
-        );
-      }
-    }
+    // --- CORRECCIÓN 2: Lógica de reCAPTCHA eliminada ---
+    // (Tu formulario 'page.tsx' ya no la envía)
+    // const recaptchaToken = ...
+    // const captchaRequired = ...
+    // if (captchaRequired) { ... }
 
     const credentials = { email, password };
     const { data, error } = await supabase.auth.signInWithPassword(credentials);
 
     if (error) {
       console.error("LogIn Error: Fallo al iniciar sesión:", error.message);
-      // Redirige con mensaje de error
+      // Redirige con mensaje de error (ESTO ESTÁ BIEN)
       redirect(
         `/login?error=${encodeURIComponent(
           "Credenciales inválidas. Por favor, inténtalo de nuevo."
@@ -245,7 +199,7 @@ export async function logIn(formData: FormData) {
       console.error(
         "LogIn Error: Sesión no encontrada después del inicio de sesión."
       );
-      // Redirige con mensaje de error
+      // Redirige con mensaje de error (ESTO ESTÁ BIEN)
       redirect(
         `/login?error=${encodeURIComponent(
           "Sesión no establecida. Por favor, inténtalo de nuevo."
@@ -256,15 +210,21 @@ export async function logIn(formData: FormData) {
     console.log("LogIn: Sesión activa con ID:", data.session.user.id);
 
     revalidatePath("/", "layout");
-    // Redirección exitosa
-    redirect("/base");
+
+    // --- ¡¡CORRECCIÓN 1!! ---
+    // NO redirigimos en caso de éxito. Dejamos que el cliente
+    // (login/page.tsx) muestre la alerta y redirija.
+    // redirect("/base"); // <--- LÍNEA ELIMINADA/COMENTADA
+
+    // Simplemente terminamos la función exitosamente.
+    return { success: true };
   } catch (e: any) {
     console.error(
       "LogIn CRÍTICO: Error inesperado en la Server Action:",
       e.message,
       e
     );
-    // Redirección en caso de error crítico
+    // Redirección en caso de error crítico (ESTO ESTÁ BIEN)
     redirect(
       `/login?error=${encodeURIComponent(
         "Ocurrió un error inesperado durante el inicio de sesión."

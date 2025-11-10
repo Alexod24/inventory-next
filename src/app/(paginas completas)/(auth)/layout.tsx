@@ -59,17 +59,17 @@ export default function AuthLayout({
             {/* Contenido (Logo y texto) encima de la imagen y el overlay */}
             {/* 'z-20' asegura que este contenido esté en la capa más alta */}
             <div className="relative z-20 flex flex-col items-center max-w-xs text-white">
-              <Link href="/" className="block mb-4">
+              {/* <Link href="/" className="block mb-4">
                 <Image
                   width={231}
                   height={48}
                   src="/images/logo/labase.png" // Ajusta esta ruta si es necesario para tu logo
                   alt="Logo de tu Empresa"
                 />
-              </Link>
-              <p className="text-center text-white/80 text-lg">
+              </Link> */}
+              {/* <p className="text-center text-white/80 text-lg">
                 Bienvenido al sistema de inventario.
-              </p>
+              </p> */}
             </div>
           </div>
 

@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
     return [];
   },
   images: {
-    domains: [],
+    domains: ["images.unsplash.com", "img.freepik.com"],
   },
 };
 

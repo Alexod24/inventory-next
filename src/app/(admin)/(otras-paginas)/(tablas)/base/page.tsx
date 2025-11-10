@@ -70,7 +70,7 @@ export default async function CombinedPage() {
         </div>
         <div className="col-span-12 xl:col-span-5">
           <Imagen
-            src="/images/espacios/lobby1.jpg"
+            src="/images/espacios/bienes.jpg"
             alt="Descripción personalizada"
             className="shadow-lg rounded-xl w-full h-[465px] object-cover"
           />

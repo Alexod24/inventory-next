@@ -34,7 +34,7 @@ export default async function RootLayout({
   // 1. Obtener la sesión de Supabase en el LADO DEL SERVIDOR
   const supabase = await createServerSupabaseClient();
 
-  // --- LOGS DE DEPURACIÓN CRÍTICOS ---
+  // --- LOGS DE DEPURACIÓN (LOS DEJAMOS POR AHORA) ---
   console.log(
     "RootLayout: Objeto 'supabase' después de createServerSupabaseClient:",
     supabase
@@ -43,24 +43,33 @@ export default async function RootLayout({
     "RootLayout: Propiedad 'supabase.auth' después de createServerSupabaseClient:",
     supabase?.auth
   );
-  // --- FIN LOGS DE DEPURACIÓN ---
 
+  // --- CORRECCIÓN DE SEGURIDAD ---
+  // 1. Obtenemos el *usuario* de forma segura, como recomienda la advertencia.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // 2. Si el usuario existe, *entonces* obtenemos la sesión completa para pasarla al cliente.
+  //    Si el usuario no existe, la sesión es null.
   const {
     data: { session },
-  } = await supabase.auth.getSession(); // Aquí es donde ocurre el error si 'supabase.auth' es undefined
+  } = user ? await supabase.auth.getSession() : { data: { session: null } };
+  // --- FIN DE LA CORRECCIÓN ---
 
   let userDataForContext: UserProfile | null = null; // Inicializa con null
 
-  if (session?.user) {
+  // 3. Basamos TODA la lógica en el objeto 'user' (verificado) en lugar de 'session.user'
+  if (user) {
     // Si hay una sesión activa, intenta obtener el rol del usuario de la tabla 'usuarios'
     console.log(
-      "RootLayout: Sesión activa, intentando obtener rol para user ID:",
-      session.user.id
+      "RootLayout: Sesión activa (verificada por getUser), intentando obtener rol para user ID:",
+      user.id // Usamos user.id
     );
     const { data: profile, error: profileError } = await supabase
       .from("usuarios")
       .select("nombre, rol") // Selecciona el nombre y el rol
-      .eq("id", session.user.id)
+      .eq("id", user.id) // Usamos user.id
       .single();
 
     if (profileError) {
@@ -70,15 +79,15 @@ export default async function RootLayout({
       );
       // Si hay un error al obtener el perfil, aún podemos pasar la información básica de Auth
       userDataForContext = {
-        id: session.user.id,
-        email: session.user.email,
+        id: user.id,
+        email: user.email,
         nombre: null, // No se pudo obtener el nombre
         rol: null, // No se pudo obtener el rol
       };
     } else if (profile) {
       userDataForContext = {
-        id: session.user.id,
-        email: session.user.email,
+        id: user.id,
+        email: user.email,
         nombre: profile.nombre, // Pasa el nombre obtenido del perfil
         rol: profile.rol, // Pasa el rol obtenido del perfil
       };
@@ -91,44 +100,32 @@ export default async function RootLayout({
     } else {
       console.warn(
         "RootLayout: No se encontró perfil en la tabla 'usuarios' para el ID:",
-        session.user.id
+        user.id // Usamos user.id
       );
       // Si no se encuentra el perfil, el usuario sigue logueado en Auth, pero sin rol específico de la app.
       userDataForContext = {
-        id: session.user.id,
-        email: session.user.email,
+        id: user.id,
+        email: user.email,
         nombre: null, // No hay nombre de perfil
         rol: null, // No hay rol de perfil
       };
     }
   } else {
-    console.log("RootLayout: No hay sesión activa.");
+    console.log("RootLayout: No hay sesión activa (verificado por getUser).");
   }
 
   return (
     <html lang="en">
-      {/* El body aquí tendrá solo las clases estáticas (como la fuente).
-          Las clases dinámicas del tema ('bg-gray-900'/'bg-white')
-          se aplicarán en el cliente mediante ThemeBodyApplicator. */}
       <body className={outfit.className} suppressHydrationWarning>
-        {/* Proveedores de contexto (estos son Client Components).
-            Es importante que envuelvan todo el árbol que necesite sus contextos. */}
         <ThemeProvider>
           <SidebarProvider>
-            {/* <--- CORRECCIÓN CLAVE AQUÍ: Pasa userDataForContext como initialUser */}
             <UserProvider initialUser={userDataForContext}>
-              {/* ThemeBodyApplicator es un Client Component que manipula el <body>.
-                  Debe ser renderizado DENTRO de ThemeProvider para tener acceso al contexto del tema.
-                  Este componente es la solución para aplicar las clases de tema dinámicas al body
-                  cuando el RootLayout es un Server Component. */}
               <ThemeBodyApplicator />
 
-              {/* SupabaseSessionProvider es también un Client Component.
-                  Recibe la sesión obtenida del servidor y la pasa al cliente.
-                  Envuelve a los 'children' principales de tu aplicación. */}
+              {/* 4. Pasamos la 'session' (que será 'null' si no hay usuario)
+                  al proveedor del cliente. Esto es correcto. */}
               <SupabaseSessionProvider initialSession={session}>
-                {children}{" "}
-                {/* Tus páginas y componentes principales se renderizan aquí */}
+                {children}
               </SupabaseSessionProvider>
             </UserProvider>
           </SidebarProvider>

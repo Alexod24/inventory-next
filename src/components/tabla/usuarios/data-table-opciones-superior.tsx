@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // CAMBIO IMPORTANTE: Usar el cliente de Supabase para el navegador
-import { createClientComponentClient } from "@/app/utils/supabase/browser"; // <--- Nueva ruta y nombre
+import { createClientComponentClient } from "@/app/utils/supabase/browser"; // <--- Ruta actualizada
 
 import Input from "../../form/input/Input";
 import Label from "../../form/Label";
@@ -24,9 +24,11 @@ import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import { MixerHorizontalIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Table } from "@tanstack/react-table";
 
-import { signUp } from "@/app/actions/auth";
-import Alert from "@/components/ui/alerta/AlertaExito"; // <--- IMPORTACIÓN DE TU COMPONENTE ALERT
-import ReactDOM from "react-dom"; // <--- IMPORTACIÓN NECESARIA PARA REACT PORTALS
+// --- ¡¡CAMBIO CLAVE!! ---
+// Importamos la nueva Server Action de Admin en lugar de 'signUp'
+import { createUserAsAdmin } from "@/app/actions/admin-atuh"; // <--- ¡NUEVA IMPORTACIÓN!
+import Alert from "@/components/ui/alerta/AlertaExito";
+import ReactDOM from "react-dom";
 
 // ---------------------------------------------------------------------------------------------
 interface DataTableViewOptionsProps<TData> {
@@ -56,23 +58,22 @@ export function DataTableViewOptions<TData>({
 }: DataTableViewOptionsProps<TData>) {
   const { isOpen, openModal, closeModal } = useModal();
   const [items, setItems] = useState<Crear[]>([]);
-  // Nuevo estado para controlar la alerta personalizada
   const [currentAlert, setCurrentAlert] = useState<{
     visible: boolean;
-    variant: "success" | "error" | "warning"; // Asume que 'error' es un variant válido en tu componente Alert
+    variant: "success" | "error" | "warning";
     title: string;
     message: string;
   } | null>(null);
 
   // Inicializa el cliente de Supabase para el navegador aquí
-  const supabase = createClientComponentClient(); // <--- Inicialización del cliente de navegador
+  const supabase = createClientComponentClient();
 
   const loadData = async () => {
     // Usa la instancia de Supabase creada
     const { data, error } = await supabase.from("usuarios").select("*");
     if (!error) setItems(data || []);
     else console.error("Error al cargar datos de usuarios:", error);
-    console.log("Datos de usuarios cargados:", data);
+    // console.log("Datos de usuarios cargados:", data); // Este log ya lo tienes
   };
 
   useEffect(() => {
@@ -81,19 +82,31 @@ export function DataTableViewOptions<TData>({
 
   const handleCreate = async (e: FormEvent) => {
     e.preventDefault();
-    setCurrentAlert(null); // Limpia cualquier alerta anterior al intentar crear
+    console.log("handleCreate: Formulario enviado.");
+    setCurrentAlert(null); // Limpia cualquier alerta anterior
 
     const formData = new FormData(e.target as HTMLFormElement);
 
+    // --- NUEVO CONSOLE.LOG ---
+    // Útil para ver exactamente qué datos se están enviando
+    console.log(
+      "handleCreate: Datos del FormData:",
+      Object.fromEntries(formData.entries())
+    );
+
     try {
-      console.log("DataTableViewOptions: Llamando a signUp con formData...");
-      await signUp(formData); // no guardes resultado
+      // --- ¡¡CAMBIO CLAVE!! ---
+      // Llamamos a la nueva acción de admin
+      console.log(
+        "DataTableViewOptions: Llamando a 'createUserAsAdmin' con formData..."
+      );
+      await createUserAsAdmin(formData); // <--- ¡ACCIÓN CORREGIDA!
 
       console.log(
         "Usuario registrado exitosamente. Cerrando modal y actualizando tabla."
       );
       closeModal();
-      await fetchData();
+      await fetchData(); // Actualiza la tabla en el cliente
       setCurrentAlert({
         visible: true,
         variant: "success",
@@ -102,20 +115,31 @@ export function DataTableViewOptions<TData>({
       });
       setTimeout(() => setCurrentAlert(null), 3000);
     } catch (err: any) {
+      // --- NUEVO CONSOLE.LOG ---
       console.error(
-        "DataTableViewOptions: Error CRÍTICO en handleCreate:",
+        "DataTableViewOptions: Error CRÍTICO en handleCreate (recibido del servidor):",
         err
       );
+      console.error(
+        "DataTableViewOptions: Mensaje de error específico:",
+        err.message
+      );
+
       setCurrentAlert({
         visible: true,
         variant: "error",
         title: "Error al Registrar",
+        // Mostramos el mensaje de error exacto que viene de nuestra Server Action
         message: err.message || "Ocurrió un error al registrar el usuario.",
       });
-      setTimeout(() => setCurrentAlert(null), 5000);
+      setTimeout(() => setCurrentAlert(null), 5000); // Más tiempo para leer el error
     }
   };
 
+  // -----------------------------------------------------------------------------------------------
+  // ... (EL RESTO DE TU CÓDIGO JSX NO CAMBIA)
+  // ... (Tu <DropdownMenu>, <Button>, <Modal>, <form>, <Input>, <Select>...)
+  // ... (Tu ReactDOM.createPortal para las alertas...)
   // -----------------------------------------------------------------------------------------------
 
   return (
@@ -205,6 +229,7 @@ export function DataTableViewOptions<TData>({
                     type="password"
                     name="password"
                     placeholder="Contraseña"
+                    required // <-- Añadido 'required'
                   />
                 </div>
 
@@ -214,6 +239,8 @@ export function DataTableViewOptions<TData>({
                     type="password"
                     name="repeatPassword"
                     placeholder="Repetir Contraseña"
+                    required // <-- Añadido 'required'
+                    // Nota: Deberías añadir lógica para validar que las contraseñas coinciden
                   />
                 </div>
 
@@ -223,6 +250,7 @@ export function DataTableViewOptions<TData>({
                     type="text"
                     name="nombre"
                     placeholder="Nombre de usuario"
+                    required // <-- Añadido 'required'
                   />
                 </div>
 
@@ -264,7 +292,7 @@ export function DataTableViewOptions<TData>({
               variant={currentAlert.variant}
               title={currentAlert.title}
               message={currentAlert.message}
-              showLink={false} // Ajusta esto según si quieres enlaces en tus alertas
+              showLink={false}
             />
           </div>,
           document.body // Renderiza directamente en el body
