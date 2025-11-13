@@ -43,7 +43,7 @@ export default async function CombinedPage() {
       {/* Imagen principal ocupando todo el ancho */}
       <div className="w-full">
         <Imagen
-          src="/images/espacios/movimientos.JPG"
+          src="/images/espacios/ventas.jpg"
           alt="Descripción personalizada"
           className="shadow-lg rounded-xl w-full h-[400px] object-cover"
         />
@@ -58,7 +58,7 @@ export default async function CombinedPage() {
 
       {/* Tabla de gastos con scroll horizontal solo ahí */}
       <div className="overflow-x-auto max-w-full">
-        <h2 className="text-xl font-semibold mb-4">Registro de Movimientos</h2>
+        <h2 className="text-xl font-semibold mb-4">Registro de Ventas</h2>
         <ExpenseTable
           data={expenseData}
           columns={expenseColumns}

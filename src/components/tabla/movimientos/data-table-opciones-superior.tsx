@@ -17,7 +17,7 @@ import { MixerHorizontalIcon, PlusIcon } from "@radix-ui/react-icons";
 import { Table } from "@tanstack/react-table";
 
 // --- IMPORTAMOS EL NUEVO MODAL ---
-import { CrearMovimientoModal } from "@/components/CrearMovimientoModal"; // Ajusta la ruta si es necesario
+import { RegistrarVentaModal } from "@/components/RegistrarVentaModal"; // Ajusta la ruta si es necesario
 
 // ---------------------------------------------------------------------------------------------
 interface DataTableViewOptionsProps<TData> {
@@ -98,7 +98,7 @@ export function DataTableViewOptions<TData>({
        */}
 
       {/* RENDERIZAMOS el nuevo componente Modal */}
-      <CrearMovimientoModal
+      <RegistrarVentaModal
         isOpen={isOpen}
         onClose={closeModal}
         onMovimientoCreated={fetchData} // Para refrescar la tabla

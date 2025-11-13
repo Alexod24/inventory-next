@@ -68,7 +68,7 @@ export function useRegistrarVentaForm(
       setOptions({
         bienes:
           bienesData.data?.map((b) => ({
-            value: b.id,
+            value: String(b.id),
             label: b.nombre,
             precio_venta: b.precio_venta || 0, // Asigna 0 si es null
             stock_actual: b.cantidad || 0, // Asigna 0 si es null
@@ -98,17 +98,36 @@ export function useRegistrarVentaForm(
       let newCantidad = parseInt(value, 10) || 0;
       setFormError(null); // Limpia error previo
 
-      // Validar contra el stock
-      if (newCantidad > selectedBienInfo.stock_actual) {
-        setFormError(
-          `Stock insuficiente. Solo hay ${selectedBienInfo.stock_actual} unidades.`
-        );
-        newCantidad = selectedBienInfo.stock_actual; // Fija al máximo
+      // --- INICIO CORRECCIÓN (Stale State) ---
+      // No podemos confiar en 'selectedBienInfo.stock_actual'.
+      // Debemos buscar el stock actual en 'options' usando el 'bien_id' del estado 'newVenta'.
+      const currentBien = options.bienes.find(
+        (b) => b.value === newVenta.bien_id
+      );
+      // Si se encontró el 'bien', usa su stock, si no, es 0.
+      const currentStock = currentBien ? currentBien.stock_actual : 0;
+      // --- FIN CORRECCIÓN ---
+
+      if (newCantidad < 0) {
+        newCantidad = 0;
+      }
+
+      // Validar contra el stock (usando currentStock)
+      if (newCantidad > currentStock) {
+        setFormError(`Stock insuficiente. Solo hay ${currentStock} unidades.`);
+        newCantidad = currentStock; // Fija al máximo
       }
 
       setNewVenta((prev) => ({
         ...prev,
         cantidad: newCantidad,
+      }));
+    }
+    // Añade un 'else' para otros inputs (si los hubiera)
+    else {
+      setNewVenta((prev) => ({
+        ...prev,
+        [name]: value,
       }));
     }
   };
@@ -178,25 +197,33 @@ export function useRegistrarVentaForm(
 
     const { bien_id, usuario_id, cantidad } = newVenta;
 
-    // --- Validación ---
-    if (typeof bien_id !== "number" || bien_id <= 0) {
-      // <-- CORREGIDO
+    // --- Validación (Corrección 1: Validación de tipo) ---
+    // Validamos que bien_id sea un STRING y no esté vacío
+    if (typeof bien_id !== "string" || !bien_id) {
       setFormError("Error: Debe seleccionar un producto.");
       return;
     }
+    // --- FIN CORRECCIÓN 1 ---
+
     if (!cantidad || cantidad <= 0) {
       setFormError("Error: La cantidad debe ser mayor a 0.");
       return;
     }
-    if (cantidad > selectedBienInfo.stock_actual) {
-      setFormError(
-        `Stock insuficiente. Solo hay ${selectedBienInfo.stock_actual} unidades.`
-      );
+
+    // --- Corrección 2: Re-validación de Stale State ---
+    // Volvemos a verificar el stock actual aquí por seguridad
+    const currentBien = options.bienes.find((b) => b.value === bien_id);
+    const currentStock = currentBien ? currentBien.stock_actual : 0;
+    const currentPrecio = currentBien ? currentBien.precio_venta : 0;
+    // --- FIN CORRECCIÓN 2 ---
+
+    if (cantidad > currentStock) {
+      setFormError(`Stock insuficiente. Solo hay ${currentStock} unidades.`);
       return;
     }
 
-    // Calcular el total
-    const totalVenta = (cantidad || 0) * selectedBienInfo.precio_venta;
+    // Calcular el total (Corrección 3: Usar precio actual)
+    const totalVenta = (cantidad || 0) * currentPrecio;
 
     // --- Inserción en Supabase ---
     const dataToInsert = {

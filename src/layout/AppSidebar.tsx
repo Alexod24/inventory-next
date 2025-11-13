@@ -54,9 +54,15 @@ const navItems: NavItem[] = [
   },
   {
     icon: <PageIcon />,
-    name: "Movimientos",
+    name: "Ventas",
     path: "/movimientos",
     roles: ["admin", "empleado"], // Admin y Empleado
+  },
+  {
+    icon: <BoxCubeIcon />,
+    name: "Ingresos",
+    path: "/ingresos",
+    roles: ["admin"], // Admin y Empleado
   },
   {
     icon: <PieChartIcon />,
@@ -70,55 +76,24 @@ const navItems: NavItem[] = [
     path: "/documentos",
     roles: ["admin", "empleado"], // Todos los roles autenticados
   },
-  // {
-  //   name: "Espacios",
-  //   icon: <ListIcon />,
-  //   // Si el menú padre agrupa items, el padre también debe tener roles si sus hijos los tienen.
-  //   // Si es un menú "general" que contiene sub-ítems con roles específicos, puedes dejarlo amplio.
-  //   roles: ["admin", "empleado", "usuario"],
-  //   subItems: [
-  //     {
-  //       name: "Phone Booth",
-  //       path: "/espacios/phone-booth",
-  //       roles: ["admin", "empleado", "usuario"],
-  //     },
-  //     {
-  //       name: "El Hangar",
-  //       path: "/espacios/el-hangar",
-  //       roles: ["admin", "empleado", "usuario"],
-  //     },
-  //     {
-  //       name: "Bunkers",
-  //       path: "/espacios/bunkers",
-  //       roles: ["admin", "empleado", "usuario"],
-  //     },
-  //     {
-  //       name: "Unidades",
-  //       path: "/espacios/unidades",
-  //       roles: ["admin", "empleado", "usuario"],
-  //     },
-  //     {
-  //       name: "La Brigada",
-  //       path: "/espacios/la-brigada",
-  //       roles: ["admin", "empleado", "usuario"],
-  //     },
-  //     {
-  //       name: "Counter",
-  //       path: "/espacios/counter",
-  //       roles: ["admin", "empleado", "usuario"],
-  //     },
-  //     {
-  //       name: "Limpieza",
-  //       path: "/espacios/limpieza",
-  //       roles: ["admin", "empleado", "usuario"],
-  //     },
-  //     {
-  //       name: "Almacen",
-  //       path: "/espacios/almacen",
-  //       roles: ["admin", "empleado", "usuario"],
-  //     },
-  //   ],
-  // },
+  {
+    icon: <ListIcon />,
+    name: "Adicionales",
+
+    roles: ["admin", "empleado", "usuario"],
+    subItems: [
+      {
+        name: "Categorias",
+        path: "/espacios/phone-booth",
+        roles: ["admin", "empleado", "usuario"],
+      },
+      {
+        name: "Proveedores",
+        path: "/espacios/el-hangar",
+        roles: ["admin", "empleado", "usuario"],
+      },
+    ],
+  },
 ];
 
 const othersItems: NavItem[] = [
@@ -128,12 +103,12 @@ const othersItems: NavItem[] = [
   //   path: "/base",
   //   roles: ["admin", "empleado"], // Todos los roles autenticados
   // },
-  // {
-  //   icon: <UserCircleIcon />,
-  //   name: "Usuarios",
-  //   path: "/usuarios",
-  //   roles: ["admin"], // <--- SOLO ADMIN PUEDE VER ESTE MÓDULO
-  // },
+  {
+    icon: <UserCircleIcon />,
+    name: "Usuarios",
+    path: "/usuarios",
+    roles: ["admin"], // <--- SOLO ADMIN PUEDE VER ESTE MÓDULO
+  },
 ];
 
 const AppSidebar: React.FC = () => {
