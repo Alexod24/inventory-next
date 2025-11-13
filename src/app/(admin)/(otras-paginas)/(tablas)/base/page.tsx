@@ -77,7 +77,7 @@ export default async function CombinedPage() {
         </div>
       </div>
       <div className="overflow-x-auto max-w-full">
-        <h2 className="text-xl font-semibold mb-4">Lista De Bienes</h2>
+        <h2 className="text-xl font-semibold mb-4">Lista De Productos</h2>
         <ExpenseTable
           data={expenseData}
           columns={expenseColumns}

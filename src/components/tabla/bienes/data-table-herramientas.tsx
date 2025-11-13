@@ -84,7 +84,7 @@ export function DataTableToolbar<TData>({
           className="h-8 w-[150px] lg:w-[250px]"
         />
 
-        {table.getColumn("disponibilidad") && (
+        {/* {table.getColumn("disponibilidad") && (
           <DataTableFacetedFilter
             column={table.getColumn("disponibilidad")}
             title="Disponibilidad"
@@ -98,7 +98,7 @@ export function DataTableToolbar<TData>({
             title="Estado"
             options={opcionesEstado}
           />
-        )}
+        )} */}
 
         {isFiltered && (
           <Button

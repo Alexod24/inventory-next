@@ -67,24 +67,6 @@ export const columns: ColumnDef<Bienes>[] = [
       );
     },
   },
-  {
-    accessorKey: "subcategoria",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Sub Categoría" />
-    ),
-    cell: ({ row }) => {
-      const subcategoriaNombre =
-        row.original.subcategoria?.nombre || "Sin subcategoría";
-
-      return (
-        <div className="flex space-x-2">
-          <span className="max-w-[500px] truncate capitalize font-medium">
-            {subcategoriaNombre}
-          </span>
-        </div>
-      );
-    },
-  },
 
   {
     accessorKey: "proveedor", // AccesorKey coincide con schema.ts
@@ -146,157 +128,208 @@ export const columns: ColumnDef<Bienes>[] = [
       return value.includes(row.getValue(id));
     },
   },
-  {
-    accessorKey: "fecha_adquisicion",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Fecha Adquisicion" />
-    ),
-    cell: ({ row }) => {
-      const rawValue = row.original.fecha_adquisicion;
+  // {
+  //   accessorKey: "fecha_adquisicion",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Fecha Adquisicion" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const rawValue = row.original.fecha_adquisicion;
 
-      if (!rawValue) {
-        console.log(
-          "❌ Fecha de adquisición indefinida para fila:",
-          row.original
-        );
-        return (
-          <div className="flex w-[100px] items-center">
-            <span className="capitalize">N/A</span>
-          </div>
-        );
-      }
+  //     if (!rawValue) {
+  //       console.log(
+  //         "❌ Fecha de adquisición indefinida para fila:",
+  //         row.original
+  //       );
+  //       return (
+  //         <div className="flex w-[100px] items-center">
+  //           <span className="capitalize">N/A</span>
+  //         </div>
+  //       );
+  //     }
 
-      const cleaned = rawValue.split(".")[0] + "Z";
-      const date = new Date(cleaned);
+  //     const cleaned = rawValue.split(".")[0] + "Z";
+  //     const date = new Date(cleaned);
 
-      if (isNaN(date.getTime())) {
-        console.log("❌ Fecha de adquisición inválida:", rawValue);
-        return <span>Invalid Date</span>;
-      }
+  //     if (isNaN(date.getTime())) {
+  //       console.log("❌ Fecha de adquisición inválida:", rawValue);
+  //       return <span>Invalid Date</span>;
+  //     }
 
-      const formattedDate = date.toLocaleDateString("es-ES", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
+  //     const formattedDate = date.toLocaleDateString("es-ES", {
+  //       day: "2-digit",
+  //       month: "short",
+  //       year: "numeric",
+  //     });
 
-      return (
-        <div className="flex w-[100px] items-center">
-          <span className="capitalize">{formattedDate}</span>
-        </div>
-      );
-    },
-    filterFn: (row, id, filterValue) => {
-      const rawValue = row.original.fecha_adquisicion;
-      if (!rawValue || !filterValue || filterValue.length !== 2) return true;
+  //     return (
+  //       <div className="flex w-[100px] items-center">
+  //         <span className="capitalize">{formattedDate}</span>
+  //       </div>
+  //     );
+  //   },
+  //   filterFn: (row, id, filterValue) => {
+  //     const rawValue = row.original.fecha_adquisicion;
+  //     if (!rawValue || !filterValue || filterValue.length !== 2) return true;
 
-      const date = new Date(rawValue.split(".")[0] + "Z");
-      const [startDate, endDate] = filterValue as [Date, Date];
-      return date >= startDate && date <= endDate;
-    },
-  },
+  //     const date = new Date(rawValue.split(".")[0] + "Z");
+  //     const [startDate, endDate] = filterValue as [Date, Date];
+  //     return date >= startDate && date <= endDate;
+  //   },
+  // },
 
   // ---------------------------------------------------------------------------------
   {
     accessorKey: "valor",
+    // Te sugiero cambiar el "title" de "Valor" a "Precio Compra"
+    // para que coincida con tu formulario, pero lo dejo como "Valor" por ahora.
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Valor" />
     ),
     cell: ({ row }) => {
+      // 1. Obtener el valor
       const valor = row.getValue("valor") as number;
+
+      // 2. Formatearlo como moneda (Soles Peruanos)
+      const formattedPrice = new Intl.NumberFormat("es-PE", {
+        style: "currency",
+        currency: "PEN",
+      }).format(valor);
+
       const isPositive = valor > 0;
+
       return (
         <div className="flex w-[100px] items-center">
           <span
             className={cn(
-              "capitalize",
-              isPositive ? "text-green-500" : "text-red-500"
+              isPositive ? "text-green-600" : "text-gray-500", // Verde si es > 0
+              "font-medium"
             )}
           >
-            {valor}
+            {formattedPrice}
           </span>
         </div>
       );
     },
     filterFn: (row, id, value) => {
-      return (value as string)
-        .toLowerCase()
-        .includes((row.getValue(id) as string).toLowerCase());
+      // 3. Actualizamos el filterFn para que funcione con números
+      const valor = row.getValue(id) as number;
+      // Permite buscar por el número (ej: "20")
+      return String(valor).includes(String(value));
     },
   },
+
   {
-    accessorKey: "estado",
+    accessorKey: "precio_venta",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Estado Fisico" />
+      <DataTableColumnHeader column={column} title="Precio Venta" />
     ),
     cell: ({ row }) => {
-      const estado = row.getValue("estado") as string;
-      const isBueno = estado.toLowerCase() === "bueno";
-      const isDañado = estado.toLowerCase() === "dañado";
-      const isRoto = estado.toLowerCase() === "roto";
+      // 1. Obtener el valor
+      const precio = row.getValue("precio_venta") as number;
+
+      // 2. Formatearlo como moneda (ej. Soles Peruanos (PEN))
+      // ¡Puedes cambiar 'es-PE' y 'PEN' si usas otra moneda!
+      const formattedPrice = new Intl.NumberFormat("es-PE", {
+        style: "currency",
+        currency: "PEN",
+      }).format(precio);
+
+      const isPositive = precio > 0;
 
       return (
         <div className="flex w-[100px] items-center">
           <span
             className={cn(
-              "capitalize font-semibold",
-              isBueno ? "text-green-600" : "",
-              isDañado ? "text-yellow-500" : "",
-              isRoto ? "text-red-500" : ""
+              isPositive ? "text-green-600" : "text-gray-500", // Verde si es > 0
+              "font-medium"
             )}
           >
-            {estado}
+            {formattedPrice}
           </span>
         </div>
       );
     },
+    // 3. Añadimos un filterFn básico para que se pueda buscar
     filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
+      const precio = row.getValue(id) as number;
+      // Permite buscar por el número (ej: "35")
+      return String(precio).includes(String(value));
     },
   },
-  {
-    accessorKey: "disponibilidad",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Disponibilidad" />
-    ),
-    cell: ({ row }) => {
-      let disponibilidadRaw = row.getValue("disponibilidad");
+  // {
+  //   accessorKey: "estado",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Estado Fisico" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const estado = row.getValue("estado") as string;
+  //     const isBueno = estado.toLowerCase() === "bueno";
+  //     const isDañado = estado.toLowerCase() === "dañado";
+  //     const isRoto = estado.toLowerCase() === "roto";
 
-      // Ajuste para manejar booleanos como en el esquema Zod
-      let disponibilidad =
-        typeof disponibilidadRaw === "boolean"
-          ? disponibilidadRaw === true
-            ? "ok"
-            : "faltante"
-          : typeof disponibilidadRaw === "string"
-          ? disponibilidadRaw
-          : "pendiente"; // o valor por defecto si es null/undefined
+  //     return (
+  //       <div className="flex w-[100px] items-center">
+  //         <span
+  //           className={cn(
+  //             "capitalize font-semibold",
+  //             isBueno ? "text-green-600" : "",
+  //             isDañado ? "text-yellow-500" : "",
+  //             isRoto ? "text-red-500" : ""
+  //           )}
+  //         >
+  //           {estado}
+  //         </span>
+  //       </div>
+  //     );
+  //   },
+  //   filterFn: (row, id, value) => {
+  //     return value.includes(row.getValue(id));
+  //   },
+  // },
+  // {
+  //   accessorKey: "disponibilidad",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Disponibilidad" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     let disponibilidadRaw = row.getValue("disponibilidad");
 
-      disponibilidad = disponibilidad.toLowerCase();
+  //     // Ajuste para manejar booleanos como en el esquema Zod
+  //     let disponibilidad =
+  //       typeof disponibilidadRaw === "boolean"
+  //         ? disponibilidadRaw === true
+  //           ? "ok"
+  //           : "faltante"
+  //         : typeof disponibilidadRaw === "string"
+  //         ? disponibilidadRaw
+  //         : "pendiente"; // o valor por defecto si es null/undefined
 
-      return (
-        <div className="flex w-[100px] items-center">
-          <span
-            className={cn(
-              "capitalize font-semibold",
-              disponibilidad === "ok" && "text-green-600",
-              disponibilidad === "faltante" && "text-red-500",
-              disponibilidad === "pendiente" && "text-yellow-500"
-            )}
-          >
-            {disponibilidad}
-          </span>
-        </div>
-      );
-    },
-    filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
-    },
-  },
+  //     disponibilidad = disponibilidad.toLowerCase();
+
+  //     return (
+  //       <div className="flex w-[100px] items-center">
+  //         <span
+  //           className={cn(
+  //             "capitalize font-semibold",
+  //             disponibilidad === "ok" && "text-green-600",
+  //             disponibilidad === "faltante" && "text-red-500",
+  //             disponibilidad === "pendiente" && "text-yellow-500"
+  //           )}
+  //         >
+  //           {disponibilidad}
+  //         </span>
+  //       </div>
+  //     );
+  //   },
+  //   filterFn: (row, id, value) => {
+  //     return value.includes(row.getValue(id));
+  //   },
+  // },
   {
     accessorKey: "observaciones",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Observaciones" />
+      <DataTableColumnHeader column={column} title="Descripcion" />
     ),
     cell: ({ row }) => (
       <div className="flex space-x-2">
@@ -359,34 +392,34 @@ export const columns: ColumnDef<Bienes>[] = [
       return <span className="capitalize">{formattedDate}</span>;
     },
   },
-  {
-    accessorKey: "actualizado_en",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Fecha actualización" />
-    ),
-    cell: ({ row }) => {
-      const rawValue = row.original.actualizado_en;
-      if (!rawValue) return <span>N/A</span>;
+  // {
+  //   accessorKey: "actualizado_en",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Fecha actualización" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const rawValue = row.original.actualizado_en;
+  //     if (!rawValue) return <span>N/A</span>;
 
-      const date = new Date(rawValue.split(".")[0] + "Z");
-      if (isNaN(date.getTime())) return <span>Invalid Date</span>;
+  //     const date = new Date(rawValue.split(".")[0] + "Z");
+  //     if (isNaN(date.getTime())) return <span>Invalid Date</span>;
 
-      const formattedDate = date.toLocaleDateString("es-ES", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
-      const formattedTime = date.toLocaleTimeString("es-ES", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
+  //     const formattedDate = date.toLocaleDateString("es-ES", {
+  //       day: "2-digit",
+  //       month: "short",
+  //       year: "numeric",
+  //     });
+  //     const formattedTime = date.toLocaleTimeString("es-ES", {
+  //       hour: "2-digit",
+  //       minute: "2-digit",
+  //       second: "2-digit",
+  //     });
 
-      return (
-        <span className="capitalize">
-          {formattedDate} {formattedTime}
-        </span>
-      );
-    },
-  },
+  //     return (
+  //       <span className="capitalize">
+  //         {formattedDate} {formattedTime}
+  //       </span>
+  //     );
+  //   },
+  // },
 ];

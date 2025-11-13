@@ -122,18 +122,18 @@ const navItems: NavItem[] = [
 ];
 
 const othersItems: NavItem[] = [
-  {
-    icon: <CalenderIcon />,
-    name: "Calendario",
-    path: "/base",
-    roles: ["admin", "empleado"], // Todos los roles autenticados
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "Usuarios",
-    path: "/usuarios",
-    roles: ["admin"], // <--- SOLO ADMIN PUEDE VER ESTE MÓDULO
-  },
+  // {
+  //   icon: <CalenderIcon />,
+  //   name: "Calendario",
+  //   path: "/base",
+  //   roles: ["admin", "empleado"], // Todos los roles autenticados
+  // },
+  // {
+  //   icon: <UserCircleIcon />,
+  //   name: "Usuarios",
+  //   path: "/usuarios",
+  //   roles: ["admin"], // <--- SOLO ADMIN PUEDE VER ESTE MÓDULO
+  // },
 ];
 
 const AppSidebar: React.FC = () => {

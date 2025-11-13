@@ -1,64 +1,64 @@
-import { string, z } from "zod";
+import { z } from "zod";
 
-// Definimos el esquema para Bienes alineado con la base de datos
-
+// Asegúrate de que tu schema se llame 'bienesSchema'
 export const bienesSchema = z.object({
-  id: z.string(),
-  codigo: z.string(),
-  nombre: z.string(),
+  id: z.any(), // O el tipo que sea tu ID (string/number)
+  nombre: z.string().optional(),
+  codigo: z.string().optional(),
 
+  // ...otros campos planos...
+
+  // --- CORRECCIÓN 1: CATEGORIA ---
+  // (Asegúrate de que 'categoria_id' sea 'number' si así lo usa tu hook)
+  categoria_id: z.number().optional(),
   categoria: z
     .object({
-      id: z.string(),
       nombre: z.string(),
     })
+    .nullable()
     .optional(),
-  categoria_id: z.string().optional(),
-  categoriaNombre: z.string(),
-  subcategoriaNombre: z.string(),
 
-  subcategoria: z
-    .object({
-      id: z.string(),
-      nombre: z.string(),
-    })
-    .optional(),
-  subcategoria_id: z.string().optional(),
-
-  proveedor: z
-    .object({
-      id: z.string(),
-      nombre: z.string(),
-    })
-    .optional(),
-  proveedor_id: z.string().optional(),
-
-  espacio: z
-    .object({
-      id: z.string(),
-      nombre: z.string(),
-    })
-    .optional(),
-  espacio_id: z.string().optional(),
-
-  cantidad: z.number(),
-  fecha_adquisicion: z.string().optional(),
-  valor: z.number(),
-  estado: z.string(),
-  disponibilidad: z.boolean(),
-  observaciones: z.string().optional(),
-
+  // --- CORRECCIÓN 2: USUARIO ---
+  usuario_id: z.string().nullable().optional(),
   usuario: z
     .object({
-      id: z.string(),
       nombre: z.string(),
     })
+    .nullable()
     .optional(),
-  usuario_id: z.string().optional(),
 
-  creado_en: z.string(),
-  actualizado_en: z.string(),
+  // --- CORRECCIÓN 3: ESPACIO ---
+  espacio_id: z.string().nullable().optional(),
+  espacio: z
+    .object({
+      nombre: z.string(),
+    })
+    .nullable()
+    .optional(),
+
+  // --- CORRECIÓN 4: PROVEEDOR ---
+  proveedor_id: z.string().nullable().optional(),
+  proveedor: z
+    .object({
+      nombre: z.string(),
+    })
+    .nullable()
+    .optional(),
+
+  // --- CORRECIÓN 5: PRECIO VENTA (Del error anterior) ---
+  precio_venta: z.number().nullable().optional(),
+
+  // --- Tus campos existentes ---
+  cantidad: z.number().optional(),
+  valor: z.number().optional(),
+  estado: z.string().optional(),
+  disponibilidad: z.boolean().optional(),
+  observaciones: z.string().nullable().optional(),
+  creado_en: z.string().optional(),
+  actualizado_en: z.string().optional(),
+
+  fecha_adquisicion: z.string().optional(), // <-- AÑADE ESTA LÍNEA
+  // ... etc
 });
 
-// Inferimos el tipo automáticamente a partir del esquema
 export type Bienes = z.infer<typeof bienesSchema>;
