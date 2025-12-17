@@ -80,6 +80,7 @@ interface CalendarDatePickerProps
   numberOfMonths?: 1 | 2;
   yearsRange?: number;
   onDateSelect: (range: { from: Date; to: Date }) => void;
+  placeholder?: string;
 }
 
 export const CalendarDatePicker = React.forwardRef<
@@ -96,6 +97,7 @@ export const CalendarDatePicker = React.forwardRef<
       yearsRange = 10,
       onDateSelect,
       variant,
+      placeholder = "Filtrar por fecha",
       ...props
     },
     ref
@@ -537,7 +539,7 @@ export const CalendarDatePicker = React.forwardRef<
                     </>
                   )
                 ) : (
-                  <span>Filtrar por fecha</span>
+                  <span>{placeholder}</span>
                 )}
               </span>
             </Button>

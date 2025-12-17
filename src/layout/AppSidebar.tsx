@@ -1,11 +1,10 @@
-"use client";
-
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext"; // Asegúrate de que la ruta sea correcta
 import { useUser } from "@/context/UserContext"; // <--- IMPORTANTE: Nueva importación
+import { ShoppingCart } from "lucide-react";
 
 import {
   BoxCubeIcon,
@@ -47,17 +46,18 @@ const navItems: NavItem[] = [
     roles: ["admin", "empleado"], // Todos los roles autenticados
   },
   {
-    icon: <TaskIcon />,
-    name: "Bienes",
-    path: "/bienes",
-    roles: ["admin", "empleado"], // Admin y Empleado
+    icon: <ShoppingCart className="w-5 h-5" />,
+    name: "Ventas",
+    path: "/ventas",
+    roles: ["admin", "empleado"],
   },
   {
-    icon: <PageIcon />,
-    name: "Ventas",
-    path: "/movimientos",
+    icon: <TaskIcon />,
+    name: "Productos",
+    path: "/productos",
     roles: ["admin", "empleado"], // Admin y Empleado
   },
+
   {
     icon: <BoxCubeIcon />,
     name: "Ingresos",

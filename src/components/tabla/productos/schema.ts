@@ -45,8 +45,16 @@ export const bienesSchema = z.object({
     .nullable()
     .optional(),
 
-  // --- CORRECIÓN 5: PRECIO VENTA (Del error anterior) ---
+  // --- CORRECCIÓN 5: PRECIO VENTA (Del error anterior) ---
   precio_venta: z.number().nullable().optional(),
+  precio_mayor: z.number().nullable().optional(), // <-- AÑADIDO
+  inventario: z
+    .array(
+      z.object({
+        stock_actual: z.number(),
+      })
+    )
+    .optional(),
 
   // --- Tus campos existentes ---
   cantidad: z.number().optional(),

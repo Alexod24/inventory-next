@@ -2,10 +2,15 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { Bienes } from "./schema"; // Asegúrate de que tu interfaz Bienes está correctamente definida aquí
-import { DataTableColumnHeader } from "./data-table-column-header";
+import { DataTableColumnHeader } from "@/components/common/data-table/data-table-column-header";
 import { cn } from "@/lib/utils";
 
-export const columns: ColumnDef<Bienes>[] = [
+import { DataTableRowActions } from "./data-table-acciones-tabla";
+import { filterDateRange } from "./data-table-herramientas";
+
+export const getColumns = (
+  refreshData: (triggeredBy?: string) => Promise<void>
+): ColumnDef<Bienes>[] => [
   {
     accessorKey: "codigo",
     header: ({ column }) => (
@@ -50,13 +55,9 @@ export const columns: ColumnDef<Bienes>[] = [
       <DataTableColumnHeader column={column} title="Categoría" />
     ),
     cell: ({ row }) => {
-      const categoriaRaw = row.original.categoria;
-      const categoriaNombre =
-        typeof categoriaRaw === "object"
-          ? categoriaRaw?.nombre ?? "Sin categoría"
-          : typeof categoriaRaw === "string"
-          ? categoriaRaw
-          : "Sin categoría";
+      // En Productos, categoria es un string directo
+      const categoriaRaw = row.getValue("categoria") as string;
+      const categoriaNombre = categoriaRaw || "Sin categoría";
 
       return (
         <div className="flex space-x-2">
@@ -86,30 +87,39 @@ export const columns: ColumnDef<Bienes>[] = [
     },
   },
 
+  // {
+  //   accessorKey: "espacio", // AccesorKey coincide con schema.ts
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Espacio" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     // Acceso directo a la propiedad 'espacioNombre' como string
+  //     const espacioNombre = row.original.espacio?.nombre || "Sin espacio";
+  //     return (
+  //       <div className="flex space-x-2">
+  //         <span className="max-w-[500px] truncate capitalize font-medium">
+  //           {espacioNombre}
+  //         </span>
+  //       </div>
+  //     );
+  //   },
+  // },
   {
-    accessorKey: "espacio", // AccesorKey coincide con schema.ts
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Espacio" />
-    ),
-    cell: ({ row }) => {
-      // Acceso directo a la propiedad 'espacioNombre' como string
-      const espacioNombre = row.original.espacio?.nombre || "Sin espacio";
-      return (
-        <div className="flex space-x-2">
-          <span className="max-w-[500px] truncate capitalize font-medium">
-            {espacioNombre}
-          </span>
-        </div>
-      );
+    // Usamos "id" directo para que no busque "cantidad" en el objeto raíz necesariamente
+    id: "stock",
+    accessorFn: (row) => {
+      // Intentar obtener del join inventario
+      const inv = row.inventario;
+      if (Array.isArray(inv) && inv.length > 0) {
+        return inv[0].stock_actual;
+      }
+      return 0;
     },
-  },
-  {
-    accessorKey: "cantidad",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Cantidad" />
+      <DataTableColumnHeader column={column} title="Stock" />
     ),
     cell: ({ row }) => {
-      const cantidad = row.getValue("cantidad") as number;
+      const cantidad = row.getValue("stock") as number;
       const isPositive = cantidad > 0;
       return (
         <div className="flex w-[100px] items-center">
@@ -125,7 +135,7 @@ export const columns: ColumnDef<Bienes>[] = [
       );
     },
     filterFn: (row, id, value) => {
-      return value.includes(row.getValue(id));
+      return String(row.getValue(id)).includes(value);
     },
   },
   // {
@@ -180,41 +190,25 @@ export const columns: ColumnDef<Bienes>[] = [
 
   // ---------------------------------------------------------------------------------
   {
-    accessorKey: "valor",
-    // Te sugiero cambiar el "title" de "Valor" a "Precio Compra"
-    // para que coincida con tu formulario, pero lo dejo como "Valor" por ahora.
+    accessorKey: "precio_compra", // Rename from valor
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Valor" />
+      <DataTableColumnHeader column={column} title="Precio Compra" />
     ),
     cell: ({ row }) => {
-      // 1. Obtener el valor
-      const valor = row.getValue("valor") as number;
-
-      // 2. Formatearlo como moneda (Soles Peruanos)
+      const valor = row.getValue("precio_compra") as number;
       const formattedPrice = new Intl.NumberFormat("es-PE", {
         style: "currency",
         currency: "PEN",
       }).format(valor);
 
-      const isPositive = valor > 0;
-
       return (
         <div className="flex w-[100px] items-center">
-          <span
-            className={cn(
-              isPositive ? "text-green-600" : "text-gray-500", // Verde si es > 0
-              "font-medium"
-            )}
-          >
-            {formattedPrice}
-          </span>
+          <span className="font-medium text-gray-500">{formattedPrice}</span>
         </div>
       );
     },
     filterFn: (row, id, value) => {
-      // 3. Actualizamos el filterFn para que funcione con números
       const valor = row.getValue(id) as number;
-      // Permite buscar por el número (ej: "20")
       return String(valor).includes(String(value));
     },
   },
@@ -254,6 +248,29 @@ export const columns: ColumnDef<Bienes>[] = [
     filterFn: (row, id, value) => {
       const precio = row.getValue(id) as number;
       // Permite buscar por el número (ej: "35")
+      return String(precio).includes(String(value));
+    },
+  },
+  {
+    accessorKey: "precio_mayor",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Precio Mayor" />
+    ),
+    cell: ({ row }) => {
+      const precio = row.getValue("precio_mayor") as number;
+      const formattedPrice = new Intl.NumberFormat("es-PE", {
+        style: "currency",
+        currency: "PEN",
+      }).format(precio);
+
+      return (
+        <div className="flex w-[100px] items-center">
+          <span className="font-medium text-blue-600">{formattedPrice}</span>
+        </div>
+      );
+    },
+    filterFn: (row, id, value) => {
+      const precio = row.getValue(id) as number;
       return String(precio).includes(String(value));
     },
   },
@@ -327,14 +344,14 @@ export const columns: ColumnDef<Bienes>[] = [
   //   },
   // },
   {
-    accessorKey: "observaciones",
+    accessorKey: "descripcion", // Rename from observaciones
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Descripcion" />
+      <DataTableColumnHeader column={column} title="Descripción" />
     ),
     cell: ({ row }) => (
       <div className="flex space-x-2">
         <span className="max-w-[500px] truncate capitalize font-medium">
-          {row.getValue("observaciones")}
+          {row.getValue("descripcion")}
         </span>
       </div>
     ),
@@ -372,12 +389,12 @@ export const columns: ColumnDef<Bienes>[] = [
 
   // ---------------------------------------------------------------------------------
   {
-    accessorKey: "creado_en",
+    accessorKey: "fecha_c",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Fecha creación" />
     ),
     cell: ({ row }) => {
-      const rawValue = row.original.creado_en;
+      const rawValue = row.getValue("fecha_c") as string;
       if (!rawValue) return <span>N/A</span>;
 
       const date = new Date(rawValue.split(".")[0] + "Z");
@@ -391,6 +408,7 @@ export const columns: ColumnDef<Bienes>[] = [
 
       return <span className="capitalize">{formattedDate}</span>;
     },
+    filterFn: filterDateRange,
   },
   // {
   //   accessorKey: "actualizado_en",
@@ -422,4 +440,10 @@ export const columns: ColumnDef<Bienes>[] = [
   //     );
   //   },
   // },
+  {
+    id: "actions",
+    cell: ({ row }) => (
+      <DataTableRowActions row={row} refreshData={refreshData} />
+    ),
+  },
 ];

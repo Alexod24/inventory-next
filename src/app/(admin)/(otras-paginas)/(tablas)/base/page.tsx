@@ -6,8 +6,7 @@ import MonthlySalesChart from "@/components/ecommerce/TarjetasMes";
 // import { DataTable as PaymentTable } from "@/components/tabla/base-operativa/data-table";
 import fs from "fs";
 import path from "path";
-import { DataTable as ExpenseTable } from "@/components/tabla/bienes/data-table";
-import { columns as expenseColumns } from "@/components/tabla/bienes/columns";
+import BaseClient from "./base-client";
 
 export const metadata = {
   title: "Bienvenido - Sistema de inventario",
@@ -78,11 +77,7 @@ export default async function CombinedPage() {
       </div>
       <div className="overflow-x-auto max-w-full">
         <h2 className="text-xl font-semibold mb-4">Lista De Productos</h2>
-        <ExpenseTable
-          data={expenseData}
-          columns={expenseColumns}
-          loading={false}
-        />
+        <BaseClient data={expenseData} />
       </div>
     </div>
   );

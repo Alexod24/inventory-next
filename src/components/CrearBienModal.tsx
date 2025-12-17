@@ -125,28 +125,8 @@ export function CrearBienModal({
                     value={newBien.usuario_id || undefined} // Este ya es string (UUID), está OK
                   />
                 </div>
-                {/* Espacio */}
-                <div>
-                  <Label>Unidad de Medida</Label>
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      name="espacio_id"
-                      options={options.espacios}
-                      placeholder="Selecciona una unidad"
-                      value={newBien.espacio_id || undefined} // Este ya es string (UUID), está OK
-                      onChange={(value) =>
-                        handleSelectChange("espacio_id", value)
-                      }
-                    />
-                    <Button
-                      size="sm"
-                      type="button" // <-- Añadido
-                      onClick={() => openMiniModal("espacios")}
-                    >
-                      +
-                    </Button>
-                  </div>
-                </div>
+                {/* --- BLOQUE UNIDAD DE MEDIDA ELIMINADO --- */}
+
                 {/* Cantidad */}
                 <div>
                   <Label>Stock</Label>
@@ -191,6 +171,19 @@ export function CrearBienModal({
                     min="0"
                     placeholder="Ej. 35.00"
                     value={newBien.precio_venta || ""}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                {/* Precio x Mayor (NUEVO) */}
+                <div>
+                  <Label>Precio x Mayor</Label>
+                  <Input
+                    type="number"
+                    name="precio_mayor"
+                    step="0.01"
+                    min="0"
+                    placeholder="Ej. 30.00"
+                    value={newBien.precio_mayor || ""}
                     onChange={handleInputChange}
                   />
                 </div>

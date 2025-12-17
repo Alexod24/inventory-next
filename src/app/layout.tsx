@@ -7,6 +7,7 @@ import "./globals.css";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { UserProvider, UserProfile } from "@/context/UserContext"; // Importamos UserProfile
+import { SedeProvider } from "@/context/SedeContext";
 
 // Importa el cliente de Supabase para el LADO DEL SERVIDOR
 import { createServerSupabaseClient } from "@/lib/supabaseServerClient";
@@ -120,12 +121,12 @@ export default async function RootLayout({
         <ThemeProvider>
           <SidebarProvider>
             <UserProvider initialUser={userDataForContext}>
-              <ThemeBodyApplicator />
-
-              {/* 4. Pasamos la 'session' (que será 'null' si no hay usuario)
-                  al proveedor del cliente. Esto es correcto. */}
               <SupabaseSessionProvider initialSession={session}>
-                {children}
+                {/* SedeProvider debe estar DENTRO de UserProvider para acceder al user */}
+                <SedeProvider>
+                  <ThemeBodyApplicator />
+                  {children}
+                </SedeProvider>
               </SupabaseSessionProvider>
             </UserProvider>
           </SidebarProvider>

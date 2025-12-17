@@ -11,8 +11,8 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 // Exportamos una función para crear la instancia del cliente Supabase para el navegador.
 // Nombrada 'createClientComponentClient' para evitar cualquier conflicto con 'createClient'
 // que puedas tener en otros archivos o con 'createClient' de @supabase/supabase-js.
-export function createClientComponentClient() {
-  return createBrowserClient(supabaseUrl, supabaseAnonKey, {
+export function createClientComponentClient<T = any>() {
+  return createBrowserClient<T>(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true, // Persiste la sesión usando cookies, ideal para Next.js
       detectSessionInUrl: true, // Detecta la sesión en la URL (para callbacks de auth)
