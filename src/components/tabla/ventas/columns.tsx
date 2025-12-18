@@ -13,7 +13,42 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { ChevronDown, ChevronRight } from "lucide-react";
+
 export const columns: ColumnDef<any>[] = [
+  {
+    id: "expander",
+    header: () => null,
+    cell: ({ row }) => {
+      // Show expander only if there are details
+      const hasDetails =
+        row.original.detalles && row.original.detalles.length > 0;
+      return hasDetails ? (
+        <button
+          onClick={() => row.toggleExpanded()}
+          className="p-1 hover:bg-gray-200 rounded-full transition-colors"
+        >
+          {row.getIsExpanded() ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+        </button>
+      ) : null;
+    },
+  },
+  {
+    accessorKey: "numero",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="N° Ticket" />
+    ),
+    cell: ({ row }) => {
+      const num = row.getValue("numero") as number;
+      const formatted = num ? `V-${String(num).padStart(4, "0")}` : "---";
+      return <span className="font-bold font-mono">{formatted}</span>;
+    },
+    enableSorting: true,
+  },
   {
     accessorKey: "fecha",
     header: ({ column }) => (
@@ -36,42 +71,7 @@ export const columns: ColumnDef<any>[] = [
       return <span>{usuario?.nombre || "N/A"}</span>;
     },
   },
-  {
-    id: "productos",
-    header: "Productos Vendidos",
-    cell: ({ row }) => {
-      const detalles = row.original.detalles || [];
-      const count = detalles.length;
-
-      return (
-        <Select>
-          <SelectTrigger className="w-[200px] h-8 text-xs">
-            <SelectValue placeholder={`${count} Productos`} />
-          </SelectTrigger>
-          <SelectContent>
-            {detalles.map((d: any) => (
-              <SelectItem
-                key={d.id}
-                value={d.id}
-                disabled
-                className="opacity-100"
-              >
-                <span className="font-bold">{d.cantidad}x</span>{" "}
-                {d.producto?.nombre} - S/{d.total}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      );
-    },
-    filterFn: (row, id, value) => {
-      const detalles = row.original.detalles || [];
-      const search = String(value).toLowerCase();
-      return detalles.some((d: any) =>
-        d.producto?.nombre?.toLowerCase().includes(search)
-      );
-    },
-  },
+  // Removed "productos" column as it is now in the detail view
   {
     accessorKey: "total",
     header: ({ column }) => (

@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import {
   ColumnDef,
@@ -8,12 +6,14 @@ import {
   VisibilityState,
   flexRender,
   getCoreRowModel,
+  getExpandedRowModel,
   getFacetedRowModel,
   getFacetedUniqueValues,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  Row,
 } from "@tanstack/react-table";
 
 import {
@@ -31,8 +31,9 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   loading?: boolean;
-  toolbar?: React.ComponentType<any>; // Allow any props for now to be flexible
+  toolbar?: React.ComponentType<any>;
   fetchData?: () => Promise<void>;
+  renderSubComponent?: (props: { row: Row<TData> }) => React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -41,10 +42,8 @@ export function DataTable<TData, TValue>({
   loading = false,
   toolbar: Toolbar,
   fetchData,
+  renderSubComponent,
 }: DataTableProps<TData, TValue>) {
-  // State for sorting, filtering, etc.
-  // Note: If you want to control this from outside (server-side), pass these as props instead.
-  // For now, we assume client-side sorting/filtering for simplicity as per existing code.
   const [rowSelection, setRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -52,10 +51,7 @@ export function DataTable<TData, TValue>({
     []
   );
   const [sorted, setSorting] = React.useState<SortingState>([]);
-  const [viewOptions, setViewOptions] = React.useState({
-    showHiddenColumns: false,
-    customView: "default",
-  });
+  const [expanded, setExpanded] = React.useState({});
 
   const table = useReactTable({
     data,
@@ -65,22 +61,24 @@ export function DataTable<TData, TValue>({
       columnVisibility,
       rowSelection,
       columnFilters,
+      expanded,
     },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onExpandedChange: setExpanded,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    getExpandedRowModel: getExpandedRowModel(),
   });
 
   if (loading) {
-    // You might want a better Skeleton loader here
     return (
       <div className="w-full h-64 flex items-center justify-center text-gray-500">
         Cargando datos...
@@ -90,14 +88,7 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      {Toolbar && (
-        <Toolbar
-          table={table}
-          viewOptions={viewOptions}
-          setViewOptions={setViewOptions}
-          fetchData={fetchData}
-        />
-      )}
+      {Toolbar && <Toolbar table={table} fetchData={fetchData} />}
 
       <div className="rounded-md border">
         <Table>
@@ -123,19 +114,28 @@ export function DataTable<TData, TValue>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                <React.Fragment key={row.id}>
+                  <TableRow data-state={row.getIsSelected() && "selected"}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  {row.getIsExpanded() && renderSubComponent && (
+                    <TableRow>
+                      <TableCell
+                        colSpan={row.getVisibleCells().length}
+                        className="p-0 bg-gray-50 dark:bg-gray-800/50"
+                      >
+                        {renderSubComponent({ row })}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </React.Fragment>
               ))
             ) : (
               <TableRow>

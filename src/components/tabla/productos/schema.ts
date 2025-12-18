@@ -5,6 +5,7 @@ export const bienesSchema = z.object({
   id: z.any(), // O el tipo que sea tu ID (string/number)
   nombre: z.string().optional(),
   codigo: z.string().optional(),
+  codigo_barras: z.string().nullable().optional(), // <-- AÑADIDO (Dual Code)
 
   // ...otros campos planos...
 

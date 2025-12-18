@@ -85,6 +85,68 @@ export default function VentasClient() {
         loading={loading}
         fetchData={fetchData}
         toolbar={SalesToolbar}
+        renderSubComponent={({ row }) => {
+          const detalles = row.original.detalles || [];
+          return (
+            <div className="p-4 bg-muted/30 rounded-lg m-2 border shadow-inner">
+              <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4" />
+                Detalle de Productos
+              </h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-muted-foreground uppercase text-xs">
+                      <th className="py-2 px-3">Producto</th>
+                      <th className="py-2 px-3 text-right">Cantidad</th>
+                      <th className="py-2 px-3 text-right">Precio Unit.</th>
+                      <th className="py-2 px-3 text-right">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detalles.map((d: any) => (
+                      <tr
+                        key={d.id}
+                        className="border-b last:border-0 hover:bg-muted/50"
+                      >
+                        <td className="py-2 px-3 font-medium">
+                          {d.producto?.nombre}
+                        </td>
+                        <td className="py-2 px-3 text-right">
+                          <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full text-xs font-bold">
+                            {d.cantidad}
+                          </span>
+                        </td>
+                        <td className="py-2 px-3 text-right tabular-nums">
+                          {new Intl.NumberFormat("es-PE", {
+                            style: "currency",
+                            currency: "PEN",
+                          }).format(d.precio)}
+                        </td>
+                        <td className="py-2 px-3 text-right font-bold tabular-nums">
+                          {new Intl.NumberFormat("es-PE", {
+                            style: "currency",
+                            currency: "PEN",
+                          }).format(d.total)}
+                        </td>
+                      </tr>
+                    ))}
+                    {detalles.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="py-4 text-center text-muted-foreground"
+                        >
+                          No hay detalles disponibles
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        }}
       />
 
       <POSModal

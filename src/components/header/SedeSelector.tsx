@@ -52,7 +52,10 @@ export default function SedeSelector() {
         <SelectTrigger className="w-[180px] h-9 bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
           <SelectValue placeholder="Seleccionar Sede" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="z-[999999]">
+          {sedes.length === 0 && (
+            <div className="p-2 text-xs">No hay sedes</div>
+          )}
           {sedes.map((sede) => (
             <SelectItem key={sede.id} value={sede.id}>
               {sede.nombre}

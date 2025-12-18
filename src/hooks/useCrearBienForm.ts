@@ -64,6 +64,7 @@ interface FormOptions {
 // --- Estado Inicial del Formulario ---
 const initialState: Partial<Bienes> = {
   codigo: "",
+  codigo_barras: "",
   nombre: "",
   categoria_id: undefined,
   proveedor_id: undefined,
@@ -72,7 +73,7 @@ const initialState: Partial<Bienes> = {
   fecha_adquisicion: new Date().toISOString().split("T")[0],
   valor: 0,
   precio_venta: 0,
-  precio_mayor: 0, // <-- AÑADIDO
+  precio_mayor: 0,
   estado: opcionesEstado[0]?.value as string,
   disponibilidad: Boolean(opcionesDisponibilidad[0]?.value),
   observaciones: "",
@@ -145,7 +146,14 @@ export function useCrearBienForm(
   }, []);
 
   // Efecto para generar el código (borrador)
+  // --- Modo de Código (Auto vs Manual/Escáner) ---
+  const [isManualCode, setIsManualCode] = useState(false);
+
+  // Efecto para crear/generar el código AUTOMÁTICO (borrador)
   useEffect(() => {
+    // SI ESTAMOS EN MODO MANUAL, NO GENERAR NADA
+    if (isManualCode) return;
+
     const categoriaLabel = tempCategoriaNombre;
 
     if (categoriaLabel && newBien.nombre) {
@@ -160,6 +168,7 @@ export function useCrearBienForm(
   }, [
     tempCategoriaNombre, // Depende del nombre temporal
     newBien.nombre,
+    isManualCode, // Dependencia añadida
   ]);
 
   // --- Handlers del Formulario Principal ---
@@ -214,7 +223,7 @@ export function useCrearBienForm(
     setTempCategoriaNombre("");
   };
 
-  // `handleAddBien` (Actualizado para Sede Isolation)
+  // `handleAddBien` Modification: Don't re-generate code if Manual
   const handleAddBien = async (e: FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -231,9 +240,17 @@ export function useCrearBienForm(
       "cantidad",
       "valor",
       "precio_venta",
-      "precio_mayor", // <-- AÑADIDO
+      "precio_mayor",
       "fecha_adquisicion",
     ];
+
+    // Si es manual, el código ES obligatorio
+    if (isManualCode) {
+      if (!newBien.codigo) {
+        setFormError("El código es obligatorio en modo manual.");
+        return;
+      }
+    }
 
     for (const field of requiredFields) {
       if (
@@ -255,16 +272,20 @@ export function useCrearBienForm(
       }
     }
 
-    // --- Generación final del código ---
-    const categoriaNombre = tempCategoriaNombre || "GENERAL";
-    const baseCode = getBaseCode(newBien.nombre || "", categoriaNombre);
-    const similarCodes = await fetchSimilarCodes(baseCode);
-    const nextSuffix = calculateNextSuffix(similarCodes, baseCode);
-    const finalCode = generateCode(
-      newBien.nombre || "",
-      categoriaNombre,
-      nextSuffix
-    );
+    let finalCode = newBien.codigo || "";
+
+    // Si NO es manual, generamos el final real (reemplazando AUTOGEN)
+    if (!isManualCode) {
+      const categoriaNombre = tempCategoriaNombre || "GENERAL";
+      const baseCode = getBaseCode(newBien.nombre || "", categoriaNombre);
+      const similarCodes = await fetchSimilarCodes(baseCode);
+      const nextSuffix = calculateNextSuffix(similarCodes, baseCode);
+      finalCode = generateCode(
+        newBien.nombre || "",
+        categoriaNombre,
+        nextSuffix
+      );
+    }
 
     // --- Inserción en 'productos' (Catálogo Global/Sede) ---
     const productData = {
@@ -273,12 +294,13 @@ export function useCrearBienForm(
       precio_compra: newBien.valor || 0,
       precio_venta: newBien.precio_venta || 0,
       fecha_c: newBien.fecha_adquisicion || new Date().toISOString(),
-      categoria: categoriaNombre,
+      categoria: tempCategoriaNombre || "GENERAL", // Use temp var usually
       codigo: finalCode,
+      codigo_barras: newBien.codigo_barras || null, // <-- AÑADIDO
       sede_id: sedeActual.id, // ISOLATION
       precio_mayor: newBien.precio_mayor || 0,
-      proveedor_id: newBien.proveedor_id || null, // <-- AÑADIDO
-      usuario_id: newBien.usuario_id || null, // <-- AÑADIDO
+      proveedor_id: newBien.proveedor_id || null,
+      usuario_id: newBien.usuario_id || null,
     };
 
     try {
@@ -322,7 +344,15 @@ export function useCrearBienForm(
       onClose();
     } catch (err: any) {
       console.error("❌ Error al añadir bien:", err);
-      setFormError(`Error al guardar: ${err.message}`);
+      // Check for duplicate key error on code
+      if (
+        err.message &&
+        err.message.includes("duplicate key value violates unique constraint")
+      ) {
+        setFormError(`El código "${finalCode}" ya existe. Intente otro.`);
+      } else {
+        setFormError(`Error al guardar: ${err.message}`);
+      }
     }
   };
 
@@ -403,5 +433,8 @@ export function useCrearBienForm(
     openMiniModal,
     closeMiniModal,
     handleCreateOption,
+    // New exports
+    isManualCode,
+    setIsManualCode,
   };
 }

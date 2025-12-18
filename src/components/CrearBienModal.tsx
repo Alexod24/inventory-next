@@ -38,6 +38,8 @@ export function CrearBienModal({
     openMiniModal,
     closeMiniModal,
     handleCreateOption,
+    isManualCode, // <-- Nuevo
+    setIsManualCode, // <-- Nuevo
   } = useCrearBienForm(onBienCreated, onClose);
 
   // No renderiza nada si no está abierto
@@ -64,16 +66,121 @@ export function CrearBienModal({
             <div className="px-2 overflow-y-auto custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 {/* Código */}
+                {/* Código */}
+                <div className="col-span-full mb-2">
+                  <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit mb-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsManualCode(false)}
+                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${
+                        !isManualCode
+                          ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
+                          : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                      }`}
+                    >
+                      Generar Automático
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsManualCode(true);
+                        // Optional: Focus logic handled by autoFocus or ref if needed
+                      }}
+                      className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all flex items-center gap-2 ${
+                        isManualCode
+                          ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
+                          : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+                      }`}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M3 5v14" />
+                        <path d="M8 5v14" />
+                        <path d="M12 5v14" />
+                        <path d="M17 5v14" />
+                        <path d="M21 5v14" />
+                      </svg>
+                      Escanear / Manual
+                    </button>
+                  </div>
+                </div>
+
+                {/* Código Interno (SKU) */}
                 <div>
-                  <Label>Código</Label>
+                  <Label>
+                    Código Interno (SKU)
+                    {isManualCode && (
+                      <span className="text-red-500 ml-1">*</span>
+                    )}
+                  </Label>
                   <Input
                     type="text"
                     value={newBien.codigo}
                     name="codigo"
-                    placeholder="Código generado automáticamente"
-                    className="!bg-gray-200 cursor-not-allowed"
-                    readOnly
+                    placeholder={
+                      isManualCode
+                        ? "Escribe el código interno manual"
+                        : "Generado automáticamente (GAL-LIM-001)"
+                    }
+                    className={
+                      !isManualCode
+                        ? "!bg-gray-100 cursor-not-allowed opacity-70 text-gray-500"
+                        : "bg-white"
+                    }
+                    readOnly={!isManualCode}
+                    onChange={handleInputChange}
                   />
+                  {!isManualCode && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      Se genera según Nombre y Categoría.
+                    </p>
+                  )}
+                </div>
+
+                {/* Código de Barras (Scanner) */}
+                <div>
+                  <Label className="flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-blue-500"
+                    >
+                      <path d="M3 5v14" />
+                      <path d="M8 5v14" />
+                      <path d="M12 5v14" />
+                      <path d="M17 5v14" />
+                      <path d="M21 5v14" />
+                    </svg>
+                    Código de Barras (Escáner)
+                  </Label>
+                  <Input
+                    type="text"
+                    value={newBien.codigo_barras || ""}
+                    name="codigo_barras"
+                    placeholder="Escanea aquí (ej. 144382)"
+                    className="bg-white font-mono text-lg ring-2 ring-blue-500/10 focus:ring-blue-500"
+                    onChange={handleInputChange}
+                    autoFocus // Focus here for scanning
+                  />
+                  <p className="text-xs text-blue-600 mt-1 animate-pulse">
+                    Pistola lista: Escanea ahora
+                  </p>
                 </div>
                 {/* Nombre */}
                 <div>

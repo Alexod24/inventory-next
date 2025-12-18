@@ -10,6 +10,7 @@ export const ventasSchema = z.object({
   total: z.number(),
   fecha: z.string(),
   sede_id: z.string().optional(),
+  numero: z.number().optional(), // Auto-increment ticket number
   // Relations for displaying names
   bienes: z
     .object({
