@@ -30,7 +30,7 @@ export function DataTableToolbar<TData>({
       <GenericDataTableToolbar
         table={table}
         filterColumn="nombre"
-        dateColumn="creado_en" // Ensure this matches columns.tsx
+        dateColumn="fecha_c" // Updated to match columns.tsx
         searchPlaceholder="Filtrar nombre..."
         actions={
           <>

@@ -58,12 +58,20 @@ export default function POSModal({ isOpen, onClose }: POSModalProps) {
   }, [isOpen]);
 
   const addToCart = (product: ProductWithStock) => {
+    // 1. Validation for NEW items (0 stock)
+    if (product.stock_actual <= 0) {
+      toast.error(`Producto agotado: ${product.nombre}`);
+      return;
+    }
+
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {
-        // Validar Stock
+        // 2. Validation for EXISTING items (stock limit)
         if (existing.quantity + 1 > product.stock_actual) {
-          toast.error("No hay suficiente stock");
+          toast.error(
+            `Solo quedan ${product.stock_actual} unidades de ${product.nombre}`
+          );
           return prev;
         }
         return prev.map((item) =>

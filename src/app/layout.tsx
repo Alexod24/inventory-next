@@ -3,6 +3,7 @@
 
 import { Outfit } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "react-hot-toast";
 
 import { SidebarProvider } from "@/context/SidebarContext";
 import { ThemeProvider } from "@/context/ThemeContext";
@@ -119,6 +120,7 @@ export default async function RootLayout({
     <html lang="en">
       <body className={outfit.className} suppressHydrationWarning>
         <ThemeProvider>
+          <Toaster position="top-right" />
           <SidebarProvider>
             <UserProvider initialUser={userDataForContext}>
               <SupabaseSessionProvider initialSession={session}>
