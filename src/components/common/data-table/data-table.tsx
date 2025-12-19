@@ -63,6 +63,9 @@ export function DataTable<TData, TValue>({
       columnFilters,
       expanded,
     },
+    meta: {
+      refreshData: fetchData,
+    },
     enableRowSelection: true,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
