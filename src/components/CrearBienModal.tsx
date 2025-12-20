@@ -2,7 +2,7 @@
 
 import React from "react";
 import ReactDOM from "react-dom";
-import { Modal } from "@/components/ui/modal/index";
+import { Modal } from "@/components/ui/modal";
 import Input from "@/components/form/input/Input";
 import Label from "@/components/form/Label";
 import Select from "@/components/form/Seleccionar";

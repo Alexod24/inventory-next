@@ -1,7 +1,7 @@
 import React from "react";
 import Imagen from "@/components/ui/imagenes/ImagenResponsive";
 import { EcommerceMetrics } from "@/components/ecommerce/Metricas";
-import ProductosClient from "./productos-client";
+import ProductosClient from "@/components/tabla/productos/client";
 
 export const metadata = {
   title: "Productos - Sistema de inventario",

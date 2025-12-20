@@ -131,6 +131,35 @@ export interface Database {
           sede_asignada_id?: string | null;
         };
       };
+      proveedores: {
+        Row: {
+          id: string;
+          nombre: string;
+          ruc: string | null;
+          telefono: string | null;
+          email: string | null;
+          direccion: string | null;
+          fecha_creacion: string;
+        };
+        Insert: {
+          id?: string;
+          nombre: string;
+          ruc?: string | null;
+          telefono?: string | null;
+          email?: string | null;
+          direccion?: string | null;
+          fecha_creacion?: string;
+        };
+        Update: {
+          id?: string;
+          nombre?: string;
+          ruc?: string | null;
+          telefono?: string | null;
+          email?: string | null;
+          direccion?: string | null;
+          fecha_creacion?: string;
+        };
+      };
       ventas: {
         Row: {
           id: string;
@@ -234,6 +263,79 @@ export interface Database {
           estado?: string;
           justificacion?: string;
           type?: "income" | "expense" | null;
+        };
+      };
+      caja_sesiones: {
+        Row: {
+          id: string;
+          sede_id: string;
+          usuario_apertura_id: string | null;
+          usuario_cierre_id: string | null;
+          fecha_apertura: string;
+          fecha_cierre: string | null;
+          monto_apertura: number;
+          monto_cierre_real: number | null;
+          monto_teorico: number | null;
+          diferencia: number | null;
+          estado: string;
+          observaciones: string | null;
+        };
+        Insert: {
+          id?: string;
+          sede_id: string;
+          usuario_apertura_id?: string | null;
+          usuario_cierre_id?: string | null;
+          fecha_apertura?: string;
+          fecha_cierre?: string | null;
+          monto_apertura?: number;
+          monto_cierre_real?: number | null;
+          monto_teorico?: number | null;
+          diferencia?: number | null;
+          estado?: string;
+          observaciones?: string | null;
+        };
+        Update: {
+          id?: string;
+          sede_id?: string;
+          usuario_apertura_id?: string | null;
+          usuario_cierre_id?: string | null;
+          fecha_apertura?: string;
+          fecha_cierre?: string | null;
+          monto_apertura?: number;
+          monto_cierre_real?: number | null;
+          monto_teorico?: number | null;
+          diferencia?: number | null;
+          estado?: string;
+          observaciones?: string | null;
+        };
+      };
+      caja_movimientos: {
+        Row: {
+          id: string;
+          sesion_id: string;
+          usuario_id: string | null;
+          tipo: string;
+          monto: number;
+          motivo: string | null;
+          fecha: string;
+        };
+        Insert: {
+          id?: string;
+          sesion_id: string;
+          usuario_id?: string | null;
+          tipo: string;
+          monto: number;
+          motivo?: string | null;
+          fecha?: string;
+        };
+        Update: {
+          id?: string;
+          sesion_id?: string;
+          usuario_id?: string | null;
+          tipo?: string;
+          monto?: number;
+          motivo?: string | null;
+          fecha?: string;
         };
       };
     };

@@ -9,7 +9,7 @@ import {
 } from "@/components/common/data-table/data-table-toolbar";
 import { DataTableFacetedFilter } from "@/components/common/data-table/data-table-filtros";
 import { exportarToPDF } from "./exportar";
-import { useModal } from "../../../hooks/useModal";
+import { useModal } from "@/hooks/useModal";
 import { CrearBienModal } from "@/components/CrearBienModal";
 import { opcionesEstado, opcionesDisponibilidad } from "@/lib/options";
 

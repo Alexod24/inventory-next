@@ -4,7 +4,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext"; // Asegúrate de que la ruta sea correcta
 import { useUser } from "@/context/UserContext"; // <--- IMPORTANTE: Nueva importación
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, Banknote } from "lucide-react";
 
 import {
   BoxCubeIcon,
@@ -69,6 +69,18 @@ const navItems: NavItem[] = [
     name: "Categorías",
     path: "/categorias",
     roles: ["admin"], // Solo Admin
+  },
+  {
+    icon: <BoxCubeIcon />, // You might want to pick a different icon if available, but reusing UserCircleIcon or similar is fine for now
+    name: "Proveedores",
+    path: "/proveedores",
+    roles: ["admin"],
+  },
+  {
+    icon: <Banknote className="w-6 h-6" />,
+    name: "Caja",
+    path: "/caja",
+    roles: ["admin"],
   },
   // {
   //   icon: <DocsIcon />,
