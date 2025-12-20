@@ -131,38 +131,36 @@ export interface Database {
           sede_asignada_id?: string | null;
         };
       };
-      ingresos: {
+      ventas: {
         Row: {
           id: string;
-          cantidad: number;
+          numero: number;
           fecha: string;
-          descripcion: string | null;
+          total: number;
+          sede_id: string | null;
           usuario_id: string | null;
-          producto: number | null; // Nota: En esquema original era bigint -> bienes.id, revisar si cambiar a UUID -> productos.id
-          sede_id: string | null; // Nuevo campo
         };
         Insert: {
           id?: string;
-          cantidad: number;
+          numero?: number;
           fecha?: string;
-          descripcion?: string | null;
-          usuario_id?: string | null;
-          producto?: number | null;
+          total: number;
           sede_id?: string | null;
+          usuario_id?: string | null;
         };
         Update: {
           id?: string;
-          cantidad?: number;
+          numero?: number;
           fecha?: string;
-          descripcion?: string | null;
-          usuario_id?: string | null;
-          producto?: number | null;
+          total?: number;
           sede_id?: string | null;
+          usuario_id?: string | null;
         };
       };
       salidas: {
         Row: {
           id: string;
+          venta_id: string | null; // Added
           producto: string; // UUID references productos
           cantidad: number;
           precio: number;
@@ -172,6 +170,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
+          venta_id?: string | null;
           producto: string;
           cantidad: number;
           precio: number;
@@ -181,6 +180,7 @@ export interface Database {
         };
         Update: {
           id?: string;
+          venta_id?: string | null;
           producto?: string;
           cantidad?: number;
           precio?: number;

@@ -31,12 +31,12 @@ export default function VentasClient() {
           `
             *,
             usuario:usuarios(nombre),
-            detalles:salidas (
+            detalles:salidas!venta_id (
                 id,
                 cantidad,
                 precio,
                 total,
-                producto:productos(nombre)
+                producto:productos!producto(nombre)
             )
         `
         )

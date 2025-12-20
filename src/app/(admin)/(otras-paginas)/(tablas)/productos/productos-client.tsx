@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { DataTableToolbar } from "@/components/tabla/productos/data-table-herramientas";
 import { DataTable } from "@/components/common/data-table/data-table";
 import { getColumns } from "@/components/tabla/productos/columns";
-import { DataTableToolbar } from "@/components/tabla/productos/data-table-herramientas";
+
 import { supabase } from "@/app/utils/supabase/supabase"; // Or use createClientComponentClient
 import { useSede } from "@/context/SedeContext"; // <-- IMPORTANTE
 import { Button } from "@/components/ui/button";

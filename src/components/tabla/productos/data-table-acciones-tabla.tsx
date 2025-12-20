@@ -164,7 +164,7 @@ export function DataTableRowActions<TData>({
     setShowConfirmDeleteModal(false); // Cierra el modal de confirmación
     try {
       const { error } = await supabase
-        .from("bienes")
+        .from("productos")
         .delete()
         .eq("id", data.id);
       if (error) throw error;
@@ -247,7 +247,7 @@ export function DataTableRowActions<TData>({
     try {
       // Realiza la actualización en Supabase
       const { error } = await supabase
-        .from("bienes")
+        .from("productos")
         .update(updatedData)
         .eq("id", id); // Actualiza el registro por su ID
 

@@ -11,8 +11,8 @@ import { es } from "date-fns/locale";
 type VentaWithDetails = Database["public"]["Tables"]["ventas"]["Row"] & {
   sedes: Database["public"]["Tables"]["sedes"]["Row"] | null;
   usuario: { nombre: string } | null;
-  salidas: (Database["public"]["Tables"]["salidas"]["Row"] & {
-    productos: { nombre: string; codigo: string } | null;
+  detalles: (Database["public"]["Tables"]["salidas"]["Row"] & {
+    producto: { nombre: string; codigo: string } | null;
   })[];
 };
 
@@ -21,34 +21,45 @@ export default function TicketPage() {
   const id = params.id as string;
   const [venta, setVenta] = useState<VentaWithDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorStatus, setErrorStatus] = useState<string | null>(null);
   const supabase = createClientComponentClient<Database>();
 
   useEffect(() => {
     const fetchVenta = async () => {
       if (!id) return;
 
-      const { data, error } = await supabase
-        .from("ventas")
-        .select(
-          `
-          *,
-          sedes (*),
-          usuario:usuarios(nombre),
-          salidas (
+      try {
+        const { data, error } = await supabase
+          .from("ventas")
+          .select(
+            `
             *,
-            productos (nombre, codigo)
+            sedes:sedes(*),
+            usuario:usuarios(nombre),
+            detalles:salidas!venta_id (
+              id,
+              cantidad,
+              precio,
+              total,
+              producto:productos!producto(nombre)
+            )
+          `
           )
-        `
-        )
-        .eq("id", id)
-        .single();
+          .eq("id", id)
+          .single();
 
-      if (error) {
-        console.error("Error fetching ticket:", error);
-      } else {
-        setVenta(data as any);
+        if (error) {
+          console.error("Error fetching ticket:", error);
+          setErrorStatus(error.message);
+        } else {
+          setVenta(data as any);
+        }
+      } catch (err: any) {
+        console.error("Fetch error:", err);
+        setErrorStatus(err.message);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     fetchVenta();
@@ -57,8 +68,6 @@ export default function TicketPage() {
   useEffect(() => {
     if (venta) {
       document.title = `Ticket-${venta.numero}`;
-      // Auto-print disabled for dev, user can click button.
-      // setTimeout(() => window.print(), 500);
     }
   }, [venta]);
 
@@ -70,9 +79,24 @@ export default function TicketPage() {
     );
   }
 
+  if (errorStatus) {
+    return (
+      <div className="flex flex-col h-screen w-full items-center justify-center text-red-500 bg-gray-100 gap-4">
+        <p className="font-bold text-xl">Error al cargar el ticket</p>
+        <p className="bg-white p-4 rounded shadow border">{errorStatus}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
+
   if (!venta) {
     return (
-      <div className="flex h-screen w-full items-center justify-center text-red-500 bg-gray-100">
+      <div className="flex h-screen w-full items-center justify-center text-red-500 bg-gray-100 font-bold">
         Ticket no encontrado
       </div>
     );
@@ -136,11 +160,11 @@ export default function TicketPage() {
 
         {/* ITEMS */}
         <div className="flex flex-col gap-2 mb-3">
-          {venta.salidas.map((item) => (
+          {(venta.detalles || []).map((item: any) => (
             <div key={item.id} className="flex">
               <div className="w-[15%] text-left align-top">{item.cantidad}</div>
               <div className="w-[55%] align-top uppercase text-[11px]">
-                {item.productos?.nombre || "Producto desconocido"}
+                {item.producto?.nombre || "Producto desconocido"}
               </div>
               <div className="w-[30%] text-right align-top">
                 {Number(item.total).toFixed(2)}

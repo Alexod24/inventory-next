@@ -58,42 +58,42 @@ const navItems: NavItem[] = [
     roles: ["admin", "empleado"], // Admin y Empleado
   },
 
-  {
-    icon: <BoxCubeIcon />,
-    name: "Ingresos",
-    path: "/ingresos",
-    roles: ["admin"], // Admin y Empleado
-  },
-  {
-    icon: <PieChartIcon />,
-    name: "Reportes",
-    path: "/reportes",
-    roles: ["admin", "empleado"], // Solo Admin
-  },
-  {
-    icon: <DocsIcon />,
-    name: "Documentos",
-    path: "/documentos",
-    roles: ["admin", "empleado"], // Todos los roles autenticados
-  },
+  // {
+  //   icon: <BoxCubeIcon />,
+  //   name: "Ingresos",
+  //   path: "/ingresos",
+  //   roles: ["admin"],
+  // },
   {
     icon: <ListIcon />,
-    name: "Adicionales",
-
-    roles: ["admin", "empleado", "usuario"],
-    subItems: [
-      {
-        name: "Categorias",
-        path: "/espacios/phone-booth",
-        roles: ["admin", "empleado", "usuario"],
-      },
-      {
-        name: "Proveedores",
-        path: "/espacios/el-hangar",
-        roles: ["admin", "empleado", "usuario"],
-      },
-    ],
+    name: "Categorías",
+    path: "/categorias",
+    roles: ["admin"], // Solo Admin
   },
+  // {
+  //   icon: <DocsIcon />,
+  //   name: "Documentos",
+  //   path: "/documentos",
+  //   roles: ["admin", "empleado"],
+  // },
+  // {
+  //   icon: <ListIcon />,
+  //   name: "Adicionales",
+
+  //   roles: ["admin", "empleado", "usuario"],
+  //   subItems: [
+  //     {
+  //       name: "Categorias",
+  //       path: "/espacios/phone-booth",
+  //       roles: ["admin", "empleado", "usuario"],
+  //     },
+  //     {
+  //       name: "Proveedores",
+  //       path: "/espacios/el-hangar",
+  //       roles: ["admin", "empleado", "usuario"],
+  //     },
+  //   ],
+  // },
 ];
 
 const othersItems: NavItem[] = [
@@ -391,15 +391,15 @@ const AppSidebar: React.FC = () => {
           {isExpanded || isHovered || isMobileOpen ? (
             <>
               <Image
-                className="dark:hidden"
-                src="/images/logo/labase.png"
+                className="dark:hidden flex justify-center items-center w-full"
+                src="/images/logo/logo-lider.png"
                 alt="Logo"
                 width={150}
                 height={40}
               />
               <Image
-                className="hidden dark:block"
-                src="/images/logo/logo-black.png"
+                className="hidden dark:block flex justify-center items-center w-full"
+                src="/images/logo/logo-lider-black.png"
                 alt="Logo"
                 width={150}
                 height={40}

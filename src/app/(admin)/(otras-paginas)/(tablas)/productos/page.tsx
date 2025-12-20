@@ -12,13 +12,13 @@ export default function ProductosPage() {
   return (
     <div className="container mx-auto py-4 space-y-4 overflow-x-hidden">
       {/* Imagen principal ocupando todo el ancho */}
-      <div className="w-full">
+      {/* <div className="w-full">
         <Imagen
           src="/images/espacios/bienes1.jpg"
           alt="Descripción personalizada"
           className="shadow-lg rounded-xl w-full h-[400px] object-cover"
         />
-      </div>
+      </div> */}
 
       {/* Métricas en una sola fila */}
       <div className="grid grid-cols-12 gap-4 items-center">
